@@ -1,0 +1,9 @@
+# Core app uses only Python standard library with SQLite.
+
+# Optional: MySQL database support
+mysql-connector-python
+
+# Optional: trained model artifact loading
+joblib
+transformers
+torch
