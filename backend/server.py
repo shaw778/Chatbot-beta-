@@ -1268,7 +1268,20 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
 
             tone = fields.get("tone", "friendly").strip() or "friendly"
             platform = fields.get("platform", "facebook").strip() or "facebook"
-            provider = fields.get("provider", "openai")
+            req_provider = (fields.get("provider") or "").strip().lower()
+            gemini_key = os.environ.get("GEMINI_API_KEY", "") or getattr(config, "GEMINI_API_KEY", "")
+            openai_key = os.environ.get("OPENAI_API_KEY", "") or getattr(config, "OPENAI_API_KEY", "")
+            anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "") or getattr(config, "ANTHROPIC_API_KEY", "")
+            if req_provider:
+                provider = req_provider
+            elif gemini_key:
+                provider = "gemini"
+            elif openai_key:
+                provider = "openai"
+            elif anthropic_key:
+                provider = "anthropic"
+            else:
+                provider = "gemini"
             vision_prompt = (
                 f"Analyze this image and write a {tone} social-media comment for {platform}.\n"
                 "Step 1: In 1-2 clear sentences, describe what is actually happening in the image (subject, setting, actions, mood).\n"

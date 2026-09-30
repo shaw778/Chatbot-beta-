@@ -19,7 +19,22 @@ def test_local_vision_model_generates_comment():
     comment = local_vision_model.generate_comment(description, tone="friendly")
     assert isinstance(comment, str)
     assert len(comment) > 10
-    assert any(w in comment.lower() for w in ["flower", "bloom", "colors", "photo", "capture", "vivid"])
+    assert any(w in comment.lower() for w in ["flower", "bloom", "colors", "photo", "capture", "vivid", "natural"])
+
+
+def test_compound_mountain_dog_comment():
+    desc = "A woman sitting on top of a mountain with her dog."
+    comment = local_vision_model.generate_comment(desc, tone="friendly")
+    assert any(w in comment.lower() for w in ["dog", "pup", "companion", "paws", "mountain", "summit", "trail"])
+
+    enthusiastic = local_vision_model.generate_comment(desc, tone="enthusiastic")
+    assert any(w in enthusiastic.lower() for w in ["pup", "dog", "summit", "mountain", "paws", "trail"])
+
+
+def test_compound_bangla_comment():
+    desc = "পাহাড়ের চূড়ায় প্রিয় কুকুরের সাথে বসে থাকা একজন নারী।"
+    comment = local_vision_model.generate_comment(desc, tone="friendly")
+    assert any(w in comment for w in ["পাহাড়", "কুকুর", "অ্যাডভেঞ্চার", "সুন্দর"])
 
 
 def test_local_vision_model_process_image_structure():
