@@ -11,8 +11,6 @@ mysql-connector-python
 
 # Optional: trained model artifact loading
 joblib
-transformers
-torch
 
 # Payment Gateway
 sslcommerz-lib

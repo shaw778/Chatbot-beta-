@@ -40,6 +40,8 @@ from .config import (
     META_PAGE_ID,
     META_LOGIN_CONFIG_ID,
     META_OAUTH_SCOPES,
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
     OPENAI_API_KEY,
     OPENAI_MODEL,
     OAUTH_STATE_SECRET,
@@ -836,12 +838,14 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
                     "database": database.label(),
                     "anthropic_key_configured": bool(ANTHROPIC_API_KEY),
                     "openai_key_configured": bool(OPENAI_API_KEY),
+                    "gemini_key_configured": bool(GEMINI_API_KEY),
                     "meta_page_token_configured": bool(active_meta_page_access_token),
                     "meta_page_id_configured": bool(active_meta_page_id),
                     "meta_page_id": active_meta_page_id or "",
                     "meta_app_id_configured": bool(META_APP_ID),
                     "anthropic_model": ANTHROPIC_MODEL,
                     "openai_model": OPENAI_MODEL,
+                    "gemini_model": GEMINI_MODEL,
                 },
             )
 

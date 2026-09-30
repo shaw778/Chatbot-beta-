@@ -689,9 +689,10 @@ body.day-mode .pkg-card:hover{box-shadow:0 8px 24px rgba(23,105,176,0.14)}
       <div class="ibar">
         <textarea id="inp" placeholder="Paste a post or Facebook post link here..." onkeydown="handleKey(event)"></textarea>
         <select id="provider-select" class="provider-select" onchange="setProvider(this.value)">
-          <option value="ollama">Ollama (local)</option>
-          <option value="anthropic">Claude</option>
+          <option value="gemini">Google Gemini (Free Cloud)</option>
           <option value="openai">ChatGPT</option>
+          <option value="anthropic">Claude</option>
+          <option value="ollama">Ollama (local)</option>
         </select>
         <select id="lang-select" class="provider-select" style="min-width:105px" title="Comment &amp; Analysis Language">
           <option value="auto">🌐 Auto-Detect</option>
@@ -710,7 +711,7 @@ body.day-mode .pkg-card:hover{box-shadow:0 8px 24px rgba(23,105,176,0.14)}
           <div class="image-fields">
             <label>Platform<select id="image-platform"><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="twitter">X / Twitter</option></select></label>
             <label>Tone<select id="image-tone"><option value="friendly">Friendly</option><option value="professional">Professional</option><option value="enthusiastic">Enthusiastic</option></select></label>
-            <label>Vision provider<select id="image-provider"><option value="openai">OpenAI Vision</option><option value="anthropic">Anthropic Vision</option></select></label>
+            <label>Vision provider<select id="image-provider"><option value="gemini">Google Gemini (Fast &amp; Free)</option><option value="openai">OpenAI Vision</option><option value="anthropic">Anthropic Vision</option></select></label>
           </div>
           <label class="drive-dropzone" id="drive-dropzone" for="image-file">
             <div><div class="drive-upload-icon">↑</div><strong>Drop files here</strong><span>or use the button below to browse from your computer</span><span class="drive-browse">Choose a file</span></div>
@@ -755,8 +756,9 @@ body.day-mode .pkg-card:hover{box-shadow:0 8px 24px rgba(23,105,176,0.14)}
           <button class="image-submit" id="fb-fetch-btn" onclick="fbFetchPost()" style="margin:0;white-space:nowrap">Fetch Post</button>
           <button class="image-submit" onclick="fbLoadFeed()" style="margin:0;white-space:nowrap;background:var(--accent)">🔄 Load Feed</button>
           <select id="fb-provider" style="border:1px solid var(--border);border-radius:7px;padding:8px 10px;font:inherit;font-size:12px">
-            <option value="anthropic">Claude</option>
+            <option value="gemini">Google Gemini (Free)</option>
             <option value="openai">ChatGPT</option>
+            <option value="anthropic">Claude</option>
           </select>
           <select id="fb-lang" style="border:1px solid var(--border);border-radius:7px;padding:8px 10px;font:inherit;font-size:12px;background:var(--surface);color:var(--text)">
             <option value="auto">🌐 Auto Language</option>
@@ -1411,10 +1413,16 @@ async function syncBackendStatus(){
     var el=document.getElementById('api-status');
     if(el){
       if(aiProvider==='ollama') el.textContent='Python + Ollama + SQLite';
+      else if(data.gemini_key_configured) el.textContent='Python + Google Gemini + SQLite';
       else if(data.openai_key_configured&&data.anthropic_key_configured) el.textContent='Python + Claude + ChatGPT + SQLite';
       else if(data.openai_key_configured) el.textContent='Python + ChatGPT + SQLite';
       else if(data.anthropic_key_configured) el.textContent='Python + Claude + SQLite';
       else el.textContent='Python + SQLite fallback';
+    }
+    if(data.gemini_key_configured && aiProvider === 'ollama'){
+      setProvider('gemini');
+      var psel = document.getElementById('provider-select');
+      if(psel) psel.value = 'gemini';
     }
     addLog('OK','Backend connected. Database: '+data.database);
     var cs=document.getElementById('connect-state');
@@ -1440,12 +1448,12 @@ async function syncBackendStatus(){
 }
 
 function setProvider(value){
-  if(value!=='ollama'&&value!=='anthropic'&&value!=='openai') return;
+  if(value!=='ollama'&&value!=='anthropic'&&value!=='openai'&&value!=='gemini') return;
   aiProvider = value;
-  var providerName={ollama:'Ollama (local)',openai:'ChatGPT',anthropic:'Claude'}[value];
+  var providerName={gemini:'Google Gemini (Free)',ollama:'Ollama (local)',openai:'ChatGPT',anthropic:'Claude'}[value];
   addLog('OK','AI provider set to '+providerName);
   var activeProvider=document.getElementById('active-provider-label');
-  if(activeProvider)activeProvider.textContent={ollama:'Ollama · Local',openai:'ChatGPT',anthropic:'Claude'}[value];
+  if(activeProvider)activeProvider.textContent={gemini:'Google Gemini · Free',ollama:'Ollama · Local',openai:'ChatGPT',anthropic:'Claude'}[value];
   var modeTag=document.getElementById('provider-mode-tag');
   if(modeTag)modeTag.textContent=value==='ollama'?'LOCAL':'CLOUD';
   var apiStatus=document.getElementById('api-status');

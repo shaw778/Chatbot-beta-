@@ -1,17 +1,27 @@
 import base64
 import json
+import logging
 import urllib.error
 import urllib.request
 
-from .config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL, OPENAI_API_KEY, OPENAI_MODEL
+from .config import (
+    ANTHROPIC_API_KEY,
+    ANTHROPIC_MODEL,
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
+    OPENAI_API_KEY,
+    OPENAI_MODEL,
+)
 from .database import database
+
+logger = logging.getLogger("chatbot.ai")
 
 
 def fallback_response(payload):
     import re
     from .models.comment_generator_model import comment_generator_model
     from .models.sentiment_model import sentiment_model
-    from .models.text_features import extract_dynamic_topics
+    from .models.text_features import extract_dynamic_topics, is_question_intent
     from .models.toxicity_model import toxicity_model
 
     messages = payload.get("messages") or []
@@ -207,17 +217,78 @@ def call_openai(payload):
         raise RuntimeError(f"OpenAI connection error: {error}") from exc
 
 
-def call_ai(payload):
-    provider = str(payload.get("provider", "anthropic")).lower()
+def call_gemini(payload):
+    """Call Google Gemini API via standard library HTTP."""
+    model = payload.get("model") or GEMINI_MODEL
+    if not GEMINI_API_KEY:
+        text = fallback_response(payload)
+        database.store_api_call("local-fallback", model, payload, text, "ok")
+        return {"text": text, "provider": "local-fallback", "model": "local"}
+
+    system = payload.get("system", "")
+    messages = payload.get("messages") or []
+    user_prompt = ""
+    if messages:
+        last = messages[-1].get("content", "")
+        user_prompt = last if isinstance(last, str) else json.dumps(last)
+
+    full_prompt = f"{system}\n\n{user_prompt}" if system else user_prompt
+    request_payload = {
+        "contents": [{"parts": [{"text": full_prompt}]}],
+        "generationConfig": {
+            "temperature": float(payload.get("temperature", 0.7)),
+            "maxOutputTokens": int(payload.get("max_tokens", 800)),
+        },
+    }
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(request_payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
     try:
+        with urllib.request.urlopen(req, timeout=30) as res:
+            data = json.loads(res.read().decode("utf-8"))
+        candidates = data.get("candidates") or []
+        text = ""
+        if candidates:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            text = "".join(p.get("text", "") for p in parts).strip()
+        if not text:
+            raise RuntimeError("Gemini returned empty response.")
+        database.store_api_call("gemini", model, request_payload, text, "ok")
+        return {"text": text, "provider": "gemini", "model": model}
+    except urllib.error.HTTPError as exc:
+        error = exc.read().decode("utf-8", errors="replace")
+        database.store_api_call("gemini", model, request_payload, None, "error", error)
+        raise RuntimeError(f"Gemini API HTTP {exc.code}: {error[:300]}") from exc
+    except urllib.error.URLError as exc:
+        error = str(exc.reason)
+        database.store_api_call("gemini", model, request_payload, None, "error", error)
+        raise RuntimeError(f"Gemini connection error: {error}") from exc
+
+
+def call_ai(payload):
+    provider = str(payload.get("provider", "gemini" if GEMINI_API_KEY else "anthropic")).lower()
+    try:
+        if provider in {"gemini", "google"}:
+            return call_gemini(payload)
         if provider in {"anthropic", "claude"}:
             return call_anthropic(payload)
         if provider in {"openai", "chatgpt"}:
             return call_openai(payload)
-    except RuntimeError:
+    except RuntimeError as exc:
+        logger.warning("Primary provider '%s' failed (%s). Checking failovers...", provider, exc)
+        if GEMINI_API_KEY and provider not in {"gemini", "google"}:
+            try:
+                return call_gemini(payload)
+            except Exception:
+                pass
         text = fallback_response(payload)
         return {"text": text, "provider": "local-fallback", "model": "local"}
-    raise ValueError(f"Unknown provider '{provider}'. Use 'anthropic' or 'openai'.")
+    raise ValueError(f"Unknown provider '{provider}'. Use 'gemini', 'anthropic', or 'openai'.")
 
 
 def call_vision(image_bytes, media_type, prompt, provider="openai"):
@@ -226,9 +297,61 @@ def call_vision(image_bytes, media_type, prompt, provider="openai"):
     encoded = base64.b64encode(image_bytes).decode("ascii")
     data_url = f"data:{media_type};base64,{encoded}"
 
+    # Route to Gemini Vision if requested or if OpenAI/Anthropic keys are missing
+    if provider in {"gemini", "google"} or (GEMINI_API_KEY and not OPENAI_API_KEY and not ANTHROPIC_API_KEY):
+        model = GEMINI_MODEL
+        if not GEMINI_API_KEY:
+            from .models.vision_model import local_vision_model
+            local_res = local_vision_model.process_image(image_bytes)
+            database.store_api_call("local-fallback-vision", model, {"model": model, "prompt": prompt}, local_res["text"], "ok")
+            return {**local_res, "provider": "local-fallback", "model": "local"}
+        request_payload = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {
+                        "inline_data": {
+                            "mime_type": media_type or "image/png",
+                            "data": encoded
+                        }
+                    }
+                ]
+            }],
+            "generationConfig": {
+                "maxOutputTokens": 350,
+                "temperature": 0.4
+            }
+        }
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(request_payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=30) as res:
+                data = json.loads(res.read().decode("utf-8"))
+            candidates = data.get("candidates") or []
+            text = ""
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                text = "".join(p.get("text", "") for p in parts).strip()
+            if not text:
+                raise RuntimeError("Gemini vision returned empty response.")
+            database.store_api_call("gemini-vision", model, {"prompt": prompt}, text, "ok")
+            return {"text": text, "provider": "gemini-vision", "model": model}
+        except Exception as exc:
+            logger.warning("Gemini vision call failed: %s", exc)
+            from .models.vision_model import local_vision_model
+            local_res = local_vision_model.process_image(image_bytes)
+            return {**local_res, "provider": "local-fallback", "model": "local"}
+
     if provider in {"openai", "chatgpt"}:
         model = OPENAI_MODEL
         if not OPENAI_API_KEY:
+            if GEMINI_API_KEY:
+                return call_vision(image_bytes, media_type, prompt, provider="gemini")
             from .models.vision_model import local_vision_model
             local_res = local_vision_model.process_image(image_bytes)
             database.store_api_call("local-fallback-vision", model, {"model": model, "prompt": prompt}, local_res["text"], "ok")
@@ -258,13 +381,20 @@ def call_vision(image_bytes, media_type, prompt, provider="openai"):
             return {"text": text.strip(), "provider": "openai-vision", "model": model}
         except urllib.error.HTTPError as exc:
             error = exc.read().decode("utf-8", errors="replace")
+            if GEMINI_API_KEY:
+                logger.info("OpenAI vision HTTP %s, falling back to Gemini vision", exc.code)
+                return call_vision(image_bytes, media_type, prompt, provider="gemini")
             raise RuntimeError(f"OpenAI vision HTTP {exc.code}: {error[:400]}") from exc
         except urllib.error.URLError as exc:
+            if GEMINI_API_KEY:
+                return call_vision(image_bytes, media_type, prompt, provider="gemini")
             raise RuntimeError(f"OpenAI vision connection error: {exc.reason}") from exc
 
     if provider in {"anthropic", "claude"}:
         model = ANTHROPIC_MODEL
         if not ANTHROPIC_API_KEY:
+            if GEMINI_API_KEY:
+                return call_vision(image_bytes, media_type, prompt, provider="gemini")
             from .models.vision_model import local_vision_model
             local_res = local_vision_model.process_image(image_bytes)
             database.store_api_call("local-fallback-vision", model, {"model": model, "prompt": prompt}, local_res["text"], "ok")
@@ -293,11 +423,15 @@ def call_vision(image_bytes, media_type, prompt, provider="openai"):
             return {"text": text.strip(), "provider": "anthropic-vision", "model": model}
         except urllib.error.HTTPError as exc:
             error = exc.read().decode("utf-8", errors="replace")
+            if GEMINI_API_KEY:
+                return call_vision(image_bytes, media_type, prompt, provider="gemini")
             raise RuntimeError(f"Anthropic vision HTTP {exc.code}: {error[:400]}") from exc
         except urllib.error.URLError as exc:
+            if GEMINI_API_KEY:
+                return call_vision(image_bytes, media_type, prompt, provider="gemini")
             raise RuntimeError(f"Anthropic vision connection error: {exc.reason}") from exc
 
-    raise ValueError("Choose OpenAI or Anthropic for image understanding.")
+    raise ValueError("Choose Gemini, OpenAI, or Anthropic for image understanding.")
 
 
 def call_anthropic(payload):
