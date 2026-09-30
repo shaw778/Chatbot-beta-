@@ -2293,6 +2293,8 @@ document.getElementById('image-form').addEventListener('submit',async function(e
         desc = parts[0].replace(/.*What's happening in the image:?\s*|.*Description:?\s*/i, '').replace(/🖼️/g, '').trim();
         comm = (parts[1] || '').replace(/💬/g, '').trim();
       }
+      desc = desc.replace(/^[\*\#\_\s]+|[\*\#\_\s]+$/g, '').trim();
+      comm = comm.replace(/^[\*\#\_\s]+|[\*\#\_\s]+$/g, '').trim();
 
       if(desc){
         var descBox = document.createElement('div');

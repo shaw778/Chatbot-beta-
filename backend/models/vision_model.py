@@ -5,6 +5,7 @@ import logging
 import os
 import random
 import re
+import time
 import urllib.error
 import urllib.request
 from PIL import Image, ImageStat, ImageFilter
@@ -42,56 +43,81 @@ class LocalVisionModel:
             return False
 
     def _try_gemini_vision(self, image_bytes):
-        """Query Google Gemini 3.8 Flash multimodal vision API if GEMINI_API_KEY is configured."""
+        """Query Google Gemini multimodal vision API with retry, backoff, and multi-model fallback."""
         gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
         if not gemini_key:
             return None
-        try:
-            model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
-            encoded = base64.b64encode(image_bytes).decode("ascii")
-            payload = {
-                "contents": [{
-                    "parts": [
-                        {
-                            "text": (
-                                "Describe what is happening in this image in 1 clear, natural sentence. "
-                                "State the primary subjects, their actions, and the setting or background specifically."
-                            )
-                        },
-                        {
-                            "inline_data": {
-                                "mime_type": "image/jpeg",
-                                "data": encoded,
-                            }
-                        },
-                    ]
-                }],
-                "generationConfig": {
-                    "maxOutputTokens": 65,
-                    "temperature": 0.2,
-                },
-            }
+
+        models_to_try = [
+            os.environ.get("GEMINI_MODEL", "gemini-3.8-flash"),
+            "gemini-3.8-flash",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+        ]
+        seen = set()
+        candidate_models = [m for m in models_to_try if m and not (m in seen or seen.add(m))]
+        encoded = base64.b64encode(image_bytes).decode("ascii")
+
+        payload = {
+            "contents": [{
+                "parts": [
+                    {
+                        "text": (
+                            "Describe what is happening in this image in 1 to 2 clear, complete sentences. "
+                            "Specifically identify the primary subjects, their actions, and the surrounding environment or setting."
+                        )
+                    },
+                    {
+                        "inline_data": {
+                            "mime_type": "image/jpeg",
+                            "data": encoded,
+                        }
+                    },
+                ]
+            }],
+            "generationConfig": {
+                "maxOutputTokens": 300,
+                "temperature": 0.2,
+            },
+        }
+
+        for model in candidate_models:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}"
-            req = urllib.request.Request(
-                url,
-                data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=15) as res:
-                data = json.loads(res.read().decode("utf-8"))
-            candidates = data.get("candidates") or []
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                text = "".join(p.get("text", "") for p in parts).strip()
-                if text:
-                    caption = text.replace("\n", " ").strip()
-                    if not caption.endswith((".", "!", "?")):
-                        caption += "."
-                    logger.info("Gemini vision produced caption: %s", caption)
-                    return caption
-        except Exception as exc:
-            logger.warning("Gemini vision captioning failed: %s", exc)
+            for attempt in range(2):
+                try:
+                    req = urllib.request.Request(
+                        url,
+                        data=json.dumps(payload).encode("utf-8"),
+                        headers={"Content-Type": "application/json"},
+                        method="POST",
+                    )
+                    with urllib.request.urlopen(req, timeout=18) as res:
+                        data = json.loads(res.read().decode("utf-8"))
+                    candidates = data.get("candidates") or []
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        text = "".join(p.get("text", "") for p in parts).strip()
+                        if text:
+                            caption = text.replace("\n", " ").strip()
+                            caption = caption.strip('*_#`"\' ')
+                            if not caption.endswith((".", "!", "?")):
+                                caption += "."
+                            logger.info("Gemini vision (%s) produced caption: %s", model, caption)
+                            return caption
+                except urllib.error.HTTPError as exc:
+                    logger.warning("Gemini vision (%s, attempt %d) HTTP %d: %s", model, attempt + 1, exc.code, exc.reason)
+                    if exc.code in {429, 500, 502, 503, 504} and attempt == 0:
+                        time.sleep(1.0)
+                        continue
+                    break
+                except Exception as exc:
+                    logger.warning("Gemini vision (%s, attempt %d) failed: %s", model, attempt + 1, exc)
+                    if attempt == 0:
+                        time.sleep(1.0)
+                        continue
+                    break
+
         return None
 
     def _try_hf_serverless_blip(self, image_bytes):

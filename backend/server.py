@@ -794,6 +794,54 @@ def redirect_to_connection_result(handler, provider, error=None):
     handler.end_headers()
 
 
+def parse_vision_response(raw_text):
+    """Cleanly extract description and comment from AI output in any markdown or plain format."""
+    text = str(raw_text or "").strip()
+    if not text:
+        return "", ""
+
+    # Strip conversational intro lines like "Here is the description..."
+    lines = text.splitlines()
+    clean_lines = []
+    for line in lines:
+        s = line.strip().lower()
+        if s.startswith(("here is ", "here are ", "sure! ", "certainly! ", "below is ")):
+            continue
+        clean_lines.append(line)
+    text = "\n".join(clean_lines).strip()
+
+    # Pattern: match Description block then Comment block with any markdown or numeric prefix
+    pattern = re.compile(
+        r'(?:(?:\*\*|\*|#{1,3}\s*|\d+[\.\)]\s*)?(?:Description|What\'s happening in the image)[\s\*\:]*)\s*([\s\S]*?)(?=(?:(?:\*\*|\*|#{1,3}\s*|\d+[\.\)]\s*)?(?:Comment|Generated Comment)[\s\*\:]*)\s*)'
+        r'(?:(?:\*\*|\*|#{1,3}\s*|\d+[\.\)]\s*)?(?:Comment|Generated Comment)[\s\*\:]*)\s*([\s\S]*)',
+        re.IGNORECASE
+    )
+    m = pattern.search(text)
+    if m:
+        d_cand = m.group(1).strip()
+        c_cand = m.group(2).strip()
+        d_cand = re.sub(r'^(?:(?:\*\*|\*|#{1,3}\s*|\d+[\.\)]\s*)?(?:Description|What\'s happening in the image)[\s\*\:]+)', '', d_cand, flags=re.IGNORECASE).strip()
+        for ch in ['*', '_', '#', '`', '"', "'"]:
+            d_cand = d_cand.strip(ch).strip()
+            c_cand = c_cand.strip(ch).strip()
+        if d_cand and c_cand:
+            return d_cand, c_cand
+
+    # Fallback pattern: split on Comment / Generated Comment
+    parts = re.split(r'(?:(?:\*\*|\*|#{1,3}\s*|\d+[\.\)]\s*)?(?:Comment|Generated Comment)[\s\*\:]+)', text, maxsplit=1, flags=re.IGNORECASE)
+    if len(parts) == 2:
+        d_cand = parts[0].strip()
+        c_cand = parts[1].strip()
+        d_cand = re.sub(r'^(?:(?:\*\*|\*|#{1,3}\s*|\d+[\.\)]\s*)?(?:Description|What\'s happening in the image)[\s\*\:]+)', '', d_cand, flags=re.IGNORECASE).strip()
+        for ch in ['*', '_', '#', '`', '"', "'"]:
+            d_cand = d_cand.strip(ch).strip()
+            c_cand = c_cand.strip(ch).strip()
+        if d_cand and c_cand:
+            return d_cand, c_cand
+
+    return "", text
+
+
 class ChatbotHandler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
         path = urlsplit(path).path
@@ -1283,12 +1331,13 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
             else:
                 provider = "gemini"
             vision_prompt = (
-                f"Analyze this image and write a {tone} social-media comment for {platform}.\n"
-                "Step 1: In 1-2 clear sentences, describe what is actually happening in the image (subject, setting, actions, mood).\n"
-                f"Step 2: Write an engaging, natural {tone} comment suitable for {platform}.\n\n"
+                f"Analyze this image and write a {tone} social-media comment for {platform}.\n\n"
+                "Instructions:\n"
+                "1. Description: In 1-2 clear, complete sentences, describe specifically what is happening in the image (identify primary subjects, actions, and landscape/background details). Do not truncate.\n"
+                f"2. Comment: In 1-2 engaging sentences, write a natural, authentic {tone} comment for {platform} reacting to the exact subjects and activity in the photo. Avoid generic praise like 'great photo' or 'nice shot'—specifically mention the subjects (e.g. hiking with the pup, the mountain view, the delicious spread).\n\n"
                 "Format your output exactly as:\n"
-                "Description: [What is happening in the image]\n"
-                "Comment: [Generated social media comment]"
+                "Description: <What is happening in the image>\n"
+                "Comment: <Specific social media comment>"
             )
             try:
                 result = call_vision(image["data"], image["content_type"], vision_prompt, provider=provider, filename=image.get("filename", ""))
@@ -1297,31 +1346,41 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
                 from .models.vision_model import local_vision_model
                 result = local_vision_model.process_image(image["data"], tone=tone, platform=platform, filename=image.get("filename", ""), user_prompt=prompt)
 
-            description = result.get("description", "")
-            comment = result.get("comment", "")
+            description = result.get("description", "").strip()
+            comment = result.get("comment", "").strip()
             raw_text = str(result.get("text", "")).strip()
 
-            if not description and not comment:
-                if "Description:" in raw_text and "Comment:" in raw_text:
-                    parts = raw_text.split("Comment:", 1)
-                    description = parts[0].replace("Description:", "").strip()
-                    comment = parts[1].strip()
-                elif "What's happening in the image:" in raw_text and "Generated Comment:" in raw_text:
-                    parts = raw_text.split("Generated Comment:", 1)
-                    description = parts[0].replace("What's happening in the image:", "").replace("🖼️", "").strip()
-                    comment = parts[1].replace("💬", "").strip()
-                else:
-                    from .models.vision_model import local_vision_model
-                    description = local_vision_model.describe_image(image["data"], filename=image.get("filename", ""), user_prompt=prompt)
-                    comment = raw_text
+            if not description or not comment:
+                d_parsed, c_parsed = parse_vision_response(raw_text)
+                if not description and d_parsed:
+                    description = d_parsed
+                if not comment and c_parsed:
+                    comment = c_parsed
 
             if not description:
                 from .models.vision_model import local_vision_model
                 description = local_vision_model.describe_image(image["data"], filename=image.get("filename", ""), user_prompt=prompt)
 
-            if not comment:
+            # Ensure comment is never generic, half-generated, or missing
+            is_generic_or_incomplete = (
+                not comment
+                or len(comment) < 8
+                or any(comment.strip().lower() == g for g in [
+                    "nice picture!", "great photo!", "looks good!", "awesome!", "cool!", "nice shot!"
+                ])
+                or comment.strip().lower().startswith("such an inviting moment")
+            )
+            if is_generic_or_incomplete and description:
                 from .models.vision_model import local_vision_model
                 comment = local_vision_model.generate_comment(description, tone=tone, platform=platform)
+            elif not comment:
+                from .models.vision_model import local_vision_model
+                comment = local_vision_model.generate_comment(description, tone=tone, platform=platform)
+
+            # Clean any stray markdown formatting
+            for ch in ['*', '_', '#', '`', '"', "'"]:
+                description = description.strip(ch).strip()
+                comment = comment.strip(ch).strip()
 
             full_text = f"🖼️ What's happening in the image:\n{description}\n\n💬 Generated Comment:\n{comment}"
             database.store_conversation("image-comment", image["filename"], full_text)
