@@ -1240,7 +1240,7 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
             )
             try:
                 result = call_vision(image["data"], image["content_type"], vision_prompt, provider=provider)
-            except RuntimeError as exc:
+            except Exception as exc:
                 logger.warning("Image vision provider unavailable: %s", exc)
                 from .models.vision_model import local_vision_model
                 result = local_vision_model.process_image(image["data"], tone=tone, platform=platform)
@@ -1408,6 +1408,15 @@ def main():
     print(f"Chatbot running at http://{host}:{port}")
     print(f"Database engine: {DB_ENGINE}")
     print(f"Database: {database.label()}")
+
+    if port != 8000 and not os.environ.get("RENDER"):
+        try:
+            alt_server = ThreadingHTTPServer((host, 8000), ChatbotHandler)
+            threading.Thread(target=alt_server.serve_forever, daemon=True).start()
+            print(f"Also listening at http://{host}:8000 for backward compatibility")
+        except OSError:
+            pass
+
     server.serve_forever()
 
 
