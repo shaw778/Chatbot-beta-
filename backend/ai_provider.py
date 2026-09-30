@@ -291,9 +291,9 @@ def call_ai(payload):
     raise ValueError(f"Unknown provider '{provider}'. Use 'gemini', 'anthropic', or 'openai'.")
 
 
-def call_vision(image_bytes, media_type, prompt, provider="openai"):
+def call_vision(image_bytes, media_type, prompt, provider="openai", filename=""):
     """Ask a configured vision provider to interpret the uploaded image."""
-    provider = str(provider or "openai").lower()
+    provider = str(provider or "gemini").lower()
     encoded = base64.b64encode(image_bytes).decode("ascii")
     data_url = f"data:{media_type};base64,{encoded}"
 
@@ -302,7 +302,7 @@ def call_vision(image_bytes, media_type, prompt, provider="openai"):
         model = GEMINI_MODEL
         if not GEMINI_API_KEY:
             from .models.vision_model import local_vision_model
-            local_res = local_vision_model.process_image(image_bytes)
+            local_res = local_vision_model.process_image(image_bytes, filename=filename, user_prompt=prompt)
             database.store_api_call("local-fallback-vision", model, {"model": model, "prompt": prompt}, local_res["text"], "ok")
             return {**local_res, "provider": "local-fallback", "model": "local"}
         request_payload = {
@@ -344,16 +344,16 @@ def call_vision(image_bytes, media_type, prompt, provider="openai"):
         except Exception as exc:
             logger.warning("Gemini vision call failed: %s", exc)
             from .models.vision_model import local_vision_model
-            local_res = local_vision_model.process_image(image_bytes)
+            local_res = local_vision_model.process_image(image_bytes, filename=filename, user_prompt=prompt)
             return {**local_res, "provider": "local-fallback", "model": "local"}
 
     if provider in {"openai", "chatgpt"}:
         model = OPENAI_MODEL
         if not OPENAI_API_KEY:
             if GEMINI_API_KEY:
-                return call_vision(image_bytes, media_type, prompt, provider="gemini")
+                return call_vision(image_bytes, media_type, prompt, provider="gemini", filename=filename)
             from .models.vision_model import local_vision_model
-            local_res = local_vision_model.process_image(image_bytes)
+            local_res = local_vision_model.process_image(image_bytes, filename=filename, user_prompt=prompt)
             database.store_api_call("local-fallback-vision", model, {"model": model, "prompt": prompt}, local_res["text"], "ok")
             return {**local_res, "provider": "local-fallback", "model": "local"}
         request_payload = {
@@ -379,26 +379,23 @@ def call_vision(image_bytes, media_type, prompt, provider="openai"):
                 raise RuntimeError("OpenAI returned no image comment.")
             database.store_api_call("openai-vision", model, {"model": model, "prompt": prompt}, text, "ok")
             return {"text": text.strip(), "provider": "openai-vision", "model": model}
-        except urllib.error.HTTPError as exc:
-            error = exc.read().decode("utf-8", errors="replace")
+        except (urllib.error.HTTPError, urllib.error.URLError, Exception) as exc:
+            logger.warning("OpenAI vision failed (%s), falling back to available engine", exc)
             if GEMINI_API_KEY:
-                logger.info("OpenAI vision HTTP %s, falling back to Gemini vision", exc.code)
-                return call_vision(image_bytes, media_type, prompt, provider="gemini")
-            raise RuntimeError(f"OpenAI vision HTTP {exc.code}: {error[:400]}") from exc
-        except urllib.error.URLError as exc:
-            if GEMINI_API_KEY:
-                return call_vision(image_bytes, media_type, prompt, provider="gemini")
-            raise RuntimeError(f"OpenAI vision connection error: {exc.reason}") from exc
+                return call_vision(image_bytes, media_type, prompt, provider="gemini", filename=filename)
+            from .models.vision_model import local_vision_model
+            local_res = local_vision_model.process_image(image_bytes, filename=filename, user_prompt=prompt)
+            return {**local_res, "provider": "local-fallback", "model": "local"}
 
     if provider in {"anthropic", "claude"}:
         model = ANTHROPIC_MODEL
         if not ANTHROPIC_API_KEY:
             if GEMINI_API_KEY:
-                return call_vision(image_bytes, media_type, prompt, provider="gemini")
+                return call_vision(image_bytes, media_type, prompt, provider="gemini", filename=filename)
             from .models.vision_model import local_vision_model
-            local_res = local_vision_model.process_image(image_bytes)
+            local_res = local_vision_model.process_image(image_bytes, filename=filename, user_prompt=prompt)
             database.store_api_call("local-fallback-vision", model, {"model": model, "prompt": prompt}, local_res["text"], "ok")
-            return local_res
+            return {**local_res, "provider": "local-fallback", "model": "local"}
         request_payload = {
             "model": model,
             "max_tokens": 250,
@@ -421,17 +418,17 @@ def call_vision(image_bytes, media_type, prompt, provider="openai"):
                 raise RuntimeError("Anthropic returned no image comment.")
             database.store_api_call("anthropic-vision", model, {"model": model, "prompt": prompt}, text, "ok")
             return {"text": text.strip(), "provider": "anthropic-vision", "model": model}
-        except urllib.error.HTTPError as exc:
-            error = exc.read().decode("utf-8", errors="replace")
+        except (urllib.error.HTTPError, urllib.error.URLError, Exception) as exc:
+            logger.warning("Anthropic vision failed (%s), falling back to available engine", exc)
             if GEMINI_API_KEY:
-                return call_vision(image_bytes, media_type, prompt, provider="gemini")
-            raise RuntimeError(f"Anthropic vision HTTP {exc.code}: {error[:400]}") from exc
-        except urllib.error.URLError as exc:
-            if GEMINI_API_KEY:
-                return call_vision(image_bytes, media_type, prompt, provider="gemini")
-            raise RuntimeError(f"Anthropic vision connection error: {exc.reason}") from exc
+                return call_vision(image_bytes, media_type, prompt, provider="gemini", filename=filename)
+            from .models.vision_model import local_vision_model
+            local_res = local_vision_model.process_image(image_bytes, filename=filename, user_prompt=prompt)
+            return {**local_res, "provider": "local-fallback", "model": "local"}
 
-    raise ValueError("Choose Gemini, OpenAI, or Anthropic for image understanding.")
+    from .models.vision_model import local_vision_model
+    local_res = local_vision_model.process_image(image_bytes, filename=filename, user_prompt=prompt)
+    return {**local_res, "provider": "local-fallback", "model": "local"}
 
 
 def call_anthropic(payload):

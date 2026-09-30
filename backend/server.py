@@ -22,6 +22,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit
 
 from PIL import Image, ImageStat
 
+from . import ai_provider, config
 from .ai_provider import call_ai, call_anthropic, call_openai, call_vision, fallback_response
 from .config import (
     ANTHROPIC_API_KEY,
@@ -42,6 +43,7 @@ from .config import (
     META_OAUTH_SCOPES,
     GEMINI_API_KEY,
     GEMINI_MODEL,
+    HF_TOKEN,
     OPENAI_API_KEY,
     OPENAI_MODEL,
     OAUTH_STATE_SECRET,
@@ -829,16 +831,17 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
         global active_meta_page_access_token, active_meta_page_id
         self._begin_request()
         path = urlsplit(self.path).path
-        if path == "/api/health":
+        if path in {"/api/health", "/api/settings"}:
             return send_json(
                 self,
                 {
                     "ok": True,
                     "database_engine": DB_ENGINE,
                     "database": database.label(),
-                    "anthropic_key_configured": bool(ANTHROPIC_API_KEY),
-                    "openai_key_configured": bool(OPENAI_API_KEY),
-                    "gemini_key_configured": bool(GEMINI_API_KEY),
+                    "anthropic_key_configured": bool(os.environ.get("ANTHROPIC_API_KEY") or ANTHROPIC_API_KEY),
+                    "openai_key_configured": bool(os.environ.get("OPENAI_API_KEY") or OPENAI_API_KEY),
+                    "gemini_key_configured": bool(os.environ.get("GEMINI_API_KEY") or GEMINI_API_KEY),
+                    "hf_token_configured": bool(os.environ.get("HF_TOKEN") or HF_TOKEN),
                     "meta_page_token_configured": bool(active_meta_page_access_token),
                     "meta_page_id_configured": bool(active_meta_page_id),
                     "meta_page_id": active_meta_page_id or "",
@@ -1092,6 +1095,32 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
                     "message": "Simulated sandbox payment verified and plan unlocked!",
                 })
 
+            if path in {"/api/settings/keys", "/api/settings"}:
+                payload = read_json(self)
+                updates = {}
+                for key_name in ["gemini_api_key", "openai_api_key", "anthropic_api_key", "hf_token"]:
+                    if key_name in payload:
+                        val = str(payload[key_name]).strip()
+                        updates[key_name.upper()] = val
+                        os.environ[key_name.upper()] = val
+                        if hasattr(config, key_name.upper()):
+                            setattr(config, key_name.upper(), val)
+                        if hasattr(ai_provider, key_name.upper()):
+                            setattr(ai_provider, key_name.upper(), val)
+                if updates:
+                    try:
+                        persist_env_vars(ROOT_DIR / ".env", updates)
+                    except Exception as exc:
+                        logger.warning("Could not persist API keys to .env: %s", exc)
+                return send_json(self, {
+                    "success": True,
+                    "updated_keys": list(updates.keys()),
+                    "gemini_key_configured": bool(os.environ.get("GEMINI_API_KEY")),
+                    "openai_key_configured": bool(os.environ.get("OPENAI_API_KEY")),
+                    "anthropic_key_configured": bool(os.environ.get("ANTHROPIC_API_KEY")),
+                    "hf_token_configured": bool(os.environ.get("HF_TOKEN")),
+                })
+
             if path == "/api/comment/image":
                 return self.handle_image_comment()
 
@@ -1249,11 +1278,11 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
                 "Comment: [Generated social media comment]"
             )
             try:
-                result = call_vision(image["data"], image["content_type"], vision_prompt, provider=provider)
+                result = call_vision(image["data"], image["content_type"], vision_prompt, provider=provider, filename=image.get("filename", ""))
             except Exception as exc:
                 logger.warning("Image vision provider unavailable: %s", exc)
                 from .models.vision_model import local_vision_model
-                result = local_vision_model.process_image(image["data"], tone=tone, platform=platform)
+                result = local_vision_model.process_image(image["data"], tone=tone, platform=platform, filename=image.get("filename", ""), user_prompt=prompt)
 
             description = result.get("description", "")
             comment = result.get("comment", "")
@@ -1270,12 +1299,12 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
                     comment = parts[1].replace("💬", "").strip()
                 else:
                     from .models.vision_model import local_vision_model
-                    description = local_vision_model.describe_image(image["data"])
+                    description = local_vision_model.describe_image(image["data"], filename=image.get("filename", ""), user_prompt=prompt)
                     comment = raw_text
 
             if not description:
                 from .models.vision_model import local_vision_model
-                description = local_vision_model.describe_image(image["data"])
+                description = local_vision_model.describe_image(image["data"], filename=image.get("filename", ""), user_prompt=prompt)
 
             if not comment:
                 from .models.vision_model import local_vision_model
@@ -1290,6 +1319,7 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
                 "description": description,
                 "comment": comment,
                 "full_text": full_text,
+                "provider": result.get("provider", "smart-vision-analyzer"),
             })
         except ValueError as exc:
             return send_json(self, {"error": str(exc)}, HTTPStatus.UNPROCESSABLE_ENTITY)
