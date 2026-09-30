@@ -1,5 +1,33 @@
-__pycache__/
-*.pyc
+# Credentials & secrets
 .env
+.env.*
+*.env
+
+# Python virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Databases & local data
 chatbot.db
+*.db
+*.sqlite
+*.sqlite3
 data/*.db
+
+# OS metadata
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Backup files
+*.bak

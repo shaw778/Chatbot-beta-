@@ -1,4 +1,10 @@
+# Production WSGI server for Render deployment
+gunicorn>=21.2.0
+
 # Core app uses only Python standard library with SQLite.
+Pillow
+pytest
+python-dotenv
 
 # Optional: MySQL database support
 mysql-connector-python
@@ -7,3 +13,7 @@ mysql-connector-python
 joblib
 transformers
 torch
+
+# Payment Gateway
+sslcommerz-lib
+requests

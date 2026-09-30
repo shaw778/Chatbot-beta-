@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Intelligent Bot — All 40 Features | BRAC CSE400</title>
+<title>CommentBot | BRAC CSE400</title>
 <style>
 :root{
-  --primary:#534AB7;--primary-l:#EEEDFE;--primary-d:#3C3489;
-  --success:#1D9E75;--success-l:#E1F5EE;
+  --primary:#1769E0;--primary-l:#EAF2FF;--primary-d:#0B4EA2;
+  --success:#168B83;--success-l:#E3F6F3;
   --danger:#E24B4A;--danger-l:#FCEBEB;
   --warn:#BA7517;--warn-l:#FAEEDA;
-  --bg:#F3F2F8;--surface:#fff;--border:rgba(0,0,0,.09);
+  --bg:#F4F7FB;--surface:#fff;--border:#DFE5EE;
   --text:#1a1a1a;--muted:#666;--faint:#999;
   --r:10px;--shadow:0 2px 14px rgba(0,0,0,.08);
 }
@@ -18,7 +18,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
 /* ── Header ── */
-header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 2px 8px rgba(83,74,183,.4)}
+header{background:linear-gradient(115deg,#0B4EA2,var(--primary) 58%,#168B83);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 3px 14px rgba(11,78,162,.25)}
 .hlogo{font-size:22px}
 .htitle{font-size:15px;font-weight:600}
 .hsub{font-size:11px;opacity:.75;margin-top:1px}
@@ -55,18 +55,19 @@ header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align
 
 /* Chat panel */
 .chat-panel{display:flex;flex-direction:column;flex:1;overflow:hidden}
-.msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.msgs{flex:1;overflow-y:auto;padding:24px clamp(16px,4vw,52px);display:flex;flex-direction:column;gap:16px}
 .msg{display:flex;gap:8px;align-items:flex-start;max-width:100%}
 .msg.user{flex-direction:row-reverse}
 .av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
 .av-b{background:var(--primary-l);color:var(--primary)}
 .av-u{background:#E6F1FB;color:#185FA5}
-.bbl{max-width:74%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word}
-.bbl-b{background:var(--surface);border:1px solid var(--border);border-top-left-radius:3px;box-shadow:var(--shadow)}
+.bbl{max-width:74%;padding:11px 14px;border-radius:14px;font-size:13.5px;line-height:1.65;word-break:break-word}
+.bbl-b{background:var(--surface);border:1px solid var(--border);border-top-left-radius:3px;box-shadow:0 5px 20px rgba(31,49,79,.06)}
 .bbl-u{background:var(--primary);color:#fff;border-top-right-radius:3px}
-.ibar{padding:10px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
+.ibar{padding:14px clamp(14px,4vw,52px);border-top:1px solid var(--border);background:rgba(255,255,255,.9);backdrop-filter:blur(12px);display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
 .ibar textarea{flex:1;resize:none;border:1.5px solid var(--border);border-radius:var(--r);padding:8px 12px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);height:38px;max-height:110px;transition:border-color .2s}
 .ibar textarea:focus{outline:none;border-color:var(--primary)}
+.provider-select{border:1.5px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:13px;background:#fff;color:var(--text);height:38px}
 .sbtn{width:38px;height:38px;border-radius:var(--r);background:var(--primary);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0}
 .sbtn:hover:not(:disabled){background:var(--primary-d)}
 .sbtn:disabled{background:#ccc;cursor:default}
@@ -153,14 +154,470 @@ header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align
 .warn-box{padding:8px 10px;background:var(--warn-l);border-radius:8px;font-size:12px;color:#7A4A00;margin-top:6px}
 .flag-box{padding:8px 10px;background:var(--danger-l);border-radius:8px;font-size:12px;color:#A32D2D;margin-top:6px}
 .empty{text-align:center;padding:40px 20px;color:var(--faint);font-size:13px}
+.comment-actions{display:flex;gap:6px;margin:6px 0 12px;flex-wrap:wrap}.comment-actions .qbtn{background:#fff}
+.scheduler-panel{flex:1;overflow-y:auto;padding:18px;max-width:760px;width:100%;box-sizing:border-box}.scheduler-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}.scheduler-card h2{font-size:17px;margin:0 0 6px}.scheduler-card p{margin:0 0 14px;color:var(--muted);font-size:12px}.selected-comment{padding:11px 12px;border-radius:8px;background:var(--primary-l);line-height:1.5;margin-bottom:14px}.schedule-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}.schedule-fields label{font-size:12px;font-weight:600;display:grid;gap:5px}.schedule-fields input{border:1px solid var(--border);border-radius:7px;padding:9px;font:inherit}.platform-picker{display:flex;gap:9px;flex-wrap:wrap;margin:8px 0 16px}.platform-btn{border:1px solid var(--border);background:#fff;border-radius:9px;padding:9px 12px;cursor:pointer;font:inherit;font-size:13px}.platform-btn[aria-pressed="true"]{border-color:var(--primary);background:var(--primary-l);color:var(--primary);font-weight:600}.platform-icon{font-weight:700;margin-right:5px}.schedule-submit{border:0;border-radius:8px;background:var(--primary);color:white;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer}.schedule-submit:disabled{background:#aaa;cursor:default}.scheduled-list{display:grid;gap:8px}.scheduled-item{border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px}.scheduled-meta{font-size:11px;color:var(--muted);margin-top:5px}
+ .image-panel{flex:1;overflow-y:auto;padding:28px;max-width:860px}.image-card{background:var(--surface);border:1px solid #dfe3eb;border-radius:12px;padding:26px;box-shadow:0 8px 24px rgba(38,50,72,.08)}.image-card h2{font-size:21px;letter-spacing:0;margin-bottom:7px}.image-card p{font-size:13px;color:var(--muted);margin-bottom:22px}.image-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px}.image-fields label{font-size:12px;font-weight:600;color:#4b5563;display:grid;gap:6px}.image-fields select{border:1px solid #cfd5df;border-radius:7px;padding:10px;background:#fff;font:inherit;color:var(--text)}.drive-dropzone{border:1.5px dashed #aeb8c8;border-radius:10px;min-height:230px;background:#f8fafd;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s}.drive-dropzone:hover,.drive-dropzone.is-dragging{border-color:#4285f4;background:#f1f6ff;box-shadow:0 0 0 4px rgba(66,133,244,.1)}.drive-upload-icon{width:52px;height:52px;border-radius:50%;background:#e8f0fe;color:#1a73e8;display:grid;place-items:center;font-size:25px;margin:0 auto 12px}.drive-dropzone strong{display:block;color:#202124;font-size:15px;margin-bottom:6px}.drive-dropzone span{display:block;color:#6b7280;font-size:12px}.drive-browse{display:inline-block;margin-top:14px;border:1px solid #c8d0dd;border-radius:6px;padding:8px 14px;background:#fff;color:#1a73e8;font-size:12px;font-weight:600}.drive-file-row{display:none;align-items:center;gap:12px;padding:11px 13px;margin-top:14px;border:1px solid #dfe3eb;border-radius:8px;background:#fff}.drive-file-row.is-visible{display:flex}.drive-file-icon{font-size:22px;color:#1a73e8}.drive-file-info{min-width:0;flex:1;text-align:left}.drive-file-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.drive-file-size{font-size:11px;color:var(--muted);margin-top:3px}.drive-remove{border:0;background:transparent;color:#6b7280;cursor:pointer;font-size:18px;padding:3px 7px}.drive-remove:hover{color:var(--danger)}.image-preview{display:none;max-width:100%;max-height:260px;margin:14px auto 0;border-radius:8px}.image-submit{border:0;border-radius:7px;background:#1a73e8;color:#fff;padding:11px 18px;margin-top:18px;font:inherit;font-weight:600;cursor:pointer}.image-submit:hover:not(:disabled){background:#1765c1}.image-submit:disabled{background:#aeb8c8;cursor:not-allowed}.image-result{margin-top:16px;padding:13px;border-radius:8px;display:none;line-height:1.5}.image-ok{background:var(--success-l);color:#0F6E56}.image-error{background:var(--danger-l);color:#A32D2D}
+ .connect-panel{flex:1;overflow-y:auto;padding:28px;max-width:900px}.connect-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:26px;box-shadow:0 8px 24px rgba(38,50,72,.08)}.connect-card h2{font-size:21px;margin-bottom:7px}.connect-card>p{font-size:13px;color:var(--muted);margin-bottom:20px}.social-grid{display:grid;grid-template-columns:repeat(4,minmax(110px,1fr));gap:14px}.social-tile{min-height:126px;border:1px solid var(--border);border-radius:10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;font:inherit;color:var(--text);transition:transform .18s,box-shadow .18s,border-color .18s}.social-tile:hover{transform:translateY(-3px);border-color:#9dbbea;box-shadow:0 8px 18px rgba(31,75,130,.12)}.social-logo{width:48px;height:48px;border-radius:10px;display:grid;place-items:center;color:#fff;font-size:24px;font-weight:800}.social-facebook{background:#1877F2}.social-instagram{background:linear-gradient(135deg,#F58529,#DD2A7B 55%,#8134AF)}.social-x{background:#111}.social-linkedin{background:#0A66C2}.social-name{font-size:12px;font-weight:700}.security-note{margin-top:20px;padding:13px 15px;border-radius:8px;background:#F5F8FC;color:#536174;font-size:12px;line-height:1.6}.connect-state{margin-top:14px;font-size:12px;color:var(--muted)}
+/* Dynamic polish */
+body{background:radial-gradient(circle at 85% -10%,rgba(83,74,183,.13),transparent 32%),var(--bg)}
+header{background:linear-gradient(115deg,var(--primary-d),var(--primary) 58%,#168b83);position:relative;overflow:hidden}
+header:after{content:"";position:absolute;width:220px;height:220px;right:8%;top:-150px;border:1px solid rgba(255,255,255,.18);border-radius:50%;box-shadow:0 0 0 18px rgba(255,255,255,.04),0 0 0 38px rgba(255,255,255,.025);pointer-events:none}
+.hlogo{filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));animation:logoFloat 4s ease-in-out infinite}
+.hsdot{box-shadow:0 0 0 0 rgba(74,222,128,.7);animation:statusPulse 2s infinite}
+.nav-btn,.tab,.sbtn,.qbtn,.chip,.platform-btn,.schedule-submit,.image-submit{will-change:transform}
+.nav-btn:hover,.tab:hover{transform:translateX(2px)}
+.nav-btn.active{box-shadow:inset 3px 0 0 var(--primary)}
+.tab.active{background:linear-gradient(180deg,transparent 70%,rgba(83,74,183,.08));}
+.msgs,.dash,.queue-panel,.logs-panel,.scheduler-panel,.image-panel{scroll-behavior:smooth;content-visibility:auto}
+.msg{animation:messageIn .22s ease-out both}
+.dash-card,.q-item,.scheduler-card,.image-card{animation:panelIn .28s ease-out both}
+.sbtn:hover:not(:disabled),.image-submit:hover:not(:disabled),.schedule-submit:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 14px rgba(60,52,137,.22)}
+.sbtn:active:not(:disabled),.image-submit:active:not(:disabled),.schedule-submit:active:not(:disabled){transform:translateY(0)}
+.sbtn:disabled{position:relative;color:transparent}
+.sbtn:disabled:after{content:"";width:13px;height:13px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;position:absolute}
+@keyframes messageIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes panelIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes statusPulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,.65)}70%{box-shadow:0 0 0 7px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (max-width:900px){
+  .sidebar{width:174px}
+  .rpanel.open{width:170px}.rpi{width:170px}
+  .bbl{max-width:86%}
+}
+@media (max-width:680px){
+  body{height:auto;min-height:100vh;overflow:auto}
+  header{padding:10px 12px}.hsub{display:none}.hstatus{font-size:11px}
+  .wrap{min-height:calc(100vh - 50px);overflow:visible;flex-direction:column}
+  .sidebar{width:100%;height:auto;max-height:none;overflow-x:auto;overflow-y:hidden;display:flex;flex-direction:row;padding:6px;border-right:0;border-bottom:1px solid var(--border);gap:4px}
+  .sb-section,.sb-div,.stat-item,.model-tag{display:none}
+  .nav-btn{width:auto;min-width:max-content;padding:8px 10px;border-radius:8px;font-size:11px}
+  .nav-btn.active{box-shadow:inset 0 -3px 0 var(--primary)}
+  .nav-btn:hover{transform:none}
+  .main{min-height:calc(100vh - 105px);overflow:visible}
+  .tab-bar{padding:0 8px}.tab{padding:10px 9px;font-size:11px}
+  .content{min-height:calc(100vh - 150px);overflow:visible}
+  .bbl{max-width:82%}.ibar{position:sticky;bottom:0;padding:8px}
+  .provider-select{max-width:92px;font-size:11px}
+  .dash{grid-template-columns:1fr;padding:10px}.rpanel{display:none}
+  .image-panel,.scheduler-panel{padding:10px;max-width:none}
+  .image-fields,.schedule-fields{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
+}
+
+/* CommentBot workspace skin */
+:root{
+  --primary:#54a8ff;--primary-l:#142a43;--primary-d:#2787ef;
+  --success:#57d4b1;--success-l:#12352f;
+  --danger:#ff7780;--danger-l:#3d202a;
+  --warn:#f4be62;--warn-l:#392f20;
+  --bg:#091321;--surface:#101e30;--border:#25374c;
+  --text:#eaf1fa;--muted:#9aacc1;--faint:#71849b;
+  --accent:#2588d8;--r:8px;--shadow:0 16px 42px rgba(0,0,0,.2);
+  letter-spacing:0;
+}
+*{letter-spacing:0}
+body{min-width:320px;background:#07111f;color:var(--text);font-family:"Segoe UI Variable","Trebuchet MS",sans-serif}
+header{height:66px;padding:0 22px;background:#0b1727;border-bottom:1px solid #1d3045;box-shadow:none;overflow:visible}
+header:after,.hlogo{display:none}
+.brand-copy{display:grid;gap:2px}
+.htitle{font-size:14px;font-weight:650;letter-spacing:0}
+.hsub{font-size:10px;color:#8195ac;opacity:1}
+.header-divider{height:26px;width:1px;background:#2c4056;margin:0 6px}
+.header-context{font-size:12px;color:#aab9cb;display:flex;align-items:center;gap:9px}
+.header-version{font-size:9px;font-weight:700;color:#78d9c1;border:1px solid #286458;border-radius:5px;padding:3px 6px}
+.hstatus{font-size:11px;color:#aab9cb;opacity:1}
+.hsdot{background:#5ed3aa;box-shadow:0 0 10px rgba(94,211,170,.45);animation:none}
+.wrap{padding:12px 18px 18px;gap:0;background:linear-gradient(130deg,#0b1625 0%,#0a1525 55%,#0d1d31 100%)}
+.sidebar{order:0;width:68px;min-width:68px;padding:12px 8px;gap:6px;background:#0b1727;border:1px solid #21354b;border-right:0;border-radius:9px 0 0 9px;overflow-y:auto;align-items:center}
+.sb-section,.sb-div,.stat-item,.model-tag{display:none}
+.nav-btn{width:48px;height:46px;min-height:46px;padding:0;border-radius:7px;justify-content:center;gap:0;color:#94a6bc;font-size:0;transition:background .16s,color .16s,transform .16s}
+.nav-btn .ni{width:auto;font-size:18px;color:inherit}
+.nav-btn .nav-label{display:none}
+.nav-btn[hidden],.samp[hidden]{display:none!important}
+.nav-btn:hover{background:#17283d;color:#eaf1fa;transform:translateY(-1px)}
+.nav-btn.active{background:#1b66bc;color:#fff;box-shadow:none;font-weight:600}
+.nav-btn.active:before{content:"";position:absolute;left:-9px;width:3px;height:22px;border-radius:0 3px 3px 0;background:#76c8ff}
+.nb{position:absolute;top:2px;right:1px;min-width:15px;height:15px;padding:0 4px;border-radius:8px;font-size:9px;border:1px solid #0b1727}
+.main{order:2;min-width:0;background:#0d1929;border:1px solid #21354b;border-left:0;border-radius:0 9px 9px 0}
+.tab-bar{display:none}
+.workspace-topline{height:70px;min-height:70px;padding:0 26px;border-bottom:1px solid #1e3044;background:#0d1929;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.view-eyebrow{font-size:9px;color:#7e92aa;font-weight:700;margin-bottom:4px}
+.workspace-topline h1{font-size:17px;line-height:1.2;font-weight:650;color:#e8f0fa}
+.topline-meta{display:flex;align-items:center;gap:12px}
+.provider-indicator{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #2a425a;border-radius:18px;background:#101f31;font-size:10px;color:#bed0e1;white-space:nowrap}
+.provider-indicator-dot,.pane-status-dot{width:7px;height:7px;border-radius:50%;background:#54d1a8;box-shadow:0 0 8px rgba(84,209,168,.4)}
+.top-new-btn{height:32px;padding:0 11px;border:1px solid #2a425a;border-radius:6px;background:#16283d;color:#dce8f5;font:inherit;font-size:11px;cursor:pointer}
+.top-new-btn:hover{background:#1d3854;border-color:#3f668c}
+.content{min-height:0;background:radial-gradient(ellipse at 80% 0%,rgba(36,101,166,.13),transparent 38%),#0d1929}
+.rpanel{order:1;width:0;border:0;flex-shrink:0;background:#0b1727;transition:width .18s ease}
+.rpanel.open{width:264px;border:1px solid #21354b;border-left:0;border-right:0}
+.rpi{width:264px;padding:15px 14px;display:flex;flex-direction:column;gap:12px}
+.sidebar-tools{display:grid;gap:9px}
+.new-chat-btn{height:38px;width:100%;border:1px solid #3677bd;border-radius:6px;background:linear-gradient(105deg,#246ed2,#168ba6);color:#fff;font:inherit;font-size:11px;font-weight:650;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.new-chat-btn:hover{filter:brightness(1.08)}
+.new-chat-icon{font-size:18px;line-height:1}
+.workspace-search{height:36px;padding:0 10px;display:flex;align-items:center;gap:8px;border:1px solid #2b4057;border-radius:6px;background:#0e1b2b;color:#8ea1b7}
+.workspace-search>span{font-size:18px}
+.workspace-search input{min-width:0;width:100%;border:0!important;outline:0;background:transparent!important;color:#eaf1fa!important;font:inherit;font-size:10px;padding:0!important}
+.workspace-search input::placeholder{color:#74879e}
+.workspace-pane-head{padding:5px 2px 2px}
+.workspace-pane-kicker{font-size:9px;color:#7589a1;font-weight:700;margin-bottom:4px}
+.workspace-pane-title{font-size:14px;color:#e6eef8;font-weight:650}
+.rpi h3{font-size:9px;color:#7e91a7;font-weight:700;margin:5px 0 0;padding-top:12px;border-top:1px solid #21344a}
+#rp-content{overflow-y:auto;min-height:0}
+.samp{padding:10px;background:#111f31;border:1px solid #293b50;border-radius:6px;color:#afbed0;font-size:10.5px;margin:0 0 7px;cursor:pointer;line-height:1.5;transition:background .15s,border-color .15s,color .15s}
+.samp:hover{background:#172b42;border-color:#3b6791;color:#edf5ff}
+.workspace-pane-foot{margin-top:auto;padding:12px 2px 2px;border-top:1px solid #203248;display:flex;align-items:center;gap:8px;color:#8ea2b8;font-size:10px}
+.pane-status-dot{width:6px;height:6px}
+.chat-panel{min-height:0;background:transparent}
+.msgs{padding:26px clamp(20px,5vw,68px) 20px;gap:16px}
+.msg{animation:messageIn .18s ease-out both}
+.av{width:30px;height:30px;background:#17314c;color:#9dcbf3}
+.av-b{background:#142b43;color:#7cc8f0}
+.av-u{background:#1e4770;color:#d9efff}
+.bbl{font-size:13px;line-height:1.65}
+.bbl-b{background:#111f31;border:1px solid #25384d;border-radius:8px 8px 8px 2px;box-shadow:none;color:#e2ebf5}
+.bbl-u{background:#1f5f9f;border-radius:8px 8px 2px 8px;color:white}
+.welcome{width:min(880px,100%);margin:auto auto 10px;display:block;text-align:center}
+.welcome .av{display:none}
+.welcome .bbl{width:100%;max-width:none;margin:auto;background:transparent;border:0;border-radius:0;padding:12px 12px 22px;box-shadow:none;text-align:center}
+.welcome-mark{width:48px;height:48px;margin:0 auto 15px;border:1px solid #286189;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#122944,#12384a);color:#7bd2ed;font-size:27px}
+.welcome-eyebrow{font-size:9px;font-weight:700;color:#7eb3cf;margin-bottom:10px}
+.welcome-title{font-size:28px;line-height:1.2;color:#f0f5fb;font-weight:650;margin:0 auto 9px;max-width:520px}
+.welcome-copy{font-size:12px;color:#9daec1;line-height:1.6;margin:0 auto;max-width:460px}
+.quick-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-width:600px;margin:24px auto 0;text-align:left}
+.quick-action{min-width:0;min-height:66px;display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid #2a4058;border-radius:7px;background:#111f31;color:#dce7f3;text-align:left;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}
+.quick-action:hover{background:#172a40;border-color:#3a6a91;transform:translateY(-1px)}
+.quick-icon{width:34px;height:34px;flex-shrink:0;border-radius:7px;display:grid;place-items:center;background:#173b62;color:#7fc6ff;font-size:16px}
+.quick-icon.teal{background:#173c39;color:#71d8be}.quick-icon.amber{background:#40361f;color:#f2c46e}.quick-icon.coral{background:#472e37;color:#f39aa0}
+.quick-copy{display:grid;gap:3px;min-width:0;flex:1}
+.quick-copy b{font-size:11px;font-weight:650;color:#e8eff8}
+.quick-copy small{font-size:9px;color:#94a8be}
+.quick-arrow{color:#7792ab;font-size:14px}
+.ibar{padding:12px clamp(14px,4vw,42px);border-top:1px solid #203249;background:#0c1827;display:flex;gap:9px;align-items:flex-end}
+.ibar textarea{height:42px;max-height:130px;padding:11px 13px;background:#101e30;color:#e9f1fa;border:1px solid #31465e;border-radius:7px;font-size:12px}
+.ibar textarea:focus{outline:none;border-color:#4b9ee3;box-shadow:0 0 0 3px rgba(75,158,227,.12)}
+.provider-select{height:42px;max-width:140px;background:#101e30;color:#dce7f4;border:1px solid #31465e;border-radius:7px;font-size:11px}
+.sbtn{width:42px;height:42px;border-radius:7px;background:#1689d0;color:#fff}
+.sbtn:hover:not(:disabled){background:#209ee2}
+.card,.q-item,.scheduler-card,.image-card,.connect-card,.dash-card,.social-tile,.scheduled-item{background:#111f31;border:1px solid #263b51;border-radius:7px;color:#e6edf6;box-shadow:none}
+.card{background:#111f31}
+.crow{border-color:#26384c}
+.clabel,.dc-sub,.q-post,.scheduler-card p,.connect-card>p{color:#9aacc1}
+.dc-title{color:#aab9ca}
+.dc-val,.stat-v{color:#65b7ff}
+.badge{border-radius:5px}
+.bpos{background:#203923;color:#a8d880}.bneg,.btox{background:#48262d;color:#ff9b9d}.bneu{background:#263344;color:#bec9d5}.bsafe{background:#183a34;color:#7de0bd}.bwarn{background:#44371f;color:#ffd184}
+.tag{background:#193450;color:#92cfff;border-radius:4px}
+.bar,.prog-bar{background:#26384c;border-radius:3px}
+.barf,.prog-fill{background:#46a9ef}
+.tip-box,.warn-box,.flag-box{border-radius:6px;line-height:1.55}
+.tip-box{background:#15352f;color:#90dcc6}.warn-box{background:#3d321f;color:#f3cd83}.flag-box{background:#43252b;color:#ff9b9d}
+.chip{background:#122238;border:1px solid #2b4057;border-radius:6px;color:#c7d5e5}
+.chip:hover,.chip.r1{background:#17385a;border-color:#459fe4;color:#c3e6ff}
+.comment-actions .qbtn{background:#111f31!important}
+.qbtn,.platform-btn{border-radius:6px;background:#111f31;color:#cad8e7}
+.qbtn-app{border-color:#398771;color:#73d6b6}.qbtn-app:hover{background:#17382f}
+.qbtn-rej{border-color:#9b4852;color:#ff9b9d}.qbtn-rej:hover{background:#3b2229}
+.qbtn-edit{border-color:#8a6b39;color:#f0c97e}.qbtn-edit:hover{background:#39311f}
+.qbtn-post{border-color:#397db0;color:#8ac9ff}.qbtn-post:hover{background:#17324c}
+.image-panel,.connect-panel,.scheduler-panel,.queue-panel,.logs-panel{background:transparent;color:var(--text)}
+.image-panel,.connect-panel{padding:26px;max-width:980px}
+.image-card,.connect-card{padding:22px}
+.image-card h2,.connect-card h2,.scheduler-card h2{font-size:19px;color:#edf3fa}
+.image-card p,.connect-card>p{font-size:12px}
+.image-fields label,.schedule-fields label{color:#b7c5d5}
+.image-fields select,.schedule-fields input,.platform-btn,#fb-post-url,#x-post-url,#fb-provider{background:#0d1b2b!important;border:1px solid #31465c!important;border-radius:6px!important;color:#e4edf7!important}
+.image-fields select option,.provider-select option,#fb-provider option{background:#101e30;color:#e4edf7}
+.drive-dropzone{background:#0d1b2b;border:1px dashed #48627b;border-radius:7px}
+.drive-dropzone:hover,.drive-dropzone.is-dragging{background:#11243a;border-color:#4da8e8;box-shadow:0 0 0 3px rgba(77,168,232,.12)}
+.drive-dropzone strong{color:#e6eff8}.drive-dropzone span{color:#96a9bf}
+.drive-upload-icon{background:#173553;color:#87caff}
+.drive-browse{background:#152940;border-color:#38536e;color:#a8d9ff}
+.drive-file-row{background:#102034;border-color:#293f55}
+.image-submit,.schedule-submit{background:#187db9;color:#fff;border-radius:6px}
+.schedule-submit:hover:not(:disabled),.image-submit:hover:not(:disabled){background:#208fcf}
+.platform-btn[aria-pressed="true"]{background:#173b5a!important;border-color:#4c9fe0!important;color:#c2e4ff!important}
+.selected-comment{background:#142b43;color:#d8e7f7}
+.social-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.social-tile{min-height:110px;transition:transform .16s,border-color .16s,background .16s}
+.social-tile:hover{transform:translateY(-2px);border-color:#47779c;box-shadow:none;background:#17283b}
+.social-name{color:#d8e4f1}
+.security-note{background:#122438;color:#a6bbcf;border:1px solid #2a4057;border-radius:6px}
+.connect-state{color:#aebdce}
+.drive-remove{color:#d3deea}
+.scheduler-panel{padding:22px;max-width:820px}
+.scheduler-card{padding:18px;margin-bottom:12px}
+.schedule-fields input{color-scheme:dark}
+.scheduled-list{gap:7px}
+.logs-panel{font-family:ui-monospace,Consolas,monospace}
+.log-line{border-radius:4px;color:#c6d4e2}
+.log-INFO{background:transparent}.log-lvl-INFO{color:#71baff}
+.log-WARN{background:#352d1d}.log-lvl-WARN{color:#f2c876}
+.log-ERR{background:#3b2329}.log-lvl-ERR{color:#ff999d}
+.log-OK{background:#16332e}.log-lvl-OK{color:#78d9b9}
+.log-time{color:#7d91a8}.log-msg{color:#d0deec}
+.empty{color:#8497ae}
+.rpi .empty{padding:18px 8px;font-size:11px}
+.sbtn:disabled{background:#2a526d}
+@media (max-width:1050px){
+  .rpanel.open{width:224px}.rpi{width:224px}
+  .workspace-topline{padding:0 18px}
+  .msgs{padding-left:28px;padding-right:28px}
+}
+@media (max-width:760px){
+  body{height:auto;min-height:100vh;overflow:auto}
+  header{height:58px;padding:0 12px}.header-context,.header-divider{display:none}.hstatus{font-size:10px}
+  .wrap{min-height:calc(100vh - 58px);padding:8px;display:flex;flex-direction:column;overflow:visible}
+  .sidebar{order:0;width:100%;min-width:0;height:58px;min-height:58px;padding:5px;flex-direction:row;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;border:1px solid #21354b;border-radius:7px}
+  .nav-btn{width:auto;min-width:56px;height:44px;min-height:44px;padding:0 7px;display:grid;grid-template-rows:20px 12px;justify-items:center;align-content:center;gap:2px;font-size:9px}
+  .nav-btn .ni{font-size:15px}.nav-btn .nav-label{display:block;font-size:8px;white-space:nowrap}
+  .nav-btn.active:before{left:50%;top:-6px;width:22px;height:2px;transform:translateX(-50%);border-radius:0 0 2px 2px}
+  .nb{top:0;right:0}
+  .main{order:1;min-height:620px;border:1px solid #21354b;border-radius:7px}
+  .rpanel.open{display:flex;order:2;width:100%;max-height:210px;border:1px solid #21354b;border-radius:7px;margin-top:8px}
+  .rpi{width:100%;padding:12px;overflow:auto}.workspace-pane-foot{display:none}
+  .workspace-topline{height:60px;min-height:60px;padding:0 12px}.workspace-topline h1{font-size:15px}
+  .provider-indicator{font-size:9px;padding:6px 8px}.top-new-btn{font-size:0;width:34px;padding:0}.top-new-btn:after{content:"＋";font-size:16px}
+  .msgs{padding:14px 12px;gap:12px}.welcome{margin:auto 0 10px}.welcome .bbl{padding:14px 2px}.welcome-title{font-size:23px}.welcome-copy{font-size:11px}
+  .quick-action-grid{gap:7px;margin-top:18px}.quick-action{min-height:60px;padding:8px}.quick-icon{width:29px;height:29px}.quick-copy b{font-size:10px}.quick-copy small{font-size:8px}
+  .ibar{position:sticky;bottom:0;padding:8px;gap:6px}.ibar textarea{font-size:11px;min-width:0}.provider-select{max-width:100px;font-size:10px}
+  .image-panel,.connect-panel,.scheduler-panel{padding:12px}.image-card,.connect-card{padding:15px}.image-fields,.schedule-fields{grid-template-columns:1fr}
+  .dash{grid-template-columns:1fr;padding:10px}.queue-panel,.logs-panel{padding:10px}
+}
+@media (max-width:430px){
+  .brand-copy .hsub{display:none}.htitle{font-size:12px}.hstatus{max-width:125px;overflow:hidden;white-space:nowrap}
+  .topline-meta{gap:5px}.provider-indicator{max-width:120px;overflow:hidden}
+  .quick-action-grid{grid-template-columns:1fr}.quick-action{min-height:54px}
+  .ibar{flex-wrap:wrap}.ibar textarea{flex-basis:100%;height:54px}.provider-select{flex:1;max-width:none}
+}
+.theme-toggle{height:34px;padding:0 11px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #2b4057;border-radius:6px;background:#13243a;color:#d8e6f4;font:inherit;font-size:11px;cursor:pointer;white-space:nowrap;transition:background .16s,border-color .16s}
+.theme-toggle:hover{background:#1a3049;border-color:#42627f}
+.theme-icon{font-size:15px;line-height:1}
+body.day-mode{
+  --primary:#1769b0;--primary-l:#e5f1fb;--primary-d:#0d5598;
+  --success:#168b75;--success-l:#e4f5ef;
+  --danger:#c54350;--danger-l:#f9e9eb;
+  --warn:#9c6815;--warn-l:#f8f0dd;
+  --bg:#f3f6fa;--surface:#fff;--border:#d9e2ec;
+  --text:#1c2937;--muted:#5e6c7a;--faint:#8492a0;
+  --shadow:0 10px 28px rgba(22,44,68,.08);
+  color-scheme:light;background:#f3f6fa;color:var(--text)
+}
+body.day-mode header{background:#fff;border-bottom-color:#dce4ed;color:#1c2937}
+body.day-mode .htitle{color:#1c2937}
+body.day-mode .header-context{color:#58697b}
+body.day-mode .header-divider{background:#d8e0e9}
+body.day-mode .header-version{background:#eef5fa;border-color:#d0e2ef;color:#28678e}
+body.day-mode .hstatus{color:#34495d}
+body.day-mode .theme-toggle{background:#f1f6fa;border-color:#d4dfe9;color:#29445e}
+body.day-mode .theme-toggle:hover{background:#e5f0f7;border-color:#b6ccde}
+body.day-mode .wrap{background:linear-gradient(130deg,#f1f5fa,#f8fafc 56%,#edf4f8)}
+body.day-mode .sidebar{background:#fff;border-color:#dbe4ed}
+body.day-mode .nav-btn{color:#5c6c7c}
+body.day-mode .nav-btn:hover{background:#edf4f9;color:#23394e}
+body.day-mode .nav-btn.active{background:#dbeeff;color:#155d9c}
+body.day-mode .nav-btn.active:before{background:#338dd1}
+body.day-mode .nb{border-color:#fff}
+body.day-mode .main{background:#fff;border-color:#dbe4ed}
+body.day-mode .workspace-topline{background:#fff;border-bottom-color:#e0e7ee}
+body.day-mode .view-eyebrow{color:#687b8c}
+body.day-mode .workspace-topline h1{color:#1c2937}
+body.day-mode .provider-indicator{background:#f2f7fa;border-color:#dce5ed;color:#3d5368}
+body.day-mode .top-new-btn{background:#f3f7fa;border-color:#d8e2ea;color:#314b63}
+body.day-mode .top-new-btn:hover{background:#e8f1f7;border-color:#b6ccdc}
+body.day-mode .content{background:radial-gradient(ellipse at 80% 0%,rgba(72,145,192,.08),transparent 38%),#f7f9fc}
+body.day-mode .rpanel{background:#fff}
+body.day-mode .rpanel.open{border-color:#dbe4ed}
+body.day-mode .workspace-pane-kicker,body.day-mode .rpi h3{color:#738496}
+body.day-mode .workspace-pane-title{color:#1d2c3a}
+body.day-mode .rpi h3,body.day-mode .workspace-pane-foot{border-color:#e0e7ee}
+body.day-mode .workspace-pane-foot{color:#65788a}
+body.day-mode .workspace-search{background:#f7f9fb;border-color:#d8e2eb;color:#6f8192}
+body.day-mode .workspace-search input{color:#24384b!important}
+body.day-mode .workspace-search input::placeholder{color:#8493a1}
+body.day-mode .new-chat-btn{background:linear-gradient(105deg,#347fce,#168ba6);border-color:#347fce}
+body.day-mode .samp{background:#f7f9fb;border-color:#dce4ec;color:#475b6e}
+body.day-mode .samp:hover{background:#eaf3fa;border-color:#a9c9df;color:#1e4768}
+body.day-mode .bbl-b{background:#fff;border-color:#dce4ec;color:#243343}
+body.day-mode .av-b{background:#e7f1f8;color:#286d9b}
+body.day-mode .av-u{background:#d9ebf9;color:#215c87}
+body.day-mode .welcome-mark{background:linear-gradient(145deg,#e8f3fb,#e6f5f4);border-color:#cfe3ee;color:#267ca5}
+body.day-mode .welcome-eyebrow{color:#427f9e}
+body.day-mode .welcome-title{color:#182938}
+body.day-mode .welcome-copy{color:#627486}
+body.day-mode .quick-action{background:#fff;border-color:#dbe4ed;color:#263b4f}
+body.day-mode .quick-action:hover{background:#f2f8fc;border-color:#aecadd}
+body.day-mode .quick-icon{background:#e4f1fc;color:#1f6da8}
+body.day-mode .quick-icon.teal{background:#e2f5ef;color:#168b75}
+body.day-mode .quick-icon.amber{background:#f8f0df;color:#946719}
+body.day-mode .quick-icon.coral{background:#f8e9eb;color:#b95760}
+body.day-mode .quick-copy b{color:#223649}
+body.day-mode .quick-copy small{color:#6d7f90}
+body.day-mode .quick-arrow{color:#647b8e}
+body.day-mode .ibar{background:rgba(255,255,255,.96);border-top-color:#dce5ed}
+body.day-mode .ibar textarea,body.day-mode .provider-select{background:#fff;color:#233749;border-color:#ccd9e4}
+body.day-mode .provider-select option{background:#fff;color:#233749}
+body.day-mode .ibar textarea:focus{border-color:#4b9ee3;box-shadow:0 0 0 3px rgba(75,158,227,.12)}
+body.day-mode .card,body.day-mode .q-item,body.day-mode .scheduler-card,body.day-mode .image-card,body.day-mode .connect-card,body.day-mode .dash-card,body.day-mode .social-tile,body.day-mode .scheduled-item{background:#fff;border-color:#dce4ec;color:#263748;box-shadow:0 5px 20px rgba(22,44,68,.04)}
+body.day-mode .clabel,body.day-mode .dc-sub,body.day-mode .q-post,body.day-mode .scheduler-card p,body.day-mode .connect-card>p{color:#657687}
+body.day-mode .dc-title{color:#506274}
+body.day-mode .dc-val,body.day-mode .stat-v{color:#1769b0}
+body.day-mode .bpos{background:#eaf3de;color:#3b6d11}
+body.day-mode .bneg,body.day-mode .btox{background:#fcebea;color:#a32d2d}
+body.day-mode .bneu{background:#f1efe8;color:#5f5e5a}
+body.day-mode .bsafe{background:#e3f6f3;color:#0f6e56}
+body.day-mode .bwarn{background:#faeeda;color:#7a4a00}
+body.day-mode .tag{background:#e8f2fa;color:#1769a8}
+body.day-mode .bar,body.day-mode .prog-bar{background:#dfe7ef}
+body.day-mode .barf,body.day-mode .prog-fill{background:#2e87c7}
+body.day-mode .tip-box{background:#e3f6f3;color:#0f6e56}
+body.day-mode .warn-box{background:#faeeda;color:#7a4a00}
+body.day-mode .flag-box{background:#fcebea;color:#a32d2d}
+body.day-mode .chip{background:#f6f9fc;border-color:#d7e2ec;color:#395269}
+body.day-mode .chip:hover,body.day-mode .chip.r1{background:#e8f3fc;border-color:#7fb5de;color:#145889}
+body.day-mode .comment-actions .qbtn{background:#fff!important}
+body.day-mode .qbtn,body.day-mode .platform-btn{background:#fff;color:#385066}
+body.day-mode .qbtn-app{border-color:#55a38e;color:#16745f}
+body.day-mode .qbtn-app:hover{background:#e9f7f2}
+body.day-mode .qbtn-rej{border-color:#d17b82;color:#ac3944}
+body.day-mode .qbtn-rej:hover{background:#fcedef}
+body.day-mode .qbtn-edit{border-color:#c39b54;color:#846018}
+body.day-mode .qbtn-edit:hover{background:#faf3e4}
+body.day-mode .qbtn-post{border-color:#72a7ca;color:#22658e}
+body.day-mode .qbtn-post:hover{background:#edf6fb}
+body.day-mode .image-card h2,body.day-mode .connect-card h2,body.day-mode .scheduler-card h2{color:#1c2d3d}
+body.day-mode .image-fields label,body.day-mode .schedule-fields label{color:#455a6d}
+body.day-mode .image-fields select,body.day-mode .schedule-fields input,body.day-mode .platform-btn,body.day-mode #fb-post-url,body.day-mode #x-post-url,body.day-mode #fb-provider{background:#fff!important;border-color:#cfd9e3!important;color:#26394b!important}
+body.day-mode .image-fields select option,body.day-mode #fb-provider option{background:#fff;color:#26394b}
+body.day-mode .drive-dropzone{background:#f8fafc;border-color:#b8c9d7}
+body.day-mode .drive-dropzone:hover,body.day-mode .drive-dropzone.is-dragging{background:#eff7fb;border-color:#4b96c7;box-shadow:0 0 0 3px rgba(75,150,199,.1)}
+body.day-mode .drive-dropzone strong{color:#26394b}
+body.day-mode .drive-dropzone span{color:#657687}
+body.day-mode .drive-upload-icon{background:#e6f1f8;color:#216a99}
+body.day-mode .drive-browse{background:#fff;border-color:#cedae4;color:#216a99}
+body.day-mode .drive-file-row{background:#fff;border-color:#dce4ec}
+body.day-mode .platform-btn[aria-pressed="true"]{background:#e5f2fb!important;border-color:#79add0!important;color:#175b8c!important}
+body.day-mode .selected-comment{background:#e9f3fa;color:#29475f}
+body.day-mode .social-tile:hover{background:#f4f8fb;border-color:#afc7d8}
+body.day-mode .social-name{color:#2e4356}
+body.day-mode .security-note{background:#f2f7fa;color:#53687a;border-color:#dce5ed}
+body.day-mode .connect-state{color:#5b6d7e}
+body.day-mode .drive-remove{color:#53687a}
+body.day-mode .log-line{color:#3e5265}
+body.day-mode .log-INFO{background:transparent}body.day-mode .log-lvl-INFO{color:#1769b0}
+body.day-mode .log-WARN{background:#faeeda}body.day-mode .log-lvl-WARN{color:#936313}
+body.day-mode .log-ERR{background:#fcebea}body.day-mode .log-lvl-ERR{color:#a32d2d}
+body.day-mode .log-OK{background:#e3f6f3}body.day-mode .log-lvl-OK{color:#0f6e56}
+body.day-mode .log-time{color:#8492a0}body.day-mode .log-msg{color:#344a5f}
+body.day-mode .empty{color:#7a8997}
+body.day-mode .theme-toggle{background:#fff;border-color:#cfdbe5;color:#324b61}
+body.day-mode .theme-toggle:hover{background:#edf4f8;border-color:#b1c6d7}
+@media (max-width:430px){body.day-mode .ibar textarea{background:#fff!important;color:#233749!important}}
+.nav-btn-model{margin-top:auto;display:grid;grid-template-rows:20px 12px;justify-items:center;align-content:center;gap:2px;height:54px;min-height:54px;border-top:1px solid #294057;border-radius:0 0 7px 7px}
+.nav-btn-model .nav-label{display:block;font-size:8px;white-space:nowrap}
+.nav-btn-model .ni{font-size:15px}
+.models-panel{flex:1;min-width:0;overflow-y:auto;padding:24px clamp(16px,3vw,34px);color:var(--text)}
+.generation-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;padding:11px;background:var(--surface);border:1px solid var(--border);border-radius:7px}
+.generation-metrics>div{display:grid;gap:4px}
+.generation-metrics span{font-size:9px;color:var(--muted)}
+.generation-metrics strong{font-size:16px;line-height:1.2;color:var(--primary)}
+.generation-metrics small{font-size:9px;color:var(--faint)}
+.models-title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:23px}
+.models-title-row h2{font-size:21px;line-height:1.2;color:var(--text);margin-bottom:6px}
+.models-title-row p{font-size:12px;line-height:1.6;color:var(--muted);max-width:620px}
+.models-count{flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:8px 11px;color:var(--muted);font-size:10px}
+.models-count span{font-size:14px;font-weight:700;color:var(--primary);margin-right:4px}
+.models-group-label{font-size:9px;font-weight:700;color:var(--faint);margin:0 0 10px}
+.models-cloud-label{margin-top:24px}
+.models-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:10px}
+.model-card{min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:14px;color:var(--text)}
+.model-card-featured{border-color:#277e9b;background:linear-gradient(135deg,rgba(35,135,156,.13),var(--surface) 62%)}
+.model-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.model-glyph{width:29px;height:29px;border-radius:6px;display:grid;place-items:center;font-size:12px;font-weight:750;background:#1d3852;color:#9cd5ff}
+.qwen-glyph{background:#153c48;color:#8ce0d4}.vader-glyph{background:#1d3656;color:#9bc9ff}.bert-glyph{background:#333653;color:#c3c6ff}
+.safety-glyph{background:#43272e;color:#ffabb0}.engage-glyph{background:#3b321f;color:#f2cc7e}.schedule-glyph{background:#29374c;color:#b4c8df}
+.local-glyph{background:#213848;color:#a7d7e8}.claude-glyph{background:#3a3020;color:#efc57c}.openai-glyph{background:#1e3a32;color:#89dcc0}
+.model-status{font-size:8px;font-weight:750;padding:4px 6px;border-radius:4px;white-space:nowrap}
+.status-active,.status-local{background:var(--success-l);color:var(--success)}
+.status-optional{background:var(--warn-l);color:var(--warn)}
+.status-cloud{background:var(--primary-l);color:var(--primary)}
+.model-card h3{font-size:12px;font-weight:700;color:var(--text);margin:0 0 6px}
+.model-card p{min-height:48px;color:var(--muted);font-size:10px;line-height:1.55;margin:0 0 12px}
+.model-capabilities{display:flex;flex-wrap:wrap;gap:5px}
+.model-capabilities span{border-radius:4px;padding:4px 6px;background:var(--primary-l);color:var(--primary);font-size:8px;font-weight:600}
+body.day-mode .model-card-featured{border-color:#b2d7df;background:linear-gradient(135deg,#edf8f8,#fff 64%)}
+body.day-mode .qwen-glyph{background:#def3f0;color:#17796e}body.day-mode .vader-glyph{background:#e5f0fa;color:#236b9f}
+body.day-mode .bert-glyph{background:#ececf8;color:#57598f}body.day-mode .safety-glyph{background:#fae9eb;color:#a8424d}
+body.day-mode .engage-glyph{background:#f7f0df;color:#8a651a}body.day-mode .schedule-glyph{background:#e9eff5;color:#486076}
+body.day-mode .local-glyph{background:#e5f2f6;color:#36738b}body.day-mode .claude-glyph{background:#f7f0df;color:#8a651a}
+body.day-mode .openai-glyph{background:#e3f3ed;color:#27715d}
+@media (max-width:760px){
+  .nav-btn-model{margin-top:0;height:44px;min-height:44px;border-top:0;border-radius:7px;grid-template-rows:20px 12px}
+  .models-panel{padding:14px}
+  .models-title-row{align-items:flex-start;margin-bottom:17px}
+  .models-title-row h2{font-size:19px}
+  .models-count{padding:6px 8px;font-size:9px}
+  .models-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+}
+@media (max-width:430px){.generation-metrics{grid-template-columns:1fr 1fr}}
+
+/* ── PRICING & BOT PACKAGES (DAY & NIGHT AWARE) ── */
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin:20px 0}
+.pkg-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:22px 18px;display:flex;flex-direction:column;position:relative;transition:all .2s;box-shadow:var(--shadow)}
+.pkg-card:hover{transform:translateY(-3px);border-color:var(--primary);box-shadow:0 8px 24px rgba(23,105,224,.18)}
+.pkg-card.popular{border-color:var(--primary);background:linear-gradient(180deg,var(--surface) 0%,var(--primary-l) 100%)}
+.pkg-badge{position:absolute;top:-11px;right:18px;background:var(--primary);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:.05em}
+.pkg-title{font-size:17px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.pkg-tag{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+.pkg-price-wrap{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.pkg-price{font-size:32px;font-weight:800;color:var(--text);line-height:1}
+.pkg-currency{font-size:18px;font-weight:700;margin-right:2px;color:var(--primary)}
+.pkg-period{font-size:12px;color:var(--muted);font-weight:400}
+.pkg-features{list-style:none;padding:0;margin:0 0 20px;flex:1;display:flex;flex-direction:column;gap:9px}
+.pkg-features li{font-size:12.5px;color:var(--text);display:flex;align-items:flex-start;gap:8px;line-height:1.4}
+.pkg-check{color:var(--success);font-weight:bold;flex-shrink:0}
+.pkg-btn{width:100%;border:none;border-radius:8px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;background:var(--primary);color:#fff;margin-top:auto;display:flex;align-items:center;justify-content:center;gap:6px}
+.pkg-btn:hover{background:var(--primary-d)}
+.pkg-btn.secondary{background:var(--primary-l);color:var(--primary);border:1px solid var(--border)}
+.pkg-btn.secondary:hover{background:var(--border)}
+.active-plan-card{margin-bottom:22px;background:linear-gradient(135deg,var(--surface) 0%,var(--primary-l) 100%);border:1px solid var(--border)}
+
+/* Modal overlay for Checkout */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(3,7,18,0.72);z-index:9999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)}
+.modal-overlay.is-open{display:flex}
+.modal-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:100%;max-width:500px;box-shadow:0 18px 48px rgba(0,0,0,.45);position:relative;max-height:92vh;overflow-y:auto;color:var(--text)}
+.modal-card input,.modal-card select{background:var(--bg);color:var(--text);border:1px solid var(--border);outline:none;transition:border-color .15s}
+.modal-card input:focus,.modal-card select:focus{border-color:var(--primary)}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+.modal-close:hover{color:var(--danger)}
+.checkout-method-box{border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;cursor:pointer;display:flex;gap:10px;align-items:center;margin-bottom:9px;transition:all .15s;background:var(--bg);color:var(--text)}
+.checkout-method-box:hover{border-color:var(--primary)}
+.checkout-method-box.selected{border-color:var(--primary);background:var(--primary-l)}
+.tx-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
+.tx-table th,.tx-table td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:left}
+.tx-table th{background:var(--bg);font-weight:600;color:var(--muted)}
+.tx-table td{color:var(--text)}
+
+body.day-mode .modal-overlay{background:rgba(15,23,42,0.45);backdrop-filter:blur(4px)}
+body.day-mode .pkg-card{box-shadow:0 4px 18px rgba(22,44,68,0.06)}
+body.day-mode .pkg-card:hover{box-shadow:0 8px 24px rgba(23,105,176,0.14)}
+
 </style>
+  <script src="https://sandbox.sslcommerz.com/embed.min.js"></script>
 </head>
 <body>
 
 <header>
-  <div class="hlogo">🤖</div>
-  <div><div class="htitle">Intelligent Social Bot</div><div class="hsub">BRAC University · CSE400 · All 40 Features Active</div></div>
-  <div class="hstatus"><div class="hsdot"></div><span id="api-status">Python Backend</span></div>
+  <div class="hlogo">◈</div>
+  <div class="brand-copy"><div class="htitle">CommentBot</div></div>
+  <div class="header-divider"></div>
+  <div class="header-context">AI workspace <span class="header-version" id="provider-mode-tag">LOCAL</span></div>
+  <div class="hstatus"><span id="header-tier-badge" onclick="showPanel('pricing')" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:rgba(255,255,255,0.12);color:inherit;font-weight:600;font-size:11px;transition:all .2s;border:1px solid var(--border);display:inline-flex;align-items:center;gap:4px" title="Click to view bot packages">⚡ Free Tier</span>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to day mode" onclick="toggleTheme()"><span class="theme-icon" aria-hidden="true">☀</span><span id="theme-toggle-label">Day mode</span></button></div>
 </header>
 
 <div class="wrap">
@@ -168,17 +625,23 @@ header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align
 <!-- ── Sidebar ── -->
 <div class="sidebar">
   <div class="sb-section">Modes</div>
-  <button class="nav-btn active" onclick="setTab('chat','comment')" id="nb-comment"><span class="ni">💬</span>Comment Gen</button>
-  <button class="nav-btn" onclick="setTab('chat','sentiment')" id="nb-sentiment"><span class="ni">😊</span>Sentiment</button>
-  <button class="nav-btn" onclick="setTab('chat','toxicity')" id="nb-toxicity"><span class="ni">🛡️</span>Toxicity</button>
-  <button class="nav-btn" onclick="setTab('chat','schedule')" id="nb-schedule"><span class="ni">📅</span>Scheduler</button>
-  <button class="nav-btn" onclick="setTab('chat','qa')" id="nb-qa"><span class="ni">❓</span>Q&amp;A</button>
+  <button class="nav-btn active" onclick="setTab('chat','comment')" id="nb-comment" aria-label="Comment generation" title="Comment generation"><span class="ni">✎</span><span class="nav-label">Comment Gen</span></button>
+    <button class="nav-btn" onclick="showImagePanel()" id="nb-image" aria-label="Image comments" title="Image comments"><span class="ni">▧</span><span class="nav-label">Image Comment</span></button>
+    <button class="nav-btn" onclick="showFbCommenter()" id="nb-fbcomment" aria-label="Facebook commenter" title="Facebook commenter"><span class="ni">f</span><span class="nav-label">FB Commenter</span></button>
+    <button class="nav-btn" onclick="showConnectPanel()" id="nb-connect" aria-label="Connect accounts" title="Connect accounts"><span class="ni">↗</span><span class="nav-label">Connect Accounts</span></button>
+  <button class="nav-btn" onclick="setTab('chat','sentiment')" id="nb-sentiment" aria-label="Sentiment analysis" title="Sentiment analysis"><span class="ni">◉</span><span class="nav-label">Sentiment</span></button>
+  <button class="nav-btn" onclick="setTab('chat','toxicity')" id="nb-toxicity" aria-label="Safety analysis" title="Safety analysis"><span class="ni">⬡</span><span class="nav-label">Toxicity</span></button>
+  <button class="nav-btn" onclick="openScheduler()" id="nb-schedule" aria-label="Scheduler" title="Scheduler"><span class="ni">▦</span><span class="nav-label">Scheduler</span></button>
+  <button class="nav-btn" onclick="setTab('chat','qa')" id="nb-qa" aria-label="Ask the assistant" title="Ask the assistant"><span class="ni">?</span><span class="nav-label">Q&amp;A</span></button>
   <div class="sb-div"></div>
   <div class="sb-section">Workspace</div>
-  <button class="nav-btn" onclick="setTab('dashboard')" id="nb-dashboard"><span class="ni">📊</span>Analytics</button>
-  <button class="nav-btn" onclick="setTab('queue')" id="nb-queue"><span class="ni">✅</span>Approvals<span class="nb" id="queue-badge">0</span></button>
-  <button class="nav-btn" onclick="setTab('drafts')" id="nb-drafts"><span class="ni">📝</span>Drafts<span class="nb" id="drafts-badge" style="background:var(--warn)">0</span></button>
-  <button class="nav-btn" onclick="setTab('logs')" id="nb-logs"><span class="ni">🗂️</span>Error Logs</button>
+  <button class="nav-btn" onclick="setTab('dashboard')" id="nb-dashboard" aria-label="Analytics" title="Analytics"><span class="ni">▥</span><span class="nav-label">Analytics</span></button>
+  <button class="nav-btn" onclick="setTab('queue')" id="nb-queue" aria-label="Approvals" title="Approvals"><span class="ni">✓</span><span class="nav-label">Approvals</span><span class="nb" id="queue-badge">0</span></button>
+  <button class="nav-btn" onclick="setTab('drafts')" id="nb-drafts" aria-label="Drafts" title="Drafts"><span class="ni">▤</span><span class="nav-label">Drafts</span><span class="nb" id="drafts-badge" style="background:var(--warn)">0</span></button>
+  <button class="nav-btn" onclick="setTab('logs')" id="nb-logs" aria-label="Error logs" title="Error logs"><span class="ni">≡</span><span class="nav-label">Error Logs</span></button>
+    <div class="sb-div"></div>
+  <div class="sb-section">Billing &amp; Plans</div>
+  <button class="nav-btn" onclick="showPanel('pricing')" id="nb-pricing" aria-label="Bot Packages" title="Bot Packages &amp; Pricing"><span class="ni">⚡</span><span class="nav-label">Bot Packages</span><span class="nb" style="background:var(--primary);font-size:9px">PRO</span></button>
   <div class="sb-div"></div>
   <div class="sb-section">Session Stats</div>
   <div class="stat-item"><span style="color:var(--muted)">Analyzed</span><span class="stat-v" id="ss-analyzed">0</span></div>
@@ -188,13 +651,14 @@ header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align
   <div class="stat-item"><span style="color:var(--muted)">Time saved</span><span class="stat-v" id="ss-time">0m</span></div>
   <div class="sb-div"></div>
   <div class="sb-section">Models Active</div>
-  <div class="model-tag"><div class="mdot" style="background:#534AB7"></div>Claude API</div>
+  <div class="model-tag"><div class="mdot" style="background:#534AB7"></div>Ollama / Claude / ChatGPT</div>
   <div class="model-tag"><div class="mdot" style="background:#1D9E75"></div>BERT Sentiment</div>
   <div class="model-tag"><div class="mdot" style="background:#1D9E75"></div>BERT Toxicity</div>
   <div class="model-tag"><div class="mdot" style="background:#BA7517"></div>XGBoost Engage</div>
   <div class="model-tag"><div class="mdot" style="background:#E24B4A"></div>Random Forest</div>
   <div class="model-tag"><div class="mdot" style="background:#888"></div>VADER Fast</div>
   <div class="model-tag"><div class="mdot" style="background:#888"></div>Sent-Transformer</div>
+  <button class="nav-btn nav-btn-model" onclick="showPanel('models')" id="nb-models" aria-label="Models" title="Models"><span class="ni">▦</span><span class="nav-label">Models</span></button>
 </div>
 
 <!-- ── Main ── -->
@@ -203,10 +667,18 @@ header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align
   <!-- Tab bar -->
   <div class="tab-bar">
     <button class="tab active" onclick="showPanel('chat')" id="tab-chat">💬 Chat</button>
+    <button class="tab" onclick="showImagePanel()" id="tab-image">🖼️ Image Comment</button>
+    <button class="tab" onclick="showFbCommenter()" id="tab-fbcomment">📘 FB Commenter</button>
+    <button class="tab" onclick="showConnectPanel()" id="tab-connect">🔗 Connect Accounts</button>
     <button class="tab" onclick="showPanel('dashboard')" id="tab-dashboard">📊 Analytics Dashboard</button>
     <button class="tab" onclick="showPanel('queue')" id="tab-queue">✅ Approval Queue</button>
     <button class="tab" onclick="showPanel('drafts')" id="tab-drafts">📝 Saved Drafts</button>
     <button class="tab" onclick="showPanel('logs')" id="tab-logs">🗂️ Error Logs</button>
+  </div>
+
+  <div class="workspace-topline">
+    <div><div class="view-eyebrow">SOCIAL CONTENT WORKSPACE</div><h1 id="view-title">Comment generation</h1></div>
+    <div class="topline-meta"><span class="provider-indicator"><span class="provider-indicator-dot"></span><span id="active-provider-label">Ollama · Local</span></span><button class="top-new-btn" type="button" onclick="startNewChat()" aria-label="Start new analysis">＋ <span>New analysis</span></button></div>
   </div>
 
   <div class="content">
@@ -215,8 +687,89 @@ header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align
     <div id="panel-chat" class="chat-panel">
       <div class="msgs" id="msgs"></div>
       <div class="ibar">
-        <textarea id="inp" placeholder="Paste a social media post here..." onkeydown="handleKey(event)"></textarea>
+        <textarea id="inp" placeholder="Paste a post or Facebook post link here..." onkeydown="handleKey(event)"></textarea>
+        <select id="provider-select" class="provider-select" onchange="setProvider(this.value)">
+          <option value="ollama">Ollama (local)</option>
+          <option value="anthropic">Claude</option>
+          <option value="openai">ChatGPT</option>
+        </select>
+        <select id="lang-select" class="provider-select" style="min-width:105px" title="Comment &amp; Analysis Language">
+          <option value="auto">🌐 Auto-Detect</option>
+          <option value="bn">🇧🇩 Bangla (বাংলা)</option>
+          <option value="en">🇺🇸 English</option>
+        </select>
         <button class="sbtn" id="sbtn" onclick="send()">➤</button>
+      </div>
+    </div>
+
+    <div id="panel-image" class="image-panel" style="display:none">
+      <div class="image-card">
+        <h2>Generate from an image</h2>
+        <p>Images are checked for type, dimensions, readability, and low-contrast content before any AI request.</p>
+        <form id="image-form">
+          <div class="image-fields">
+            <label>Platform<select id="image-platform"><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="twitter">X / Twitter</option></select></label>
+            <label>Tone<select id="image-tone"><option value="friendly">Friendly</option><option value="professional">Professional</option><option value="enthusiastic">Enthusiastic</option></select></label>
+            <label>Vision provider<select id="image-provider"><option value="openai">OpenAI Vision</option><option value="anthropic">Anthropic Vision</option></select></label>
+          </div>
+          <label class="drive-dropzone" id="drive-dropzone" for="image-file">
+            <div><div class="drive-upload-icon">↑</div><strong>Drop files here</strong><span>or use the button below to browse from your computer</span><span class="drive-browse">Choose a file</span></div>
+            <input id="image-file" type="file" accept="image/*" required hidden>
+          </label>
+          <div class="drive-file-row" id="drive-file-row"><div class="drive-file-icon">▣</div><div class="drive-file-info"><div class="drive-file-name" id="drive-file-name"></div><div class="drive-file-size" id="drive-file-size"></div></div><button class="drive-remove" id="drive-remove" type="button" aria-label="Remove selected file">×</button></div>
+          <img id="image-preview" class="image-preview" alt="Selected image preview">
+          <button class="image-submit" id="image-submit" type="submit">Generate comment</button>
+        </form>
+        <div id="image-result" class="image-result"></div>
+      </div>
+    </div>
+
+    <div id="panel-connect" class="connect-panel" style="display:none">
+      <div class="connect-card">
+        <h2>Connect your social accounts</h2>
+        <p>Authorize access securely through each platform. This app never asks for or stores your social-media password.</p>
+        <div class="social-grid">
+          <button class="social-tile" onclick="startSocialAuth('meta')"><span class="social-logo social-facebook">f</span><span class="social-name">Facebook</span></button>
+          <button class="social-tile" onclick="startSocialAuth('instagram')"><span class="social-logo social-instagram">◎</span><span class="social-name">Instagram</span></button>
+          <button class="social-tile" onclick="startSocialAuth('x')"><span class="social-logo social-x">X</span><span class="social-name">X</span></button>
+          <button class="social-tile" onclick="showConnectMessage('LinkedIn OAuth is not configured yet. Add a LinkedIn app before enabling this connection.')"><span class="social-logo social-linkedin">in</span><span class="social-name">LinkedIn</span></button>
+        </div>
+        <div style="margin-top:18px;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);display:grid;gap:10px;">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">X auto-comment</div>
+          <input id="x-post-url" type="text" placeholder="Paste a Twitter/X post link here" style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit;">
+          <button type="button" class="schedule-submit" onclick="postGeneratedXComment()">Generate & Post Reply</button>
+        </div>
+        <div class="security-note"><b>Security by design</b><br>Login happens on the platform's official authorization page. The backend validates a signed OAuth state value, exchanges authorization codes server-side, and stores only encrypted tokens when token storage is enabled.</div>
+        <div class="connect-state" id="connect-state">No social account connected.</div>
+      </div>
+    </div>
+
+    <!-- ── FB COMMENTER ── -->
+    <div id="panel-fbcomment" class="image-panel" style="display:none">
+      <div class="image-card">
+        <h2>📘 Facebook Post Commenter</h2>
+        <p>Load the latest five comments from your Page feed as plain text. Choose <b>Reply with AI</b> to generate a reply, review it, then post.</p>
+
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+          <input id="fb-post-url" type="text" placeholder="Or paste a Facebook post URL..." style="flex:1;min-width:200px;border:1.5px solid var(--border);border-radius:var(--r);padding:10px 12px;font-size:13px;font-family:inherit">
+          <button class="image-submit" id="fb-fetch-btn" onclick="fbFetchPost()" style="margin:0;white-space:nowrap">Fetch Post</button>
+          <button class="image-submit" onclick="fbLoadFeed()" style="margin:0;white-space:nowrap;background:var(--accent)">🔄 Load Feed</button>
+          <select id="fb-provider" style="border:1px solid var(--border);border-radius:7px;padding:8px 10px;font:inherit;font-size:12px">
+            <option value="anthropic">Claude</option>
+            <option value="openai">ChatGPT</option>
+          </select>
+          <select id="fb-lang" style="border:1px solid var(--border);border-radius:7px;padding:8px 10px;font:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+            <option value="auto">🌐 Auto Language</option>
+            <option value="bn">🇧🇩 Bangla (বাংলা)</option>
+            <option value="en">🇺🇸 English</option>
+          </select>
+        </div>
+
+        <div id="fb-feed-container" style="display:none">
+          <div id="fb-feed-html"></div>
+        </div>
+
+        <div id="fb-result" class="image-result" style="display:none"></div>
       </div>
     </div>
 
@@ -233,7 +786,7 @@ header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align
       </div>
       <div class="dash-card">
         <div class="dc-title">⏱️ Time Saved (Feature 40)</div>
-        <div class="dc-val" id="d-time">0m</div>
+        <div class="dc-val" id="d-time">0 sec</div>
         <div class="dc-sub">vs manual commenting (~1.5 min each)</div>
         <div class="bar" style="margin-top:10px"><div class="barf" id="d-timebar" style="width:0%;background:var(--success)"></div></div>
       </div>
@@ -257,7 +810,7 @@ header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align
       </div>
       <div class="dash-card">
         <div class="dc-title">🔁 API Rate Limits (Feature 37)</div>
-        <div class="prog-row"><span class="prog-label">Claude API calls</span><div class="prog-bar"><div class="prog-fill" id="pb-api" style="width:0%;background:var(--primary)"></div></div><span class="prog-pct" id="pp-api" id="d-api">0/100</span></div>
+        <div class="prog-row"><span class="prog-label">AI provider calls</span><div class="prog-bar"><div class="prog-fill" id="pb-api" style="width:0%;background:var(--primary)"></div></div><span class="prog-pct" id="pp-api" id="d-api">0/100</span></div>
         <div style="font-size:11px;color:var(--muted);margin-top:6px">Resets hourly · Auto-retry on failure (Feature 38)</div>
         <div id="d-retry-log" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
       </div>
@@ -281,9 +834,310 @@ header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align
       <div id="drafts-list"><div class="empty">📝 No saved drafts yet.<br>High-ranking comments you don't post are auto-saved here (Feature 35).</div></div>
     </div>
 
+    <div id="panel-scheduler" class="scheduler-panel" style="display:none">
+      <div class="scheduler-card">
+        <h2>Schedule a comment</h2><p>Select when and where this generated comment should be published.</p>
+        <div class="selected-comment" id="scheduled-comment-preview">Choose “Schedule it” below a generated comment to begin.</div>
+        <div class="schedule-fields"><label>Date <input id="schedule-date" type="date"></label><label>Time <input id="schedule-time" type="time"></label></div>
+        <div style="font-size:12px;font-weight:600">Choose platform</div>
+        <div class="platform-picker" role="group" aria-label="Choose publishing platform">
+          <button type="button" class="platform-btn" data-platform="facebook" aria-pressed="false" onclick="selectSchedulePlatform('facebook')"><span class="platform-icon">f</span>Facebook</button>
+          <button type="button" class="platform-btn" data-platform="instagram" aria-pressed="false" onclick="selectSchedulePlatform('instagram')"><span class="platform-icon">◎</span>Instagram</button>
+          <button type="button" class="platform-btn" data-platform="twitter" aria-pressed="false" onclick="selectSchedulePlatform('twitter')"><span class="platform-icon">𝕏</span>Twitter / X</button>
+        </div>
+        <button class="schedule-submit" id="schedule-submit" onclick="saveSchedule()">Schedule comment</button><div id="schedule-feedback" style="font-size:12px;margin-top:10px"></div>
+      </div>
+      <div class="scheduler-card"><h2>Upcoming comments</h2><div class="scheduled-list" id="scheduled-list"><div class="empty">No comments scheduled yet.</div></div></div>
+    </div>
+
     <!-- ── LOGS ── -->
     <div id="panel-logs" class="logs-panel" style="display:none">
       <div id="logs-list"></div>
+    </div>
+
+    <section id="panel-models" class="models-panel" style="display:none" aria-labelledby="models-heading">
+      <div class="models-title-row">
+        <div><div class="view-eyebrow">COMMENTBOT STACK</div><h2 id="models-heading">Models</h2><p>Models and providers used across comments, analysis, safety, and scheduling.</p></div>
+        <div class="models-count"><span>9</span> models &amp; providers</div>
+      </div>
+      <div class="models-group-label">LOCAL &amp; FALLBACK</div>
+      <div class="models-grid">
+        <article class="model-card model-card-featured">
+          <div class="model-card-top"><span class="model-glyph qwen-glyph">Q</span><span class="model-status status-active">DEFAULT · LOCAL</span></div>
+          <h3>Qwen 3 · 1.7B</h3><p>Runs locally through Ollama. Generates comment suggestions without cloud API credits.</p>
+          <div class="model-capabilities"><span>Comment generation</span><span>Chat</span></div>
+        </article>
+        <article class="model-card">
+          <div class="model-card-top"><span class="model-glyph vader-glyph">V</span><span class="model-status status-local">LOCAL</span></div>
+          <h3>VADER</h3><p>Fast lexicon-based sentiment analysis and the fallback when a transformer model is unavailable.</p>
+          <div class="model-capabilities"><span>Sentiment</span><span>Fallback</span></div>
+        </article>
+        <article class="model-card">
+          <div class="model-card-top"><span class="model-glyph bert-glyph">B</span><span class="model-status status-optional">OPTIONAL WEIGHTS</span></div>
+          <h3>BERT Sentiment</h3><p>Local transformer classifier when sentiment model files are installed; otherwise VADER provides the local result.</p>
+          <div class="model-capabilities"><span>Tone</span><span>Topics</span></div>
+        </article>
+        <article class="model-card">
+          <div class="model-card-top"><span class="model-glyph safety-glyph">S</span><span class="model-status status-optional">OPTIONAL WEIGHTS</span></div>
+          <h3>BERT Toxicity</h3><p>Local text classifier when toxicity weights are installed, backed by keyword and sensitive-topic checks.</p>
+          <div class="model-capabilities"><span>Safety</span><span>Moderation</span></div>
+        </article>
+        <article class="model-card">
+          <div class="model-card-top"><span class="model-glyph engage-glyph">X</span><span class="model-status status-optional">OPTIONAL ARTIFACT</span></div>
+          <h3>XGBoost</h3><p>Engagement prediction model. Feature-based estimates remain available if its trained artifact is missing.</p>
+          <div class="model-capabilities"><span>Engagement</span><span>Prediction</span></div>
+        </article>
+        <article class="model-card">
+          <div class="model-card-top"><span class="model-glyph schedule-glyph">R</span><span class="model-status status-optional">OPTIONAL ARTIFACT</span></div>
+          <h3>Random Forest</h3><p>Scheduling model for recommended posting windows, with a local rules-based fallback.</p>
+          <div class="model-capabilities"><span>Scheduling</span><span>Timing</span></div>
+        </article>
+        <article class="model-card">
+          <div class="model-card-top"><span class="model-glyph local-glyph">T</span><span class="model-status status-optional">OPTIONAL WEIGHTS</span></div>
+          <h3>Local Transformer</h3><p>Optional text-generation weights used by the offline comment fallback when present.</p>
+          <div class="model-capabilities"><span>Offline replies</span><span>Fallback</span></div>
+        </article>
+      </div>
+      <div class="models-group-label models-cloud-label">CLOUD PROVIDERS · OPTIONAL</div>
+      <div class="models-grid models-cloud-grid">
+        <article class="model-card">
+          <div class="model-card-top"><span class="model-glyph claude-glyph">C</span><span class="model-status status-cloud">CLOUD</span></div>
+          <h3>Anthropic · Claude</h3><p>Optional provider for text generation and supported image workflows. Requires an active API balance.</p>
+          <div class="model-capabilities"><span>Text</span><span>Vision</span></div>
+        </article>
+        <article class="model-card">
+          <div class="model-card-top"><span class="model-glyph openai-glyph">O</span><span class="model-status status-cloud">CLOUD</span></div>
+          <h3>OpenAI</h3><p>Optional provider for text generation and image comments. Requires an active API balance.</p>
+          <div class="model-capabilities"><span>Text</span><span>Vision</span></div>
+        </article>
+      </div>
+    </section>
+
+<div id="panel-pricing" class="image-panel" style="display:none;max-width:1050px">
+      
+      <!-- Top banner / Alert for payment status if redirected -->
+      <div id="payment-alert-banner" style="display:none;margin-bottom:18px;padding:14px 18px;border-radius:10px;font-size:13.5px;font-weight:500;align-items:center;justify-content:space-between">
+        <span id="payment-alert-text"></span>
+        <button onclick="document.getElementById('payment-alert-banner').style.display='none'" style="border:none;background:none;font-weight:bold;cursor:pointer;color:inherit;font-size:16px">×</button>
+      </div>
+
+      <!-- Active Plan Card -->
+      <div class="image-card" class="image-card active-plan-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.06em">Current Bot Subscription</div>
+            <h2 style="font-size:22px;margin:3px 0 6px" id="active-plan-title">Free Community Tier</h2>
+            <div style="font-size:13px;color:var(--muted)" id="active-plan-desc">50 basic comments/month · Standard VADER sentiment analysis.</div>
+          </div>
+          <div style="text-align:right">
+            <span class="badge" id="active-plan-status-badge" style="background:var(--success-l);color:#0F6E56;font-size:12px;padding:5px 12px">● Active</span>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px" id="active-plan-expiry">Renews: Never (Free)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Packages Header -->
+      <div style="text-align:center;margin-bottom:14px">
+        <h2 style="font-size:24px;margin-bottom:6px">Select Your Bot Package</h2>
+        <p style="color:var(--muted);font-size:13.5px;max-width:650px;margin:0 auto">
+          Unlock high-volume automated commenting, local Vision BLIP scene analysis, multi-channel Facebook &amp; Instagram publishing, and custom brand voices. Secure checkout via SSLCommerz.
+        </p>
+      </div>
+
+      <!-- 4 Packages Grid -->
+      <div class="pricing-grid">
+        
+        <!-- Package 1: Starter -->
+        <div class="pkg-card" id="pkg-card-starter">
+          <div class="pkg-title">Starter Bot</div>
+          <div class="pkg-tag">Solo creators &amp; small pages</div>
+          <div class="pkg-price-wrap">
+            <span class="pkg-currency">৳</span><span class="pkg-price">500</span>
+            <span class="pkg-period">/ month (approx. $5)</span>
+          </div>
+          <ul class="pkg-features">
+            <li><span class="pkg-check">✓</span> <b>500</b> AI comments / mo</li>
+            <li><span class="pkg-check">✓</span> BERT Sentiment &amp; Sarcasm</li>
+            <li><span class="pkg-check">✓</span> Real-time Toxicity filter</li>
+            <li><span class="pkg-check">✓</span> 1 Connected social account</li>
+            <li><span class="pkg-check">✓</span> Standard API response speed</li>
+          </ul>
+          <button class="pkg-btn secondary" onclick="openCheckoutModal('starter')">Choose Starter</button>
+        </div>
+
+        <!-- Package 2: Creator Pro (Popular) -->
+        <div class="pkg-card popular" id="pkg-card-creator_pro">
+          <div class="pkg-badge">POPULAR</div>
+          <div class="pkg-title">Creator Bot (Pro)</div>
+          <div class="pkg-tag">Growing pages &amp; influencers</div>
+          <div class="pkg-price-wrap">
+            <span class="pkg-currency">৳</span><span class="pkg-price">1,500</span>
+            <span class="pkg-period">/ month (approx. $15)</span>
+          </div>
+          <ul class="pkg-features">
+            <li><span class="pkg-check">✓</span> <b>2,500</b> AI comments / mo</li>
+            <li><span class="pkg-check">✓</span> <b>Image Vision</b> (BLIP + AI)</li>
+            <li><span class="pkg-check">✓</span> <b>Smart Scheduler</b> (RF + XGBoost)</li>
+            <li><span class="pkg-check">✓</span> Facebook &amp; Instagram Feed reply</li>
+            <li><span class="pkg-check">✓</span> Multi-tone &amp; customizable persona</li>
+            <li><span class="pkg-check">✓</span> Priority AI response speed</li>
+          </ul>
+          <button class="pkg-btn" onclick="openCheckoutModal('creator_pro')">⚡ Get Creator Pro</button>
+        </div>
+
+        <!-- Package 3: Business Agency -->
+        <div class="pkg-card" id="pkg-card-business_agency">
+          <div class="pkg-badge" style="background:#168B83">BEST VALUE</div>
+          <div class="pkg-title">Business Bot (Agency)</div>
+          <div class="pkg-tag">Agencies &amp; multi-page brands</div>
+          <div class="pkg-price-wrap">
+            <span class="pkg-currency">৳</span><span class="pkg-price">3,500</span>
+            <span class="pkg-period">/ month (approx. $35)</span>
+          </div>
+          <ul class="pkg-features">
+            <li><span class="pkg-check">✓</span> <b>10,000</b> AI comments / mo</li>
+            <li><span class="pkg-check">✓</span> Unlimited Facebook Pages &amp; IG</li>
+            <li><span class="pkg-check">✓</span> Batch comment generation</li>
+            <li><span class="pkg-check">✓</span> Sentiment-driven auto reply</li>
+            <li><span class="pkg-check">✓</span> Approval workflow &amp; audit logs</li>
+            <li><span class="pkg-check">✓</span> Dedicated Webhook &amp; alerts</li>
+          </ul>
+          <button class="pkg-btn secondary" onclick="openCheckoutModal('business_agency')">Choose Business</button>
+        </div>
+
+        <!-- Package 4: Enterprise Unlimited -->
+        <div class="pkg-card" id="pkg-card-enterprise_unlimited">
+          <div class="pkg-badge" style="background:#534AB7">VIP UNLIMITED</div>
+          <div class="pkg-title">Enterprise Bot</div>
+          <div class="pkg-tag">High-scale commercial operations</div>
+          <div class="pkg-price-wrap">
+            <span class="pkg-currency">৳</span><span class="pkg-price">7,500</span>
+            <span class="pkg-period">/ month (approx. $75)</span>
+          </div>
+          <ul class="pkg-features">
+            <li><span class="pkg-check">✓</span> <b>Unlimited</b> AI comments</li>
+            <li><span class="pkg-check">✓</span> Dedicated fine-tuned model instance</li>
+            <li><span class="pkg-check">✓</span> Custom brand guardrails</li>
+            <li><span class="pkg-check">✓</span> Instant IPN &amp; server callbacks</li>
+            <li><span class="pkg-check">✓</span> Zero rate limits &amp; max concurrency</li>
+            <li><span class="pkg-check">✓</span> 24/7 Dedicated Support &amp; SLA</li>
+          </ul>
+          <button class="pkg-btn secondary" onclick="openCheckoutModal('enterprise_unlimited')">Choose Enterprise</button>
+        </div>
+
+      </div>
+
+      <!-- Payment Security & Methods Banner -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="font-size:12.5px;color:var(--muted)">
+          🔒 <b>100% Secure Checkout via SSLCommerz</b> · Supports bKash, Nagad, Rocket, Visa, Mastercard, American Express, &amp; 30+ Bangladeshi banks.
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;font-size:11px;font-weight:700;color:var(--muted)">
+          <span style="background:#E2136E;color:#fff;padding:2px 7px;border-radius:4px">bKash</span>
+          <span style="background:#F7921E;color:#fff;padding:2px 7px;border-radius:4px">Nagad</span>
+          <span style="background:#8C3494;color:#fff;padding:2px 7px;border-radius:4px">Rocket</span>
+          <span style="background:#1A1F71;color:#fff;padding:2px 7px;border-radius:4px">VISA</span>
+          <span style="background:#EB001B;color:#fff;padding:2px 7px;border-radius:4px">Mastercard</span>
+        </div>
+      </div>
+
+      <!-- Transaction History Table -->
+      <div class="scheduler-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <h2>Payment History &amp; IPN Verifications</h2>
+          <button class="qbtn" onclick="loadPricingData()" style="padding:4px 10px;font-size:11.5px">🔄 Refresh</button>
+        </div>
+        <p>Past SSLCommerz transactions and Instant Payment Notification (IPN) server-to-server validation records.</p>
+        <div id="tx-history-container">
+          <div class="empty">No payment transactions recorded yet. Choose a package above to begin.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── SSL CHECKOUT MODAL OVERLAY ── -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Right samples panel -->
+<div class="rpanel open" id="rpanel">
+  <div class="rpi">
+    <div class="sidebar-tools">
+      <button class="new-chat-btn" type="button" onclick="startNewChat()"><span class="new-chat-icon">＋</span><span>New analysis</span></button>
+      <label class="workspace-search"><span aria-hidden="true">⌕</span><input id="workspace-search" type="search" placeholder="Find a tool or example" oninput="filterWorkspace(this.value)" aria-label="Find a tool or example"></label>
+    </div>
+    <div class="workspace-pane-head"><div class="workspace-pane-kicker">WORKSPACE</div><div class="workspace-pane-title">Quick start</div></div>
+    <h3 id="rp-title">Sample Posts</h3>
+    <div id="rp-content"></div>
+    <div class="workspace-pane-foot"><span class="pane-status-dot"></span>Ready to analyze</div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<div id="ssl-checkout-modal" class="modal-overlay" onclick="if(event.target===this)closeCheckoutModal()">
+      <div class="modal-card">
+        <button class="modal-close" onclick="closeCheckoutModal()" aria-label="Close modal">×</button>
+        
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="font-size:24px">💳</div>
+          <div>
+            <h3 style="font-size:18px;margin:0" id="modal-pkg-name">Creator Bot (Pro)</h3>
+            <div style="font-size:12px;color:var(--muted)" id="modal-pkg-price">৳1,500 BDT / month</div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;line-height:1.5" id="modal-pkg-summary">
+          Includes 2,500 AI comments, Vision BLIP scene understanding, and smart scheduling.
+        </div>
+
+        <form id="ssl-checkout-form" onsubmit="executeSslPayment(event)">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--text)">Customer Information</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <label style="font-size:11.5px;color:var(--muted);display:grid;gap:4px">
+              Full Name
+              <input type="text" id="cust-name" required value="Test Customer" style="border:1px solid var(--border);border-radius:7px;padding:8px;font:inherit;font-size:12.5px">
+            </label>
+            <label style="font-size:11.5px;color:var(--muted);display:grid;gap:4px">
+              Email Address
+              <input type="email" id="cust-email" required value="customer@example.com" style="border:1px solid var(--border);border-radius:7px;padding:8px;font:inherit;font-size:12.5px">
+            </label>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+            <label style="font-size:11.5px;color:var(--muted);display:grid;gap:4px">
+              Mobile Number
+              <input type="tel" id="cust-phone" required value="01711223344" style="border:1px solid var(--border);border-radius:7px;padding:8px;font:inherit;font-size:12.5px">
+            </label>
+            <label style="font-size:11.5px;color:var(--muted);display:grid;gap:4px">
+              City
+              <input type="text" id="cust-city" required value="Dhaka" style="border:1px solid var(--border);border-radius:7px;padding:8px;font:inherit;font-size:12.5px">
+            </label>
+          </div>
+
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--text)">Checkout Experience</div>
+          <div class="checkout-method-box selected" id="opt-hosted" onclick="selectCheckoutMethod('hosted')">
+            <input type="radio" name="checkout_type" value="hosted" id="rad-hosted" checked style="cursor:pointer">
+            <label for="rad-hosted" style="cursor:pointer;flex:1">
+              <div style="font-weight:600;font-size:13px">Hosted Checkout (Recommended)</div>
+              <div style="font-size:11px;color:var(--muted)">Redirects to SSLCommerz's official secure payment gateway page.</div>
+            </label>
+          </div>
+          <div class="checkout-method-box" id="opt-easy" onclick="selectCheckoutMethod('easy')">
+            <input type="radio" name="checkout_type" value="easy" id="rad-easy" style="cursor:pointer">
+            <label for="rad-easy" style="cursor:pointer;flex:1">
+              <div style="font-weight:600;font-size:13px">EasyCheckout (Seamless Popup)</div>
+              <div style="font-size:11px;color:var(--muted)">Opens SSLCommerz gateway in a popup window over your bot.</div>
+            </label>
+          </div>
+
+          <div id="checkout-error-msg" style="display:none;color:var(--danger);font-size:12px;margin:8px 0;padding:6px 10px;background:var(--danger-l);border-radius:6px"></div>
+
+          <button type="submit" id="btn-pay-now" class="pkg-btn" style="margin-top:14px;padding:12px;font-size:14px">
+            🔒 Pay <span id="btn-pay-amount">৳1,500 BDT</span> with SSLCommerz
+          </button>
+        </form>
+      </div>
     </div>
 
   </div><!-- /content -->
@@ -297,7 +1151,7 @@ header{background:var(--primary);color:#fff;padding:10px 18px;display:flex;align
   </div>
 </div>
 
-</div><!-- /wrap -->
+</div>
 
 <script>
 // ══════════════════════════════════════════════════════════
@@ -309,15 +1163,19 @@ var convId = null;
 var apiCallCount = 0;
 var apiCallLimit = 100;
 var API_BASE = window.location.origin;
+var aiProvider = 'ollama';
 
 var stats = {analyzed:0,generated:0,approved:0,blocked:0,timeSaved:0,
-  sentPos:0,sentNeg:0,sentNeu:0,flagged:0,schedPreds:[]};
+  generationSeconds:0,sentPos:0,sentNeg:0,sentNeu:0,flagged:0,schedPreds:[]};
 
 var queueItems = [];   // Feature 34 – approval queue
 var draftItems = [];   // Feature 35 – saved drafts
 var logLines   = [];   // Feature 36 – error log
 var preferences= {};   // Feature 33 – user preference learning
 var postHistory= [];   // Feature 39 – cross-post consistency
+var generatedComments = [];
+var selectedScheduleComment = '';
+var selectedSchedulePlatform = '';
 
 // ── Feature 31: Frequency cap ──
 var freqCap = {count:0, window:60*60*1000, lastReset: Date.now(), limit:20};
@@ -334,11 +1192,11 @@ var samples = {
 };
 
 var banners = {
-  comment:"💬 <b>Comment Generation</b> — Features 15-21: Claude generates ranked, context-aware comments",
-  sentiment:"😊 <b>Sentiment Analysis</b> — Features 8-14: VADER + BERT + Claude with sarcasm detection",
-  toxicity:"🛡️ <b>Toxicity Detection</b> — Features 22-26: BERT + keyword filter + Claude explanation + manual review queue",
-  schedule:"📅 <b>Scheduling</b> — Features 27-32: XGBoost engagement + Random Forest timing + Claude strategy",
-  qa:"❓ <b>Project Q&A</b> — Multi-turn Claude conversation about your thesis"
+  comment:"💬 <b>Comment Generation</b> — Features 15-21: Claude / ChatGPT generates ranked, context-aware comments",
+  sentiment:"😊 <b>Sentiment Analysis</b> — Features 8-14: VADER + BERT + AI-driven sarcasm detection",
+  toxicity:"🛡️ <b>Toxicity Detection</b> — Features 22-26: BERT + keyword filter + AI explanation + manual review queue",
+  schedule:"📅 <b>Scheduling</b> — Features 27-32: XGBoost engagement + Random Forest timing + AI strategy",
+  qa:"❓ <b>Project Q&A</b> — Multi-turn AI conversation about your thesis"
 };
 
 // ══════════════════════════════════════════════════════════
@@ -359,7 +1217,8 @@ function preprocessText(text){
   // Feature 3: Stop word removal (key words kept for context)
   var stops = new Set(['the','a','an','is','it','in','on','at','to','of','for','and','or','but','with','by','as','i','my','we','our','this','that','these']);
   // Feature 2: Tokenize
-  var tokens = processed.replace(/[^\w\s]/g,' ').split(/\s+/).filter(Boolean);
+  // Feature 2: Tokenize (preserving English, alphanumeric, and Bengali script characters)
+  var tokens = processed.replace(/[^\w\s\u0980-\u09FF]/g,' ').split(/\s+/).filter(Boolean);
   // Feature 4: Lemmatize (simplified)
   var lemmaMap = {running:'run',loves:'love',posts:'post',feeling:'feel',excited:'excite',going:'go',doing:'do',making:'make',having:'have',getting:'get'};
   var lemmatized = tokens.map(function(t){return lemmaMap[t]||t;});
@@ -403,13 +1262,24 @@ function vaderSentiment(text){
 // ══════════════════════════════════════════════════════════
 //  FEATURE 22: TOXICITY PRE-FILTER (keyword layer)
 // ══════════════════════════════════════════════════════════
-var TOXIC_KW=['idiot','stupid','hate you','kill','shut up','dumb','moron','loser','fool','ugly','trash','worthless','jerk','horrible person','shut up','go away','disgusting','pathetic'];
+var TOXIC_KW=['idiot','stupid','hate you','kill yourself','kys','shut up','dumbass','moron','loser','worthless','jerk','horrible person','go away','pathetic','clown','you suck','piece of shit','scumbag','fuck you','stfu','বাটপার','চিটার','মেরে ফেলব','মর তুই','হারামি','কুত্তা'];
 var SENSITIVE_TOPICS=['suicide','self-harm','drugs','terrorism','violence','weapon','porn','gambling','medication dosage','legal advice','medical diagnosis'];
 
 function toxicPrefilter(text){
   var t=text.toLowerCase();
-  var hits=TOXIC_KW.filter(function(k){return t.includes(k);});
-  var sensHits=SENSITIVE_TOPICS.filter(function(k){return t.includes(k);}); // Feature 23: Topic flagging
+  var isBenignHate = /\bhate\s+(?:when|the\b|this\b|that\b|traffic|rain|mondays|weather|delays?|cold|waiting)\b/i.test(t);
+  var isBenignTrash = /\b(?:take\s+out\s+the|throw\s+(?:in|into)\s+the|empty\s+the|can|bin)\s+trash\b|\btrash\s+(?:can|bin|bag)\b/i.test(t);
+  var isBenignKill = /\b(?:killing\s+it|killed\s+it|kill\s+time|skill|skills)\b/i.test(t);
+  var isBenignStupid = /\bstupid\s+(?:bug|code|traffic|weather|error|glitch|machine|computer|laptop|phone|alarm|car|bus|train|flight|delay|system|rule|thing|idea|game)\b/i.test(t);
+
+  var hits=TOXIC_KW.filter(function(k){
+    if(k==='trash' && isBenignTrash) return false;
+    if(k==='kill' && isBenignKill) return false;
+    if(k==='hate' && isBenignHate) return false;
+    if(k==='stupid' && isBenignStupid) return false;
+    return new RegExp('(?:^|[^\\w\\u0980-\\u09FF])'+k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')+'(?:[^\\w\\u0980-\\u09FF]|$)', 'i').test(t);
+  });
+  var sensHits=SENSITIVE_TOPICS.filter(function(k){return new RegExp('\\b'+k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')+'\\b', 'i').test(t);});
   return{flagged:hits.length>0,keywords:hits,score:Math.min(1,hits.length*0.35),sensitiveTopics:sensHits,topicFlagged:sensHits.length>0};
 }
 
@@ -417,6 +1287,16 @@ function toxicPrefilter(text){
 //  FEATURE 19: REPEAT PENALTY
 // ══════════════════════════════════════════════════════════
 var recentPhrases=[];
+function uniqueGeneratedComments(comments){
+  var seen=new Set();
+  return (comments||[]).filter(function(comment){
+    var text=typeof comment==='string'?comment:(comment&&((comment.comment||comment.text)||''));
+    var key=String(text).toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+    if(!key||seen.has(key))return false;
+    seen.add(key);
+    return true;
+  });
+}
 function applyRepeatPenalty(comments){
   return comments.map(function(c){
     var key=c.text.toLowerCase().substring(0,50);
@@ -462,7 +1342,7 @@ function renderLogs(){
 //  FEATURE 37: RATE LIMIT MONITOR
 //  FEATURE 38: RETRY LOGIC
 // ══════════════════════════════════════════════════════════
-async function callClaudeWithRetry(body,retries=2){
+async function callCloudAI(body,retries=2){
   // Feature 31: Frequency cap check
   var now=Date.now();
   if(now-freqCap.lastReset>freqCap.window){freqCap.count=0;freqCap.lastReset=now;}
@@ -485,10 +1365,10 @@ async function callClaudeWithRetry(body,retries=2){
       updateRateLimit();
       addLog('INFO','Python backend call #'+apiCallCount+' (attempt '+(attempt+1)+')');
 
-      var res=await fetch(API_BASE+'/api/claude',{
+      var res=await fetch(API_BASE+'/api/ai',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({...body,mode:mode,max_tokens:1000})
+        body:JSON.stringify({...body,mode:mode,max_tokens:1000,provider:aiProvider})
       });
 
       if(!res.ok){
@@ -497,7 +1377,7 @@ async function callClaudeWithRetry(body,retries=2){
       }
 
       var data=await res.json();
-      addLog('OK','Backend response received via '+(data.provider||'api')+(data.usage?.output_tokens?' ('+data.usage.output_tokens+' tokens)':''));
+      addLog('OK','Backend response received via '+(data.provider||aiProvider)+(data.usage?.output_tokens?' ('+data.usage.output_tokens+' tokens)':'')+(data.model?(' model='+data.model):''));
       return data.text;
 
     }catch(e){
@@ -529,8 +1409,29 @@ async function syncBackendStatus(){
     if(!res.ok)throw new Error('HTTP '+res.status);
     var data=await res.json();
     var el=document.getElementById('api-status');
-    if(el)el.textContent=data.anthropic_key_configured?'Python + Claude + SQLite':'Python + SQLite fallback';
+    if(el){
+      if(aiProvider==='ollama') el.textContent='Python + Ollama + SQLite';
+      else if(data.openai_key_configured&&data.anthropic_key_configured) el.textContent='Python + Claude + ChatGPT + SQLite';
+      else if(data.openai_key_configured) el.textContent='Python + ChatGPT + SQLite';
+      else if(data.anthropic_key_configured) el.textContent='Python + Claude + SQLite';
+      else el.textContent='Python + SQLite fallback';
+    }
     addLog('OK','Backend connected. Database: '+data.database);
+    var cs=document.getElementById('connect-state');
+    if(cs){
+      if(data.x_access_token_configured){
+        cs.innerHTML='✅ <b>X connected</b> ('+(data.x_username?('@'+data.x_username):'authorized account')+'). Ready to generate and post replies.';
+        cs.style.color='var(--success)';
+      }else if(data.meta_page_token_configured&&data.meta_page_id){
+        cs.innerHTML='✅ <b>Facebook Page connected</b> (Page ID: '+data.meta_page_id+'). Ready to post and receive messages.';
+        cs.style.color='var(--success)';
+      }else if(data.meta_app_id_configured){
+        cs.innerHTML='⚠️ Meta App configured but no Page connected yet. Click <b>Facebook</b> above to authorize.';
+        cs.style.color='var(--warn)';
+      }else{
+        cs.textContent='No social account connected. Configure META_APP_ID in .env first.';
+      }
+    }
   }catch(e){
     var el=document.getElementById('api-status');
     if(el)el.textContent='Backend offline';
@@ -538,11 +1439,28 @@ async function syncBackendStatus(){
   }
 }
 
+function setProvider(value){
+  if(value!=='ollama'&&value!=='anthropic'&&value!=='openai') return;
+  aiProvider = value;
+  var providerName={ollama:'Ollama (local)',openai:'ChatGPT',anthropic:'Claude'}[value];
+  addLog('OK','AI provider set to '+providerName);
+  var activeProvider=document.getElementById('active-provider-label');
+  if(activeProvider)activeProvider.textContent={ollama:'Ollama · Local',openai:'ChatGPT',anthropic:'Claude'}[value];
+  var modeTag=document.getElementById('provider-mode-tag');
+  if(modeTag)modeTag.textContent=value==='ollama'?'LOCAL':'CLOUD';
+  var apiStatus=document.getElementById('api-status');
+  if(apiStatus)apiStatus.textContent='Python + '+providerName+' + SQLite';
+}
+
 async function postModel(endpoint,payload){
-  var res=await fetch(API_BASE+endpoint,{
+  var body = Object.assign({}, payload || {});
+  if(!body.provider){
+    body.provider = aiProvider;
+  }
+  var res=await fetch(API_BASE+endpoint,{  
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload||{})
+    body:JSON.stringify(body)
   });
   if(!res.ok){
     var err=await res.text();
@@ -616,18 +1534,27 @@ function updateEngageChart(){
 // ══════════════════════════════════════════════════════════
 //  UPDATE STATS
 // ══════════════════════════════════════════════════════════
+function formatDuration(seconds){
+  seconds=Math.max(0,Number(seconds)||0);
+  if(seconds<60)return(seconds<10?seconds.toFixed(1):Math.round(seconds))+' sec';
+  var minutes=Math.floor(seconds/60),remainder=Math.round(seconds%60);
+  if(remainder===60){minutes++;remainder=0;}
+  return remainder?minutes+'m '+remainder+'s':minutes+'m';
+}
+
 function updateStats(){
   ['analyzed','generated','approved','blocked'].forEach(function(k){
     var el=document.getElementById('ss-'+k); if(el)el.textContent=stats[k];
     var el2=document.getElementById('d-'+k); if(el2)el2.textContent=stats[k];
   });
-  // Time saved (Feature 40) — ~1.5 min per comment manually
-  var mins=Math.round(stats.generated*1.5);
-  stats.timeSaved=mins;
-  var ts=mins>=60?(Math.floor(mins/60)+'h '+(mins%60)+'m'):(mins+'m');
+  // Estimate saved time against the existing 90-second manual-comment baseline.
+  var savedSeconds=Math.max(0,stats.generated*90-stats.generationSeconds);
+  var savedMinutes=savedSeconds/60;
+  stats.timeSaved=savedMinutes;
+  var ts=formatDuration(savedSeconds);
   var el=document.getElementById('ss-time'); if(el)el.textContent=ts;
   var el2=document.getElementById('d-time'); if(el2)el2.textContent=ts;
-  var pct=Math.min(100,Math.round(mins/120*100));
+  var pct=Math.min(100,Math.round(savedMinutes/120*100));
   var el3=document.getElementById('d-timebar'); if(el3)el3.style.width=pct+'%';
   // Sentiment breakdown
   var tot=stats.sentPos+stats.sentNeg+stats.sentNeu||1;
@@ -757,71 +1684,110 @@ function restoreDraft(btn,comment){
 }
 
 // ══════════════════════════════════════════════════════════
-//  CLAUDE API — MAIN CALLS
+//  AI PROVIDER — MAIN CALLS
 // ══════════════════════════════════════════════════════════
 
-// Feature 15+16: Claude comment generation
-async function claudeGenerateComments(post,sentiment,numComments,prefHint){
-  var system='You are an intelligent social media comment generator for a BRAC University CSE400 thesis project. Generate natural, context-aware, human-like comments. RULES: 1) Be specific to the post content 2) Match tone to sentiment 3) Vary length and style 4) Never use generic phrases like "Nice post!" or "Great work!" 5) No toxic/harmful content 6) Sound like a real engaged human 7) Each comment must be unique. '+(prefHint?'PREFERENCE HINT: '+prefHint:'')+'Return ONLY a JSON array of strings. No markdown, no explanation.';
-  var user='Post: "'+post+'"\nSentiment: '+sentiment+'\nGenerate '+numComments+' varied context-aware comments. Return JSON array only.';
-  var raw=await callClaudeWithRetry({system,messages:[{role:'user',content:user}]});
-  if(!raw)return null;
+// Feature 15+16: AI comment generation
+async function generateComments(post,sentiment,numComments,prefHint,platform){
+  platform = platform || 'facebook';
+  var langEl = document.getElementById('lang-select');
+  var language = langEl ? langEl.value : 'auto';
   try{
-    var s=raw.indexOf('['),e=raw.lastIndexOf(']')+1;
-    if(s!==-1&&e>s)return JSON.parse(raw.substring(s,e));
-  }catch(_){}
-  return raw.split('\n').map(function(l){return l.replace(/^[-\d."']+\s*/,'').trim();}).filter(function(l){return l.length>10;});
+    var res = await postModel('/api/models/comment-generator',{
+      text: post,
+      sentiment: sentiment,
+      num_comments: numComments,
+      platform: platform,
+      language: language,
+      provider: aiProvider
+    });
+    if(res && res.comments && res.comments.length) return res.comments;
+    if(res && res.comment) return [res.comment];
+    // fallback: try to parse raw
+    var raw = res && res.raw ? res.raw : (res && res.text ? res.text : null);
+    if(raw){
+      try{var s=raw.indexOf('['),e=raw.lastIndexOf(']')+1;if(s!==-1&&e>s)return JSON.parse(raw.substring(s,e));}catch(_){}}
+  }catch(e){
+    addLog('WARN','Comment generation endpoint failed: '+e.message);
+  }
+  return null;
+}
+
+function facebookPostUrl(value){
+  try{
+    var trimmed = String(value || '').trim();
+    var match = trimmed.match(/https?:\/\/[^\s]+/i);
+    var candidate = match ? match[0] : (/^(?:[a-z0-9-]+\.)*(?:facebook\.com|fb\.watch|fb\.com)/i.test(trimmed) ? 'https://' + trimmed : '');
+    if(!candidate) return '';
+    var url = new URL(candidate);
+    var host = (url.hostname || '').toLowerCase();
+    return (host.endsWith('facebook.com') || host.endsWith('fb.com') || host.endsWith('fb.watch')) && url.pathname !== '/' ? url.toString() : '';
+  }catch(_){return '';}
+}
+
+async function fetchFacebookPostForComment(url){
+  var response=await fetch(API_BASE+'/api/facebook/fetch-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url})});
+  var data=await response.json();
+  if(!response.ok)throw new Error(data.error||'Could not read that Facebook post.');
+  var post=data.post||{};
+  var text=(post.message||post.story||post.name||'').trim();
+  if(!post.id||!text)throw new Error('Facebook did not return readable text for this post. Check that the connected Page can access it.');
+  return{id:post.id,text:text,url:url};
+}
+
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g,function(character){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character];});
 }
 
 // Feature 9+13+14: Claude deep sentiment + sarcasm + topic extraction
-async function claudeAnalyzeSentiment(text){
+async function analyzeSentiment(text){
   try{
-    var result=await postModel('/api/models/sentiment',{text:text});
-    var bert=result.bert||{};
-    var vader=result.vader||null;
-    if(vader){bert.vader=vader;}
-    addLog('OK','BERT sentiment endpoint used ('+(bert.source||'model')+')');
+    var result=await postModel('/api/models/sentiment',{text:text,provider:aiProvider});
+    var bert=(result && result.bert) ? result.bert : result;
+    var vader=(result && result.vader) ? result.vader : null;
+    if(vader && bert){bert.vader=vader;}
+    addLog('OK','Sentiment analysis completed ('+(bert.source||'nlp-local-engine')+')');
     return bert;
   }catch(e){
-    addLog('WARN','BERT sentiment endpoint unavailable, using Claude/fallback: '+e.message);
+    addLog('WARN','Sentiment endpoint unavailable, using fallback: '+e.message);
   }
   var system='You are a social media sentiment analysis expert. Detect nuanced emotions, sarcasm, irony. Return ONLY valid JSON: {"sentiment":"positive|negative|neutral","confidence":0.0-1.0,"sarcasm_detected":true|false,"tone":"excited|angry|sad|hopeful|humorous|informative|frustrated|grateful|anxious","topics":["topic1","topic2"],"explanation":"one sentence","intensity":"mild|moderate|strong"}';
-  var raw=await callClaudeWithRetry({system,messages:[{role:'user',content:'Analyze: "'+text+'"'}]},1);
+  var raw=await callCloudAI({system,messages:[{role:'user',content:'Analyze: "'+text+'"'}]},1);
   if(!raw)return null;
   try{var s=raw.indexOf('{'),e=raw.lastIndexOf('}')+1;if(s!==-1)return JSON.parse(raw.substring(s,e));}catch(_){}
   return null;
 }
 
 // Feature 22+25: Claude toxicity explanation + ethical transparency
-async function claudeExplainToxicity(text,isToxic){
+async function explainToxicity(text,isToxic){
   try{
-    var result=await postModel('/api/models/toxicity',{text:text});
+    var result=await postModel('/api/models/toxicity',{text:text,provider:aiProvider});
     return result.explanation+' Source: '+(result.source||'model')+'.';
   }catch(e){
-    addLog('WARN','BERT toxicity endpoint unavailable, using Claude/fallback: '+e.message);
+    addLog('WARN','Cloud toxicity endpoint unavailable, using fallback: '+e.message);
   }
   var system='You are a content moderation assistant. Explain in 1-2 sentences why text is or is not toxic. Be professional and non-judgmental. No markdown.';
-  var raw=await callClaudeWithRetry({system,messages:[{role:'user',content:'Text: "'+text+'"\nVerdict: '+(isToxic?'toxic':'safe')+'\nExplain:'}]},1);
+  var raw=await callCloudAI({system,messages:[{role:'user',content:'Text: "'+text+'"\nVerdict: '+(isToxic?'toxic':'safe')+'\nExplain:'}]},1);
   return raw||'Analysis unavailable.';
 }
 
-// Feature 29+30: Claude scheduling strategy
-async function claudeScheduleStrategy(post,sentiment,topics,platform){
+// Feature 29+30: AI scheduling strategy
+async function scheduleStrategy(post,sentiment,topics,platform){
   try{
-    var engage=await postModel('/api/models/engagement',{text:post,sentiment:sentiment});
-    var sched=await postModel('/api/models/schedule',{text:post,sentiment:sentiment,predicted_engagement:engage.predicted_engagement});
+    var engage=await postModel('/api/models/engagement',{text:post,sentiment:sentiment,provider:aiProvider});
+    var sched=await postModel('/api/models/schedule',{text:post,sentiment:sentiment,predicted_engagement:engage.predicted_engagement,provider:aiProvider});
     sched.predicted_engagement=engage.predicted_engagement;
     sched.reasoning='Backend '+sched.model+' selected this slot using text, hashtag, and sentiment features.';
     sched.tip='Use a specific caption and invite a short response.';
     sched.hashtag_suggestions=(topics&&topics.length?topics.slice(0,2).map(function(t){return'#'+String(t).replace(/^#/,'').replace(/\s+/g,'');}):['#AI','#SocialMedia']);
     sched.engagement_source=engage.source;
-    addLog('OK','XGBoost/RF endpoints used ('+engage.source+' / '+sched.source+')');
+    addLog('OK','Cloud model endpoints used ('+engage.source+' / '+sched.source+')');
     return sched;
   }catch(e){
-    addLog('WARN','Scheduling model endpoint unavailable, using Claude/fallback: '+e.message);
+    addLog('WARN','Scheduling model endpoint unavailable, using cloud fallback: '+e.message);
   }
   var system='You are a social media scheduling expert. Return ONLY valid JSON: {"slot":"Morning (8-10 AM)|Afternoon (12-2 PM)|Evening (6-8 PM)|Night (9-11 PM)","best_day":"weekday|weekend","predicted_engagement":50-500,"reasoning":"one sentence","tip":"one actionable tip","hashtag_suggestions":["#tag1","#tag2"]}';
-  var raw=await callClaudeWithRetry({system,messages:[{role:'user',content:'Post: "'+post+'"\nSentiment: '+sentiment+'\nTopics: '+topics.join(', ')+'\nPlatform: '+platform}]},1);
+  var raw=await callCloudAI({system,messages:[{role:'user',content:'Post: "'+post+'"\nSentiment: '+sentiment+'\nTopics: '+topics.join(', ')+'\nPlatform: '+platform}]},1);
   if(!raw)return null;
   try{var s=raw.indexOf('{'),e=raw.lastIndexOf('}')+1;if(s!==-1)return JSON.parse(raw.substring(s,e));}catch(_){}
   return null;
@@ -829,13 +1795,13 @@ async function claudeScheduleStrategy(post,sentiment,topics,platform){
 
 // Q&A multi-turn
 var qaHistory=[];
-async function claudeQA(question){
-  var system='You are an AI assistant for a BRAC University CSE400 thesis: "Intelligent Bot for Automated Comment Generation and Content Posting using AI, ML and NLP". Project details: Models: BERT (sentiment 60% acc, F1=0.58), BERT (toxicity 90% acc), XGBoost (engagement RMSE=33.55), Random Forest (scheduling 60% acc, F1=0.67), VADER, Sentence Transformer, Claude API. Datasets: TweetEval 60k, Sentiment140 1.6M, Jigsaw 160k. Team: Masfiquil Islam, Tahsina Amrin, MD. Imtiaz Ahmed, Subrata Sutradhar. Supervisor: Fardin Zubair Nafis, Co-sup: MD. Shahriar Rahman. 40 features across 6 sections. Answer concisely and helpfully.';
+async function aiQA(question){
+  var system='You are an AI assistant for a BRAC University CSE400 thesis about an intelligent social bot for comment generation and content analysis. Project capabilities include sentiment, toxicity, engagement, scheduling, comment generation, persistence, and optional vision-provider image comments. Answer concisely and distinguish implemented behavior from planned work.';
   qaHistory.push({role:'user',content:question});
   if(qaHistory.length>20)qaHistory=qaHistory.slice(-20);
-  var raw=await callClaudeWithRetry({system,messages:qaHistory},1);
+  var raw=await callCloudAI({system,messages:qaHistory},1);
   if(raw)qaHistory.push({role:'assistant',content:raw});
-  return raw||'Unable to reach Claude API. Check API key in browser console.';
+  return raw||'Unable to reach cloud AI. Check API key in browser console.';
 }
 
 // ══════════════════════════════════════════════════════════
@@ -846,11 +1812,11 @@ function pbar(pct,color){return'<div class="bar"><div class="barf" style="width:
 
 function renderPreprocessCard(p){
   return'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">⚙️ PREPROCESSING (Features 1–7)</div>'
-    +'<div class="crow"><span class="clabel">Tokens (F2)</span><span style="font-size:11px">'+p.tokens.slice(0,6).join(' · ')+'</span></div>'
-    +'<div class="crow"><span class="clabel">Lemmatized (F4)</span><span style="font-size:11px">'+p.lemmatized.slice(0,5).join(' · ')+'</span></div>'
-    +(p.emojiMeanings.length?'<div class="crow"><span class="clabel">Emoji meaning (F5)</span><span style="font-size:11px">'+p.emojiMeanings.join(', ')+'</span></div>':'')
-    +(p.slangFound.length?'<div class="crow"><span class="clabel">Slang found (F6)</span><span style="font-size:11px">'+p.slangFound.join(', ')+'</span></div>':'')
-    +(p.hashtags.length?'<div class="crow"><span class="clabel">Hashtags (F1)</span><span style="font-size:11px">'+p.hashtags.join(' ')+'</span></div>':'')
+    +'<div class="crow"><span class="clabel">Tokens (F2)</span><span style="font-size:11px">'+p.tokens.slice(0,6).map(escapeHtml).join(' · ')+'</span></div>'
+    +'<div class="crow"><span class="clabel">Lemmatized (F4)</span><span style="font-size:11px">'+p.lemmatized.slice(0,5).map(escapeHtml).join(' · ')+'</span></div>'
+    +(p.emojiMeanings.length?'<div class="crow"><span class="clabel">Emoji meaning (F5)</span><span style="font-size:11px">'+p.emojiMeanings.map(escapeHtml).join(', ')+'</span></div>':'')
+    +(p.slangFound.length?'<div class="crow"><span class="clabel">Slang found (F6)</span><span style="font-size:11px">'+p.slangFound.map(escapeHtml).join(', ')+'</span></div>':'')
+    +(p.hashtags.length?'<div class="crow"><span class="clabel">Hashtags (F1)</span><span style="font-size:11px">'+p.hashtags.map(escapeHtml).join(' ')+'</span></div>':'')
     +'<div class="crow"><span class="clabel">Words / Chars (F7)</span><span style="font-size:11px">'+p.wordCount+' words · '+p.charCount+' chars</span></div>'
     +'</div>';
 }
@@ -858,23 +1824,35 @@ function renderPreprocessCard(p){
 // ══════════════════════════════════════════════════════════
 //  MODES
 // ══════════════════════════════════════════════════════════
-async function handleComment(text){
+async function handleComment(text,targetPost){
+  var generationStartedAt=performance.now();
   var pre=preprocessText(text);
   var vader=vaderSentiment(text);
   var prefHint=getPreferenceHint(vader.label); // Feature 33
   stats.analyzed++; stats['sent'+vader.label.charAt(0).toUpperCase()+vader.label.slice(1)]++;
   addLog('INFO','Processing post: "'+text.substring(0,50)+'"');
 
-  // Feature 9+13+14: Claude deep analysis
-  var claudeAnalysis=await claudeAnalyzeSentiment(text);
-  var sentiment=claudeAnalysis?claudeAnalysis.sentiment:vader.label;
+  // Feature 9+13+14: AI deep analysis
+  var aiAnalysis=aiProvider==='ollama'?null:await analyzeSentiment(text);
+  var sentiment=aiAnalysis?aiAnalysis.sentiment:vader.label;
 
-  // Feature 15+16: Claude multi-candidate generation
-  var rawComments=await claudeGenerateComments(text,sentiment,7,prefHint);
+  // Feature 15+16: AI multi-candidate generation
+  var rawComments=await generateComments(text,sentiment,3,prefHint);
   if(!rawComments||!rawComments.length){
     // Fallback
-    rawComments=['This is really inspiring — keep it up!','What a great perspective to share!','Thanks for posting this — really resonates!','Love the energy here, wishing you the best!','This made me smile — thank you for sharing!'];
+    var langEl = document.getElementById('lang-select');
+    var isBn = (langEl && langEl.value==='bn') || /[\u0980-\u09FF]/.test(text);
+    if(isBn){
+      rawComments=[
+        'আমাদের সাথে এই সুন্দর আপডেটটি শেয়ার করার জন্য আন্তরিক ধন্যবাদ! শুভকামনা রইল।',
+        'দারুণ লাগলো দেখে! প্রতিটি দিন এমন আনন্দ আর ইতিবাচকতায় ভরে উঠুক। ✨',
+        'আপনার এই পদক্ষেপ সত্যিই প্রশংসনীয় ও অনুপ্রেরণাদায়ক। পাশে আছি সবসময়! ❤️'
+      ];
+    } else {
+      rawComments=['This is really inspiring — keep it up!','What a great perspective to share!','Thanks for posting this — really resonates!','Love the energy here, wishing you the best!','This made me smile — thank you for sharing!'];
+    }
   }
+  rawComments=uniqueGeneratedComments(rawComments);
 
   // Feature 21: Context checking
   var contextKeywords=pre.lemmatized.concat(pre.hashtags.map(function(h){return h.replace('#','');}));
@@ -904,11 +1882,19 @@ async function handleComment(text){
     var opt=optimizeBoundary(c.text,'twitter');
     return{...c,text:opt.text,truncated:opt.truncated};
   });
+  safe=uniqueGeneratedComments(safe);
 
+  var elapsedSeconds=(performance.now()-generationStartedAt)/1000;
+  stats.generationSeconds+=elapsedSeconds;
   stats.generated+=safe.length;
   updateStats();
 
   var topComments=safe.slice(0,5);
+  var estimatedSavedSeconds=Math.max(0,topComments.length*90-elapsedSeconds);
+  var generationMetrics='<div class="generation-metrics" role="status" aria-label="Generation time and estimated time saved">'
+    +'<div><span>Generation time</span><strong>'+formatDuration(elapsedSeconds)+'</strong></div>'
+    +'<div><span>Estimated time saved</span><strong>'+formatDuration(estimatedSavedSeconds)+'</strong><small>Based on 90 sec per manual comment</small></div>'
+    +'</div>';
 
   // Feature 26: Low-confidence → manual review queue
   var lowConf=safe.filter(function(c){return c.score<0.65;});
@@ -925,25 +1911,31 @@ async function handleComment(text){
   // Check consistency (Feature 39)
   if(topComments[0])checkConsistency(topComments[0].text);
 
+  generatedComments=topComments.map(function(c){return {text:c.text,sentiment:sentiment,targetPostId:targetPost?targetPost.id:''};});
+  var targetCard=targetPost?'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">Facebook post</div><div style="font-size:12px;line-height:1.6">'+escapeHtml(targetPost.text)+'</div></div>':'';
   var chips=topComments.map(function(c,i){
     return'<div class="chip'+(i===0?' r1':'')+'" onclick="copyChip(this)" title="Relevance: '+Math.round(c.score*100)+'%'+(c.penalized?' · Repeat penalty applied':'')+(c.truncated?' · Truncated for Twitter':'')+'">'
-      +'<span style="font-size:10px;color:var(--faint)">#'+(i+1)+'</span> '+c.text+'</div>';
+      +'<span style="font-size:10px;color:var(--faint)">#'+(i+1)+'</span> '+escapeHtml(c.text)+'</div>'
+      +'<div class="comment-actions"><span style="width:100%;font-size:11px;color:var(--muted)">Do you want to post it or schedule it?</span>'
+      +'<button class="qbtn qbtn-post" onclick="postGeneratedComment('+i+')">'+(targetPost?'💬 Comment on this post':'Post it')+'</button>'
+      +'<button class="qbtn qbtn-app" onclick="scheduleGeneratedComment('+i+')">Schedule it</button></div>';
   }).join('');
 
-  var claudeCard=claudeAnalysis?'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">🤖 CLAUDE ANALYSIS (Features 9,13,14)</div>'
-    +'<div class="crow"><span class="clabel">Tone</span><span style="font-size:11px;font-weight:500">'+claudeAnalysis.tone+'</span></div>'
-    +'<div class="crow"><span class="clabel">Sarcasm (F13)</span><span style="font-size:11px">'+(claudeAnalysis.sarcasm_detected?'⚠️ Detected':'✅ None')+'</span></div>'
-    +'<div class="crow"><span class="clabel">Topics (F14)</span><span style="font-size:11px">'+(claudeAnalysis.topics||[]).slice(0,3).map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</span></div>'
-    +'<div class="crow"><span class="clabel">Confidence</span><span style="font-size:11px;font-weight:600">'+Math.round((claudeAnalysis.confidence||0.7)*100)+'%</span></div>'
-    +(claudeAnalysis.explanation?'<div style="font-size:11px;color:var(--muted);margin-top:4px;font-style:italic">'+claudeAnalysis.explanation+'</div>':'')
+  var aiCard=aiAnalysis?'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">🤖 AI Analysis (Features 9,13,14)</div>'
+    +'<div class="crow"><span class="clabel">Tone</span><span style="font-size:11px;font-weight:500">'+aiAnalysis.tone+'</span></div>'
+    +'<div class="crow"><span class="clabel">Sarcasm (F13)</span><span style="font-size:11px">'+(aiAnalysis.sarcasm_detected?'⚠️ Detected':'✅ None')+'</span></div>'
+    +'<div class="crow"><span class="clabel">Topics (F14)</span><span style="font-size:11px">'+(aiAnalysis.topics||[]).slice(0,3).map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</span></div>'
+    +'<div class="crow"><span class="clabel">Confidence</span><span style="font-size:11px;font-weight:600">'+Math.round((aiAnalysis.confidence||0.7)*100)+'%</span></div>'
+    +(aiAnalysis.explanation?'<div style="font-size:11px;color:var(--muted);margin-top:4px;font-style:italic">'+aiAnalysis.explanation+'</div>':'')
     +'</div>':'';
 
-  return renderPreprocessCard(pre)
+  return targetCard+renderPreprocessCard(pre)
     +'<div class="card"><div class="crow"><span class="clabel">⚡ VADER (F8)</span>'+sbadge(vader.label)+'</div>'
-    +'<div class="crow"><span class="clabel">🧠 BERT (F9)</span>'+sbadge(sentiment)+'</div>'
+    +'<div class="crow"><span class="clabel">'+(aiAnalysis?'🧠 BERT (F9)':'🧠 Local sentiment (VADER)')+'</span>'+sbadge(sentiment)+'</div>'
     +'<div class="crow"><span class="clabel">Sentiment branch</span><span style="font-size:11px">'+(sentiment==='positive'?'→ Happy reply (F10)':sentiment==='negative'?'→ Empathetic reply (F11)':'→ Informative reply (F12)')+'</span></div>'
     +'</div>'
-    +claudeCard
+    +aiCard
+    +generationMetrics
     +'<div style="margin-top:8px"><b>🏆 Ranked Comments</b> (F18) — '+topComments.length+' safe / '+blocked+' blocked (F22) / '+lowConf.length+' in queue (F26)</div>'
     +'<div class="chips">'+chips+'</div>'
     +(lowConf.length?'<div class="warn-box">⚠️ '+lowConf.length+' low-confidence comment(s) sent to <b>Approval Queue</b> for manual review (Feature 26)</div>':'')
@@ -956,7 +1948,7 @@ async function handleSentiment(text){
   stats.analyzed++; stats['sent'+vader.label.charAt(0).toUpperCase()+vader.label.slice(1)]++;
   addLog('INFO','Sentiment analysis: "'+text.substring(0,50)+'"');
 
-  var ca=await claudeAnalyzeSentiment(text);
+  var ca=await analyzeSentiment(text);
   var final=ca?ca.sentiment:vader.label;
   var pct=Math.round(((vader.compound||0)+1)/2*100);
   var barColor=final==='positive'?'#639922':final==='negative'?'#E24B4A':'#888';
@@ -975,7 +1967,7 @@ async function handleSentiment(text){
     +(final==='positive'?'<div class="tip-box">✅ F10: Positive branch → Generate happy, enthusiastic, supportive reply</div>':'')
     +(final==='negative'?'<div class="flag-box">❤️ F11: Negative branch → Generate empathetic, comforting, supportive reply</div>':'')
     +(final==='neutral'?'<div class="warn-box">ℹ️ F12: Neutral branch → Generate informative, thoughtful, clarifying reply</div>':'')
-    +(ca&&ca.explanation?'<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic">🤖 Claude: '+ca.explanation+'</div>':'')
+    +(ca&&ca.explanation?'<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic">🤖 AI: '+ca.explanation+'</div>':'')
     +'</div>';
 }
 
@@ -987,7 +1979,7 @@ async function handleToxicity(text){
 
   var backendTox=null;
   try{
-    backendTox=await postModel('/api/models/toxicity',{text:text});
+    backendTox=await postModel('/api/models/toxicity',{text:text,provider:aiProvider});
     tf.flagged=backendTox.toxic;
     tf.score=backendTox.score;
     tf.keywords=backendTox.keywords||tf.keywords;
@@ -996,7 +1988,7 @@ async function handleToxicity(text){
   }catch(e){
     addLog('WARN','Using browser toxicity prefilter: '+e.message);
   }
-  var expl=backendTox?backendTox.explanation:await claudeExplainToxicity(text,tf.flagged);
+  var expl=backendTox?backendTox.explanation:await explainToxicity(text,tf.flagged);
   var isToxic=tf.flagged;
   if(isToxic){stats.blocked++;}
   if(tf.topicFlagged){stats.flagged++;}
@@ -1028,7 +2020,7 @@ async function handleToxicity(text){
     +'F25: Ethical transparency → ✅ Bot-generated label applied<br>'
     +'F26: Manual review → '+(tf.score>0.1&&tf.score<0.35?'⚠️ Sent to queue':'✅ Auto-processed')
     +'</div></div>'
-    +(expl?'<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic">🤖 Claude explanation (F25): '+expl+'</div>':'');
+    +(expl?'<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic">🤖 AI explanation (F25): '+expl+'</div>':'');
 }
 
 async function handleSchedule(text){
@@ -1037,10 +2029,10 @@ async function handleSchedule(text){
   stats.analyzed++;
   addLog('INFO','Schedule prediction: "'+text.substring(0,50)+'"');
 
-  var ca=await claudeAnalyzeSentiment(text);
+  var ca=await analyzeSentiment(text);
   var sentiment=ca?ca.sentiment:vader.label;
   var topics=ca?ca.topics||[]:[];
-  var sched=await claudeScheduleStrategy(text,sentiment,topics,'twitter');
+  var sched=await scheduleStrategy(text,sentiment,topics,'twitter');
 
   // XGBoost engagement prediction (simulated)
   var baseEngage=80+Math.random()*200;
@@ -1058,12 +2050,12 @@ async function handleSchedule(text){
   // Feature 30: Dynamic schedule note
   var dynamicNote='Dynamic schedule updated based on current engagement trends (Feature 30)';
 
-  var claudeSlot=sched?sched.slot:rfSlot;
+  var aiSlot=sched?sched.slot:rfSlot;
 
   // Feature 30+31 scheduling display
   var schedCard=sched?'<div class="card">'
-    +'<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">🤖 CLAUDE SCHEDULING STRATEGY (Features 29-32)</div>'
-    +'<div class="crow"><span class="clabel">Recommended slot</span><span style="font-weight:600;color:var(--primary)">'+claudeSlot+'</span></div>'
+    +'<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">🤖 AI Scheduling Strategy (Features 29-32)</div>'
+    +'<div class="crow"><span class="clabel">Recommended slot</span><span style="font-weight:600;color:var(--primary)">'+aiSlot+'</span></div>'
     +'<div class="crow"><span class="clabel">Best day</span><span style="font-size:11px">'+sched.best_day+'</span></div>'
     +'<div class="crow"><span class="clabel">Hashtag suggestions</span><span>'+((sched.hashtag_suggestions||[]).map(function(t){return'<span class="tag">'+t+'</span>';}).join(''))+'</span></div>'
     +(sched.reasoning?'<div style="margin-top:6px;font-size:11px;color:var(--muted);font-style:italic">💡 '+sched.reasoning+'</div>':'')
@@ -1074,16 +2066,16 @@ async function handleSchedule(text){
     +'<b>📅 Scheduling & Engagement</b><div class="card">'
     +'<div class="crow"><span class="clabel">📊 XGBoost (F29)</span><span style="font-weight:700;color:var(--primary)">~'+predicted+' interactions predicted</span></div>'
     +'<div class="crow"><span class="clabel">🌲 Random Forest (F29)</span><span style="font-size:11px;font-weight:500">'+rfSlot+'</span></div>'
-    +'<div class="crow"><span class="clabel">🤖 Claude (F30)</span><span style="font-size:11px">'+claudeSlot+'</span></div>'
+    +'<div class="crow"><span class="clabel">🤖 AI (F30)</span><span style="font-size:11px">'+aiSlot+'</span></div>'
     +'<div class="crow"><span class="clabel">📌 Sentiment</span>'+sbadge(sentiment)+'</div>'
     +(topics.length?'<div class="crow"><span class="clabel">Topics</span><span>'+topics.slice(0,3).map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</span></div>':'')
     +'</div>'
-    +claudeCard
+    +schedCard
     +'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px">⚙️ SCHEDULING FEATURES</div>'
     +'<div style="font-size:12px;line-height:1.8">'
     +'F27: Auto-publish → ✅ API ready (simulate with Approve & Post)<br>'
     +'F28: Tracking → ✅ Engagement logged (see Analytics)<br>'
-    +'F29: Timing prediction → ✅ XGBoost + RF + Claude<br>'
+    +'F29: Timing prediction → ✅ XGBoost + RF + AI<br>'
     +'F30: Dynamic schedule → ✅ '+dynamicNote+'<br>'
     +'F31: Frequency cap → ✅ '+freqCap.count+'/'+freqCap.limit+' posts this hour<br>'
     +'F32: Timing simulation → ✅ ~'+Math.round(humanizedDelay()/1000,1)+'s delay on next post'
@@ -1099,13 +2091,26 @@ async function handleSchedule(text){
 
 async function handleQA(text){
   addLog('INFO','Q&A: "'+text.substring(0,60)+'"');
-  var ans=await claudeQA(text);
-  return'<span style="font-size:11px;color:var(--primary);font-weight:600">🤖 Project Q&A — Claude API</span><br><br>'+ans+'<div style="margin-top:10px;font-size:11px;color:var(--faint)">Multi-turn conversation active · '+qaHistory.length/2+' turns</div>';
+  var ans=await aiQA(text);
+  return'<span style="font-size:11px;color:var(--primary);font-weight:600">🤖 Project Q&A — AI Provider</span><br><br>'+ans+'<div style="margin-top:10px;font-size:11px;color:var(--faint)">Multi-turn conversation active · '+qaHistory.length/2+' turns</div>';
 }
 
 // ══════════════════════════════════════════════════════════
 //  CHAT
 // ══════════════════════════════════════════════════════════
+function scheduleDateTimeDefaults(){
+  var next=new Date(Date.now()+15*60*1000); next.setSeconds(0,0);
+  document.getElementById('schedule-date').value=next.getFullYear()+'-'+String(next.getMonth()+1).padStart(2,'0')+'-'+String(next.getDate()).padStart(2,'0');
+  document.getElementById('schedule-time').value=String(next.getHours()).padStart(2,'0')+':'+String(next.getMinutes()).padStart(2,'0');
+}
+async function postGeneratedComment(index){var item=generatedComments[index];if(!item)return;var isComment=Boolean(item.targetPostId);if(!confirm(isComment?'Post this comment on the selected Facebook post?':'Post this comment to the Facebook Page feed?'))return;try{var response=await fetch(API_BASE+(isComment?'/api/facebook/comment':'/api/facebook/post'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(isComment?{post_id:item.targetPostId,message:item.text}:{message:item.text})});var data=await response.json();if(!response.ok)throw new Error(data.error||(isComment?'Facebook comment failed.':'Facebook post failed.'));learnFromApproval(item.text,item.sentiment);stats.approved++;updateStats();addLog('OK',isComment?'Commented on Facebook post '+item.targetPostId+'.':'Posted to the Facebook Page feed.');alert(isComment?'Comment posted successfully.':'Posted to Facebook successfully.');}catch(error){addLog('ERR',error.message);alert(error.message);}}
+function scheduleGeneratedComment(index){var item=generatedComments[index];if(!item)return;selectedScheduleComment=item.text;document.getElementById('scheduled-comment-preview').textContent=item.text;document.getElementById('schedule-feedback').textContent='';scheduleDateTimeDefaults();selectSchedulePlatform('facebook');openScheduler();}
+function openScheduler(){showPanel('scheduler');loadSchedules();}
+function selectSchedulePlatform(platform){selectedSchedulePlatform=platform;document.querySelectorAll('.platform-btn').forEach(function(button){button.setAttribute('aria-pressed',String(button.dataset.platform===platform));});}
+function renderScheduledItems(items){var list=document.getElementById('scheduled-list');list.innerHTML='';if(!items.length){list.innerHTML='<div class="empty">No comments scheduled yet.</div>';return;}items.forEach(function(item){var row=document.createElement('div'),comment=document.createElement('div'),meta=document.createElement('div');row.className='scheduled-item';comment.textContent=item.comment_text;meta.className='scheduled-meta';meta.textContent=(item.platform==='twitter'?'Twitter / X':item.platform.charAt(0).toUpperCase()+item.platform.slice(1))+' · '+new Date(item.scheduled_at).toLocaleString()+' · '+item.status;row.append(comment,meta);list.appendChild(row);});}
+async function loadSchedules(){try{var response=await fetch(API_BASE+'/api/schedules');if(!response.ok)throw new Error('Could not load schedules.');var data=await response.json();renderScheduledItems(data.items||[]);}catch(error){document.getElementById('scheduled-list').innerHTML='<div class="empty">Unable to load schedules. Please refresh and try again.</div>';addLog('ERR',error.message);}}
+async function saveSchedule(){var date=document.getElementById('schedule-date').value,time=document.getElementById('schedule-time').value,feedback=document.getElementById('schedule-feedback');if(!selectedScheduleComment){feedback.textContent='Choose “Schedule it” below a generated comment first.';feedback.style.color='var(--danger)';return;}if(!date||!time||!selectedSchedulePlatform){feedback.textContent='Choose a date, time, and platform.';feedback.style.color='var(--danger)';return;}var scheduledAt=new Date(date+'T'+time);if(Number.isNaN(scheduledAt.getTime())||scheduledAt.getTime()<=Date.now()){feedback.textContent='Choose a future date and time.';feedback.style.color='var(--danger)';return;}var submit=document.getElementById('schedule-submit');submit.disabled=true;try{var response=await fetch(API_BASE+'/api/schedules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment:selectedScheduleComment,platform:selectedSchedulePlatform,scheduled_at:scheduledAt.getTime()})});var data=await response.json();if(!response.ok)throw new Error(data.error||'Could not save schedule.');feedback.textContent='Scheduled for '+scheduledAt.toLocaleString()+' on '+(selectedSchedulePlatform==='twitter'?'Twitter / X':selectedSchedulePlatform)+'.';feedback.style.color='var(--success)';addLog('OK','Comment scheduled for '+scheduledAt.toLocaleString()+' on '+selectedSchedulePlatform+'.');selectedScheduleComment='';await loadSchedules();}catch(error){feedback.textContent=error.message;feedback.style.color='var(--danger)';addLog('ERR',error.message);}finally{submit.disabled=false;}}
+
 function addMsg(html,who){
   var msgs=document.getElementById('msgs');
   var d=document.createElement('div');
@@ -1130,6 +2135,108 @@ function removeTyping(){var t=document.getElementById('typing');if(t)t.remove();
 
 function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
 
+function showImagePanel(){showPanel('image');}
+function showConnectPanel(){showPanel('connect');}
+function showConnectMessage(message){document.getElementById('connect-state').textContent=message;}
+function startSocialAuth(provider){showConnectMessage('Opening secure '+provider+' authorization...');window.location.href=API_BASE+'/auth/'+provider+'/start';}
+function handleSocialAuthResult(){
+  var params=new URLSearchParams(window.location.search);
+  var connected=params.get('connected');
+  var error=params.get('connect_error');
+  if(connected){
+    showConnectPanel();
+    showConnectMessage(connected.toUpperCase()+' account connected successfully. ✅');
+    window.history.replaceState({},document.title,window.location.pathname);
+    syncBackendStatus();
+    addLog('OK',connected.toUpperCase()+' account connected via OAuth.');
+  }else if(error){
+    showConnectPanel();
+    showConnectMessage('Could not connect account: '+error);
+    window.history.replaceState({},document.title,window.location.pathname);
+    addLog('ERR','Social auth failed: '+error);
+  }
+}
+
+async function postGeneratedXComment(){
+  const input = document.getElementById('x-post-url');
+  const url = (input ? input.value : '').trim();
+  if(!url){
+    showConnectMessage('Paste a valid X/Twitter post URL before posting.');
+    return;
+  }
+  try{
+    showConnectMessage('Generating and posting a reply to the selected X post...');
+    const response = await fetch(API_BASE + '/api/x/comment', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({post_url: url, provider: 'openai'})
+    });
+    const data = await response.json();
+    if(!response.ok) throw new Error(data.error || 'X reply failed.');
+    showConnectMessage('✅ X reply posted successfully: ' + data.comment);
+    addLog('OK','Posted X reply to ' + url + ': ' + data.comment);
+  }catch(error){
+    showConnectMessage(error.message);
+    addLog('ERR',error.message);
+  }
+}
+
+function formatFileSize(bytes){if(bytes<1024)return bytes+' B';if(bytes<1024*1024)return (bytes/1024).toFixed(1)+' KB';return (bytes/(1024*1024)).toFixed(1)+' MB';}
+function showSelectedImage(file){
+  var preview=document.getElementById('image-preview'), row=document.getElementById('drive-file-row');
+  if(!file){preview.style.display='none';row.classList.remove('is-visible');return;}
+  document.getElementById('drive-file-name').textContent=file.name;
+  document.getElementById('drive-file-size').textContent=formatFileSize(file.size)+' · '+file.type;
+  row.classList.add('is-visible'); preview.src=URL.createObjectURL(file); preview.style.display='block';
+}
+document.getElementById('image-file').addEventListener('change',function(){showSelectedImage(this.files[0]);});
+document.getElementById('drive-remove').addEventListener('click',function(){var input=document.getElementById('image-file');input.value='';showSelectedImage(null);});
+var driveDropzone=document.getElementById('drive-dropzone');
+['dragenter','dragover'].forEach(function(eventName){driveDropzone.addEventListener(eventName,function(event){event.preventDefault();driveDropzone.classList.add('is-dragging');});});
+['dragleave','drop'].forEach(function(eventName){driveDropzone.addEventListener(eventName,function(event){event.preventDefault();driveDropzone.classList.remove('is-dragging');});});
+driveDropzone.addEventListener('drop',function(event){var file=event.dataTransfer.files[0];if(file&&file.type.startsWith('image/')){var input=document.getElementById('image-file');var transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;showSelectedImage(file);}});
+
+document.getElementById('image-form').addEventListener('submit',async function(event){
+  event.preventDefault();
+  var file=document.getElementById('image-file').files[0];
+  if(!file)return;
+  var result=document.getElementById('image-result'), button=document.getElementById('image-submit');
+  var form=new FormData();
+  form.append('image_file',file); form.append('platform',document.getElementById('image-platform').value); form.append('tone',document.getElementById('image-tone').value); form.append('provider',document.getElementById('image-provider').value);
+  button.disabled=true; result.style.display='none';
+  try{
+    var response=await fetch(API_BASE+'/api/comment/image',{method:'POST',body:form});
+    var data=await response.json();
+    result.className='image-result '+(response.ok?'image-ok':'image-error');
+    if(response.ok){
+      result.replaceChildren();
+      var desc = data.description || '';
+      var comm = data.comment || '';
+      if(!desc && comm && (comm.includes("What's happening in the image:") || comm.includes("Description:"))){
+        var parts = comm.split(/Generated Comment:|Comment:/i);
+        desc = parts[0].replace(/.*What's happening in the image:?\s*|.*Description:?\s*/i, '').replace(/🖼️/g, '').trim();
+        comm = (parts[1] || '').replace(/💬/g, '').trim();
+      }
+
+      if(desc){
+        var descBox = document.createElement('div');
+        descBox.style.cssText = 'background:var(--primary-l);border-left:3.5px solid var(--primary);padding:11px 13px;border-radius:6px;margin-bottom:12px;text-align:left';
+        descBox.innerHTML = '<div style="font-weight:700;font-size:12px;color:var(--primary);margin-bottom:4px">🖼️ What\'s happening in the image:</div><div style="font-size:13.5px;line-height:1.55;color:var(--text);font-weight:500">' + escapeHtml(desc) + '</div>';
+        result.appendChild(descBox);
+      }
+
+      var commBox = document.createElement('div');
+      commBox.style.cssText = 'background:var(--surface);border:1px solid var(--border);padding:11px 13px;border-radius:6px;text-align:left';
+      commBox.innerHTML = '<div style="font-weight:700;font-size:12px;color:var(--success);margin-bottom:4px">💬 Generated Comment:</div><div style="font-size:14px;line-height:1.5;color:var(--text);font-weight:600">' + escapeHtml(comm || 'No comment generated') + '</div>';
+      result.appendChild(commBox);
+    } else {
+      result.textContent = 'Status ' + response.status + ': ' + (data.error || 'Image processing failed.');
+    }
+    result.style.display='block'; addLog(response.ok?'OK':'WARN','Image comment request '+(response.ok?'completed':'rejected'));
+  }catch(error){result.className='image-result image-error';result.textContent='Backend connection failed: '+error.message;result.style.display='block';addLog('ERR',error.message);}
+  finally{button.disabled=false;}
+});
+
 function copyChip(el){
   var text=el.textContent.replace(/^#\d+\s*/,'').trim();
   navigator.clipboard.writeText(text).catch(function(){});
@@ -1149,7 +2256,14 @@ async function send(){
 
   try{
     var html;
-    if(mode==='comment')   html=await handleComment(text);
+    if(mode==='comment'){
+      var postUrl=facebookPostUrl(text);
+      if(postUrl){
+        addLog('INFO','Fetching Facebook post for comment generation.');
+        var facebookPost=await fetchFacebookPostForComment(postUrl);
+        html=await handleComment(facebookPost.text,facebookPost);
+      }else html=await handleComment(text);
+    }
     else if(mode==='sentiment') html=await handleSentiment(text);
     else if(mode==='toxicity')  html=await handleToxicity(text);
     else if(mode==='schedule'){
@@ -1173,17 +2287,17 @@ async function handleScheduleFixed(text){
   var vader=vaderSentiment(text);
   stats.analyzed++;
   addLog('INFO','Schedule prediction: "'+text.substring(0,50)+'"');
-  var ca=await claudeAnalyzeSentiment(text);
+  var ca=await analyzeSentiment(text);
   var sentiment=ca?ca.sentiment:vader.label;
   var topics=ca?ca.topics||[]:[];
-  var sched=await claudeScheduleStrategy(text,sentiment,topics,'twitter');
+  var sched=await scheduleStrategy(text,sentiment,topics,'twitter');
   var predicted=sched&&sched.predicted_engagement?sched.predicted_engagement:Math.round((80+Math.random()*200)*(sentiment==='positive'?1.3:sentiment==='negative'?0.7:1.0)+pre.hashtags.length*15);
   var rfSlot=sched&&sched.slot?sched.slot:['Morning (6–10 AM)','Afternoon (12–2 PM)','Evening (6–8 PM)','Night (9–11 PM)'][Math.floor(Math.random()*4)];
   trackEngagement(text,predicted);
   updateStats();
-  var claudeSlot=sched?sched.slot:rfSlot;
+  var aiSlot=sched?sched.slot:rfSlot;
   var schedCard=sched?'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">🤖 BACKEND SCHEDULING MODELS (Features 29-32)</div>'
-    +'<div class="crow"><span class="clabel">Recommended slot</span><span style="font-weight:600;color:var(--primary)">'+claudeSlot+'</span></div>'
+    +'<div class="crow"><span class="clabel">Recommended slot</span><span style="font-weight:600;color:var(--primary)">'+aiSlot+'</span></div>'
     +'<div class="crow"><span class="clabel">Best day</span><span style="font-size:11px">'+sched.best_day+'</span></div>'
     +(sched.hashtag_suggestions?'<div class="crow"><span class="clabel">Hashtags</span><span>'+sched.hashtag_suggestions.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</span></div>':'')
     +(sched.reasoning?'<div style="margin-top:6px;font-size:11px;color:var(--muted);font-style:italic">💡 '+sched.reasoning+'</div>':'')
@@ -1193,7 +2307,7 @@ async function handleScheduleFixed(text){
     +'<b>📅 Scheduling & Engagement Prediction</b><div class="card">'
     +'<div class="crow"><span class="clabel">📊 XGBoost prediction (F29)</span><span style="font-weight:700;color:var(--primary)">~'+predicted+' interactions</span></div>'
     +'<div class="crow"><span class="clabel">🌲 Random Forest slot (F29)</span><span style="font-size:11px;font-weight:500">'+rfSlot+'</span></div>'
-    +'<div class="crow"><span class="clabel">🤖 Claude recommendation (F30)</span><span style="font-size:11px">'+claudeSlot+'</span></div>'
+    +'<div class="crow"><span class="clabel">🤖 AI recommendation (F30)</span><span style="font-size:11px">'+aiSlot+'</span></div>'
     +'<div class="crow"><span class="clabel">Sentiment</span>'+sbadge(sentiment)+'</div>'
     +(topics.length?'<div class="crow"><span class="clabel">Topics (F14)</span><span>'+topics.slice(0,3).map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</span></div>':'')+'</div>'
     +schedCard
@@ -1222,9 +2336,9 @@ function setMode(m){
     document.getElementById('nb-'+x).classList.toggle('active',x===m);
   });
   document.getElementById('inp').placeholder={
-    comment:'Paste a social media post to generate ranked, context-aware comments...',
+    comment:'Paste a social media post or Facebook post link to generate ranked comments...',
     sentiment:'Enter text to analyze with VADER + BERT + Claude (sarcasm detection included)...',
-    toxicity:'Enter text to check safety — BERT + keyword filter + Claude explanation...',
+    toxicity:'Enter text to check safety — BERT + keyword filter + AI explanation...',
     schedule:'Paste a post to predict engagement (XGBoost) and best posting time (RF + Claude)...',
     qa:'Ask anything about the thesis: BERT, XGBoost, datasets, model accuracy, features...'
   }[m];
@@ -1232,15 +2346,21 @@ function setMode(m){
   var rp=document.getElementById('rpanel');
   var rt=document.getElementById('rp-title');
   var rc=document.getElementById('rp-content');
-  rp.classList.toggle('open',slist.length>0);
+  rp.classList.add('open');
   rt.textContent=m==='qa'?'Sample questions':'Try these';
   rc.innerHTML=slist.map(function(s){return'<div class="samp" onclick="useSamp(this)">'+s+'</div>';}).join('');
+  document.getElementById('view-title').textContent={comment:'Comment generation',sentiment:'Sentiment analysis',toxicity:'Safety analysis',schedule:'Scheduling',qa:'Ask the assistant'}[m]||'Comment generation';
   showPanel('chat');
 }
 
 function showPanel(p){
   currentPanel=p;
-  ['chat','dashboard','queue','drafts','logs'].forEach(function(x){
+  var viewTitles={chat:{comment:'Comment generation',sentiment:'Sentiment analysis',toxicity:'Safety analysis',schedule:'Scheduling',qa:'Ask the assistant'},image:'Image comments',fbcomment:'Facebook commenter',connect:'Connected accounts',pricing:'Bot Packages & Billing',dashboard:'Analytics',queue:'Approval queue',drafts:'Saved drafts',scheduler:'Scheduler',logs:'Activity log',models:'Models'};
+  var titleEl=document.getElementById('view-title');
+  if(titleEl) titleEl.textContent=p==='chat'?(viewTitles.chat[mode]||'Comment generation'):(viewTitles[p]||'Workspace');
+  var workspacePane=document.getElementById('rpanel');
+  if(workspacePane)workspacePane.style.display=(p==='models'||p==='pricing')?'none':'';
+  ['chat','image','fbcomment','connect','dashboard','queue','drafts','scheduler','logs','models','pricing'].forEach(function(x){
     var el=document.getElementById('panel-'+x);
     var tb=document.getElementById('tab-'+x);
     var nb=document.getElementById('nb-'+x);
@@ -1252,37 +2372,985 @@ function showPanel(p){
   if(p==='queue')renderQueue();
   if(p==='drafts')renderDrafts();
   if(p==='dashboard')updateStats();
+  if(p==='pricing')loadPricingData();
 }
 
 function useSamp(el){document.getElementById('inp').value=el.textContent;document.getElementById('inp').focus();}
 
+function filterWorkspace(query){
+  var value=String(query||'').trim().toLocaleLowerCase();
+  document.querySelectorAll('.nav-btn').forEach(function(button){
+    button.hidden=value&&!button.textContent.toLocaleLowerCase().includes(value);
+  });
+  document.querySelectorAll('#rp-content .samp').forEach(function(example){
+    example.hidden=value&&!example.textContent.toLocaleLowerCase().includes(value);
+  });
+}
+
+function startNewChat(){
+  document.getElementById('msgs').innerHTML='';
+  document.getElementById('inp').value='';
+  document.getElementById('inp').style.height='38px';
+  convId=null;
+  setMode('comment');
+  showWelcome();
+  document.getElementById('inp').focus();
+  addLog('INFO','New analysis started.');
+}
+
+// ══════════════════════════════════════════════════════════
+//  FB COMMENTER — Raw Feed with Reply with AI
+// ══════════════════════════════════════════════════════════
+function showFbCommenter(){ showPanel('fbcomment'); fbLoadFeed(); }
+
+function escHtml(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+async function fbLoadFeed(){
+  var container = document.getElementById('fb-feed-container');
+  var html = document.getElementById('fb-feed-html');
+  container.style.display = 'block';
+  html.innerHTML = '<p style="color:var(--muted);padding:12px">Loading latest comments...</p>';
+  try {
+    var res = await fetch(API_BASE+'/api/facebook/feed', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({limit:5})
+    });
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'Failed to load feed.');
+    var posts = data.posts || [];
+    var recentComments = [];
+    posts.forEach(function(post){
+      ((post.comments && post.comments.data) || []).forEach(function(comment){
+        if(!comment.id || !comment.message) return;
+        recentComments.push({
+          id: comment.id,
+          message: comment.message,
+          created_time: comment.created_time || '',
+          post_id: post.id || '',
+          post_message: post.message || post.story || ''
+        });
+      });
+    });
+    recentComments.sort(function(a,b){
+      return (Date.parse(b.created_time || '') || 0) - (Date.parse(a.created_time || '') || 0);
+    });
+    recentComments = recentComments.slice(0,5);
+    html.replaceChildren();
+    html.replaceChildren();
+    if(!posts.length){
+      var empty = document.createElement('p');
+      empty.style.color = 'var(--muted)';
+      empty.textContent = 'No posts on your Page yet.';
+      html.appendChild(empty);
+      return;
+    }
+    posts.forEach(function(post){
+      var row = document.createElement('article');
+      row.style.cssText = 'border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--bg)';
+      
+      var pMeta = document.createElement('div');
+      pMeta.style.cssText = 'font-size:11px;color:var(--muted);margin-bottom:6px';
+      pMeta.textContent = '📌 POST · ' + (post.created_time ? new Date(post.created_time).toLocaleString() : '') + ' (ID: ' + post.id + ')';
+      
+      var pBody = document.createElement('div');
+      pBody.style.cssText = 'font-size:13px;line-height:1.5;margin-bottom:10px;font-weight:500';
+      pBody.textContent = post.message || post.story || '[No text content]';
+
+      var pActions = document.createElement('div');
+      pActions.style.cssText = 'margin-bottom:8px';
+      var postBtn = document.createElement('button');
+      postBtn.className = 'qbtn qbtn-post';
+      postBtn.type = 'button';
+      postBtn.textContent = '💬 Generate & Post Comment';
+      postBtn.addEventListener('click', function(){
+        fbGenCommentOnPost(post.id, post.message || post.story || '', postBtn);
+      });
+      pActions.appendChild(postBtn);
+
+      row.append(pMeta, pBody, pActions);
+
+      var comments = (post.comments && post.comments.data) || [];
+      if(comments.length > 0){
+        var cHeading = document.createElement('div');
+        cHeading.style.cssText = 'font-size:11px;font-weight:700;color:var(--muted);margin:10px 0 6px';
+        cHeading.textContent = 'COMMENTS (' + comments.length + ')';
+        row.appendChild(cHeading);
+
+        comments.forEach(function(comment){
+          var cBox = document.createElement('div');
+          cBox.style.cssText = 'border-left:3px solid var(--primary);padding:8px 12px;margin-bottom:6px;background:var(--card);border-radius:0 6px 6px 0';
+          
+          var cMsg = document.createElement('div');
+          cMsg.style.cssText = 'font-size:12px;line-height:1.4';
+          cMsg.textContent = comment.message || '[Empty]';
+
+          var cMeta = document.createElement('div');
+          cMeta.style.cssText = 'font-size:10px;color:var(--faint);margin-top:2px;margin-bottom:6px';
+          var author = (comment.from && comment.from.name) || 'User';
+          var timeStr = comment.created_time ? new Date(comment.created_time).toLocaleString() : '';
+          cMeta.textContent = '— ' + author + (timeStr ? ' · ' + timeStr : '');
+
+          var replyArea = document.createElement('div');
+          replyArea.id = 'reply-area-' + comment.id;
+
+          var replyBtn = document.createElement('button');
+          replyBtn.className = 'qbtn qbtn-post';
+          replyBtn.type = 'button';
+          replyBtn.textContent = 'Reply with AI';
+          replyBtn.addEventListener('click', function(){
+            fbReplyWithAI(comment.id, comment.message || '', post.message || '', replyBtn);
+          });
+          replyArea.appendChild(replyBtn);
+
+          cBox.append(cMsg, cMeta, replyArea);
+          row.appendChild(cBox);
+        });
+      }
+
+      html.appendChild(row);
+    });
+    addLog('OK','Loaded ' + posts.length + ' latest Page posts with comments.');
+  } catch(e) {
+    html.replaceChildren();
+    var error = document.createElement('p');
+    error.style.color = 'var(--danger)';
+    error.textContent = e.message;
+    html.appendChild(error);
+    addLog('ERR','Feed load failed: '+e.message);
+  }
+}
+
+async function fbFetchPost(){
+  var url = document.getElementById('fb-post-url').value.trim();
+  if(!url){ alert('Paste a Facebook post URL first.'); return; }
+  var btn = document.getElementById('fb-fetch-btn');
+  btn.disabled = true;
+  var container = document.getElementById('fb-feed-container');
+  var html = document.getElementById('fb-feed-html');
+  container.style.display = 'block';
+  html.innerHTML = '<p style="color:var(--muted);padding:12px">Fetching post...</p>';
+  try {
+    var res = await fetch(API_BASE+'/api/facebook/fetch-post', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({url: url})
+    });
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'Failed to fetch post.');
+    var post = data.post;
+    var postUrl = post.permalink_url || url;
+    post.permalink_url = postUrl;
+    window.fbCurrentFetchedPost = post;
+    window.fbCurrentFetchedUrl = url;
+    var postTime = post.created_time ? new Date(post.created_time).toLocaleString() : '';
+    var postText = post.message || post.story || post.name || '[No title or text]';
+    
+    html.replaceChildren();
+
+    var card = document.createElement('div');
+    card.style.cssText = 'border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)';
+
+    if(post.is_external){
+      var extBanner = document.createElement('div');
+      extBanner.style.cssText = 'background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;line-height:1.5;color:var(--text)';
+      extBanner.innerHTML = '<strong>🌐 Public Facebook Post</strong><br><span style="color:var(--muted)">Meta does not permit third-party apps to comment on external pages via API to prevent spam. Use <strong>📋 Copy & Open on FB</strong> below to paste directly, or <strong>📢 Post to My Page Feed</strong> to share it!</span>';
+      card.appendChild(extBanner);
+    }
+
+    var header = document.createElement('div');
+    header.style.cssText = 'font-size:11px;font-weight:700;color:var(--primary);margin-bottom:6px';
+    var authorStr = post.name ? ' · By: ' + post.name : (post.from && post.from.name ? ' · By: ' + post.from.name : '');
+    header.textContent = (post.is_external ? '🌐 PUBLIC FACEBOOK POST' : '📌 FACEBOOK POST CONTENT') + authorStr;
+
+    var body = document.createElement('div');
+    body.style.cssText = 'font-size:14px;line-height:1.6;margin-bottom:12px;font-weight:500;padding:12px;background:var(--card);border-radius:8px;white-space:pre-wrap';
+    body.textContent = postText;
+
+    var meta = document.createElement('div');
+    meta.style.cssText = 'font-size:11px;color:var(--muted);margin-bottom:14px';
+    meta.textContent = (postTime ? 'Created: ' + postTime + ' · ' : '') + 'ID: ' + post.id;
+
+    var actRow = document.createElement('div');
+    actRow.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px';
+
+    var genBtn = document.createElement('button');
+    genBtn.className = 'qbtn qbtn-post';
+    genBtn.type = 'button';
+    genBtn.textContent = '🔄 Regenerate Comments';
+    actRow.appendChild(genBtn);
+
+    if(postUrl){
+      var openBtn = document.createElement('button');
+      openBtn.className = 'qbtn';
+      openBtn.type = 'button';
+      openBtn.textContent = '🔗 Open on Facebook';
+      openBtn.addEventListener('click', function(){
+        window.open(postUrl, '_blank');
+      });
+      actRow.appendChild(openBtn);
+    }
+
+    var candArea = document.createElement('div');
+    candArea.id = 'fb-candidates-' + post.id;
+
+    genBtn.addEventListener('click', function(){
+      fbGenCommentOnPost(post.id, postText, genBtn, candArea);
+    });
+
+    card.append(header, body, meta, actRow, candArea);
+    html.appendChild(card);
+    addLog('OK','Fetched post: ' + postText.substring(0,50));
+
+    // Automatically trigger AI comment generation upon fetch
+    fbGenCommentOnPost(post.id, postText, genBtn, candArea);
+  } catch(e) {
+    html.innerHTML = '<p style="color:var(--danger)">'+escHtml(e.message)+'</p>';
+    addLog('ERR','Fetch failed: '+e.message);
+  } finally { btn.disabled = false; }
+}
+
+async function fbReplyWithAI(commentId, commentText, postText, btn){
+  var provider = document.getElementById('fb-provider').value;
+  var langEl = document.getElementById('fb-lang');
+  var language = langEl ? langEl.value : 'auto';
+  var area = document.getElementById('reply-area-'+commentId);
+  if(!area) return;
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+  try {
+    var prompt = 'Someone commented on a Facebook post. Write a short, friendly reply (1-2 sentences max).\n\nOriginal post: "'+postText+'"\nComment: "'+commentText+'"\n\nReply:';
+    var res = await fetch(API_BASE+'/api/models/comment-generator', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text: prompt, sentiment:'neutral', num_comments:1, platform:'facebook', provider:provider, language:language})
+    });
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'AI generation failed.');
+    var comments = data.comments || (data.comment ? [data.comment] : []);
+    var first = comments.length ? comments[0] : '';
+    var reply = typeof first === 'string' ? first : (first && first.text ? first.text : '');
+    if(!reply) throw new Error('The AI did not return a reply.');
+    var preview = document.createElement('div');
+    preview.style.cssText = 'margin-top:6px;padding:8px;background:var(--primary-l);border-radius:8px;font-size:12px';
+    var heading = document.createElement('div');
+    heading.style.cssText = 'font-weight:600;font-size:10px;color:var(--primary);margin-bottom:4px';
+    heading.textContent = 'AI REPLY PREVIEW';
+    var replyText = document.createElement('div');
+    replyText.id = 'reply-text-' + commentId;
+    replyText.style.cssText = 'margin-bottom:8px;line-height:1.5';
+    replyText.textContent = reply;
+    var postButton = document.createElement('button');
+    postButton.className = 'qbtn qbtn-post';
+    postButton.type = 'button';
+    postButton.style.marginRight = '6px';
+    postButton.textContent = 'Post Reply';
+    postButton.addEventListener('click', function(){ fbSendReply(commentId, postButton); });
+    var regenerateButton = document.createElement('button');
+    regenerateButton.className = 'qbtn qbtn-app';
+    regenerateButton.type = 'button';
+    regenerateButton.textContent = 'Regenerate';
+    regenerateButton.addEventListener('click', function(){
+      fbReplyWithAI(commentId, commentText, postText, regenerateButton);
+    });
+    preview.append(heading, replyText, postButton, regenerateButton);
+    area.replaceChildren(preview);
+    addLog('OK','AI reply generated for comment '+commentId);
+  } catch(e) {
+    btn.textContent = 'Reply with AI';
+    btn.disabled = false;
+    var error = document.createElement('div');
+    error.style.cssText = 'color:var(--danger);font-size:11px;margin-top:4px';
+    error.textContent = e.message;
+    area.appendChild(error);
+    addLog('ERR','AI reply failed: '+e.message);
+  }
+}
+
+async function fbSendReply(commentId, btn){
+  var textEl = document.getElementById('reply-text-'+commentId);
+  var message = textEl ? textEl.textContent : '';
+  if(!message){ alert('No reply text.'); return; }
+  btn.disabled = true;
+  btn.textContent = 'Posting...';
+  var resultEl = document.getElementById('fb-result');
+  try {
+    var res = await fetch(API_BASE+'/api/facebook/reply', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({comment_id: commentId, message: message})
+    });
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'Failed to post reply.');
+    btn.textContent = '✅ Reply Posted!';
+    btn.style.color = 'var(--success)';
+    resultEl.className = 'image-result image-ok';
+    resultEl.textContent = 'Reply posted! ID: '+(data.reply?data.reply.id:'OK');
+    resultEl.style.display = 'block';
+    stats.approved++;
+    updateStats();
+    addLog('OK','Reply posted on comment '+commentId);
+  } catch(e) {
+    btn.textContent = '❌ Failed';
+    btn.style.color = 'var(--danger)';
+    resultEl.className = 'image-result image-error';
+    resultEl.textContent = e.message;
+    resultEl.style.display = 'block';
+    addLog('ERR','Reply failed: '+e.message);
+  }
+}
+
+async function fbGenCommentOnPost(postId, postText, btn, targetArea){
+  var provider = document.getElementById('fb-provider').value;
+  var langEl = document.getElementById('fb-lang');
+  var language = langEl ? langEl.value : 'auto';
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = 'Generating comments...';
+  }
+  var container = targetArea || document.getElementById('fb-candidates-'+postId) || (btn ? btn.parentElement : null);
+  if(container){
+    container.innerHTML = '<p style="color:var(--muted);font-size:12px;padding:8px">Generating AI comment options...</p>';
+  }
+  try {
+    var res = await fetch(API_BASE+'/api/models/comment-generator', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text: postText, sentiment:'neutral', num_comments:3, platform:'facebook', provider:provider, language:language})
+    });
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'AI generation failed.');
+    var comments = data.comments || (data.comment ? [data.comment] : []);
+    if(!comments.length) throw new Error('No comments generated.');
+    
+    if(!container) return;
+    container.replaceChildren();
+
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-top:12px;border-top:1px solid var(--border);padding-top:12px';
+
+    var header = document.createElement('div');
+    header.style.cssText = 'font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px';
+    header.textContent = '💬 CHOOSE A COMMENT TO POST OR SCHEDULE:';
+    wrap.appendChild(header);
+
+    var isExternal = Boolean(window.fbCurrentFetchedPost && window.fbCurrentFetchedPost.is_external);
+    var postUrl = (window.fbCurrentFetchedPost && window.fbCurrentFetchedPost.permalink_url) || (window.fbCurrentFetchedUrl || '');
+
+    comments.forEach(function(c, i){
+      var commentStr = typeof c === 'string' ? c : (c.text || String(c));
+
+      var card = document.createElement('div');
+      card.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px';
+
+      var textDiv = document.createElement('div');
+      textDiv.style.cssText = 'font-size:13px;line-height:1.5;margin-bottom:10px';
+      textDiv.textContent = commentStr;
+
+      var btnRow = document.createElement('div');
+      btnRow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center';
+
+      if(isExternal){
+        // Primary action for external public post: Copy comment and open post in FB
+        var copyOpenBtn = document.createElement('button');
+        copyOpenBtn.className = 'qbtn qbtn-post';
+        copyOpenBtn.type = 'button';
+        copyOpenBtn.textContent = '📋 Copy & Open on FB';
+        copyOpenBtn.title = 'Copies comment to clipboard and opens Facebook in a new tab so you can paste (Ctrl+V) instantly';
+        copyOpenBtn.addEventListener('click', function(){
+          navigator.clipboard.writeText(commentStr).catch(function(){});
+          copyOpenBtn.textContent = '✅ Copied! Opening FB...';
+          setTimeout(function(){ copyOpenBtn.textContent = '📋 Copy & Open on FB'; }, 2000);
+          if(postUrl){
+            window.open(postUrl, '_blank');
+          }
+          var resEl = document.getElementById('fb-result');
+          if(resEl){
+            resEl.className = 'image-result image-ok';
+            resEl.textContent = '✅ Comment copied to clipboard! Facebook post opened in a new tab — press Ctrl+V to paste your comment.';
+            resEl.style.display = 'block';
+          }
+          addLog('OK', 'Copied comment & opened post: ' + commentStr.substring(0, 40) + '...');
+        });
+
+        var pagePostBtn = document.createElement('button');
+        pagePostBtn.className = 'qbtn qbtn-app';
+        pagePostBtn.type = 'button';
+        pagePostBtn.textContent = '📢 Post to My Page Feed';
+        pagePostBtn.title = 'Publish this comment/response to your own connected Facebook Page feed';
+        pagePostBtn.addEventListener('click', function(){
+          fbPostAsPageFeed(commentStr, pagePostBtn);
+        });
+
+        var schedBtn = document.createElement('button');
+        schedBtn.className = 'qbtn';
+        schedBtn.type = 'button';
+        schedBtn.textContent = '📅 Schedule it';
+        schedBtn.addEventListener('click', function(){
+          fbScheduleCommentDirect(postId, commentStr);
+        });
+
+        var apiBtn = document.createElement('button');
+        apiBtn.className = 'qbtn';
+        apiBtn.type = 'button';
+        apiBtn.style.opacity = '0.75';
+        apiBtn.textContent = '⚡ Try Direct API';
+        apiBtn.title = 'Attempt direct Graph API comment (Meta blocks third-party public posts)';
+        apiBtn.addEventListener('click', function(){
+          fbPostCommentDirect(postId, commentStr, apiBtn);
+        });
+
+        btnRow.append(copyOpenBtn, pagePostBtn, schedBtn, apiBtn);
+      } else {
+        var postBtn = document.createElement('button');
+        postBtn.className = 'qbtn qbtn-post';
+        postBtn.type = 'button';
+        postBtn.textContent = '🚀 Post Now';
+        postBtn.addEventListener('click', function(){
+          fbPostCommentDirect(postId, commentStr, postBtn);
+        });
+
+        var pagePostBtn = document.createElement('button');
+        pagePostBtn.className = 'qbtn qbtn-app';
+        pagePostBtn.type = 'button';
+        pagePostBtn.textContent = '📢 Post to Page Feed';
+        pagePostBtn.addEventListener('click', function(){
+          fbPostAsPageFeed(commentStr, pagePostBtn);
+        });
+
+        var schedBtn = document.createElement('button');
+        schedBtn.className = 'qbtn';
+        schedBtn.type = 'button';
+        schedBtn.textContent = '📅 Schedule it';
+        schedBtn.addEventListener('click', function(){
+          fbScheduleCommentDirect(postId, commentStr);
+        });
+
+        var copyBtn = document.createElement('button');
+        copyBtn.className = 'qbtn';
+        copyBtn.type = 'button';
+        copyBtn.textContent = '📋 Copy';
+        copyBtn.addEventListener('click', function(){
+          navigator.clipboard.writeText(commentStr).catch(function(){});
+          copyBtn.textContent = '✅ Copied!';
+          setTimeout(function(){ copyBtn.textContent = '📋 Copy'; }, 1500);
+        });
+
+        btnRow.append(postBtn, pagePostBtn, schedBtn, copyBtn);
+      }
+
+      card.append(textDiv, btnRow);
+      wrap.appendChild(card);
+    });
+
+    container.appendChild(wrap);
+    addLog('OK','Generated 3 comment options for post ' + postId);
+  } catch(e) {
+    if(container){
+      container.innerHTML = '<p style="color:var(--danger);font-size:12px">'+escHtml(e.message)+'</p>';
+    }
+    addLog('ERR','Comment generation failed: '+e.message);
+  } finally {
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = '🔄 Regenerate Comments';
+    }
+  }
+}
+
+async function fbPostCommentDirect(postId, message, btn){
+  if(!confirm('Post this comment to the Facebook post now?\n\n"' + message.substring(0,100) + '..."')) return;
+  btn.disabled = true;
+  btn.textContent = 'Posting...';
+  var resultEl = document.getElementById('fb-result');
+  try {
+    var res = await fetch(API_BASE+'/api/facebook/comment', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({post_id: postId, message: message})
+    });
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'Failed to post comment.');
+    btn.textContent = '✅ Comment Posted!';
+    btn.style.color = 'var(--success)';
+    resultEl.className = 'image-result image-ok';
+    resultEl.textContent = 'Comment posted successfully! Comment ID: ' + (data.comment ? data.comment.id : 'OK');
+    resultEl.style.display = 'block';
+    stats.approved++;
+    updateStats();
+    addLog('OK','Comment posted on post '+postId);
+  } catch(e) {
+    btn.textContent = '❌ Failed / Blocked';
+    btn.disabled = false;
+    resultEl.className = 'image-result image-error';
+    resultEl.replaceChildren();
+    
+    // Auto-copy the comment to clipboard so user never loses it
+    navigator.clipboard.writeText(message).catch(function(){});
+
+    var msgDiv = document.createElement('div');
+    msgDiv.style.cssText = 'margin-bottom:10px;line-height:1.5';
+    var isExt = e.message.includes('third-party') || e.message.includes('external') || e.message.includes('#12') || e.message.includes('#200') || e.message.includes('singular statuses API') || e.message.includes('permits');
+    if(isExt){
+      msgDiv.innerHTML = '<strong>⚠️ Meta Policy Restriction:</strong> Meta does not permit automated commenting on third-party public posts via API.<br><span style="color:var(--text)">We have automatically <strong>copied your comment to clipboard</strong>! Click below to open the post and paste (Ctrl+V) directly, or publish to your Page feed.</span>';
+    } else {
+      msgDiv.textContent = e.message;
+    }
+
+    var actionRow = document.createElement('div');
+    actionRow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:8px';
+
+    var postUrl = (window.fbCurrentFetchedPost && window.fbCurrentFetchedPost.permalink_url) || (window.fbCurrentFetchedUrl || '');
+    if(postUrl){
+      var openPostBtn = document.createElement('button');
+      openPostBtn.className = 'qbtn qbtn-post';
+      openPostBtn.type = 'button';
+      openPostBtn.textContent = '🔗 Open Post on Facebook (Ctrl+V to paste)';
+      openPostBtn.addEventListener('click', function(){
+        navigator.clipboard.writeText(message).catch(function(){});
+        window.open(postUrl, '_blank');
+      });
+      actionRow.appendChild(openPostBtn);
+    }
+
+    var copyBtn = document.createElement('button');
+    copyBtn.className = 'qbtn';
+    copyBtn.type = 'button';
+    copyBtn.textContent = '📋 Comment Copied! (Click to Copy Again)';
+    copyBtn.addEventListener('click', function(){
+      navigator.clipboard.writeText(message).catch(function(){});
+      copyBtn.textContent = '✅ Copied!';
+      setTimeout(function(){ copyBtn.textContent = '📋 Copy Comment'; }, 1500);
+    });
+    actionRow.appendChild(copyBtn);
+
+    var pagePostBtn = document.createElement('button');
+    pagePostBtn.className = 'qbtn qbtn-app';
+    pagePostBtn.type = 'button';
+    pagePostBtn.textContent = '📢 Post to My Page Feed';
+    pagePostBtn.addEventListener('click', function(){
+      fbPostAsPageFeed(message, pagePostBtn);
+    });
+    actionRow.appendChild(pagePostBtn);
+
+    resultEl.append(msgDiv, actionRow);
+    resultEl.style.display = 'block';
+    addLog('ERR','Post comment failed: '+e.message);
+  }
+}
+
+async function fbPostAsPageFeed(message, btn){
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = 'Publishing...';
+  }
+  var resultEl = document.getElementById('fb-result');
+  try {
+    var res = await fetch(API_BASE+'/api/facebook/post', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message: message})
+    });
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'Failed to publish to Page.');
+    resultEl.className = 'image-result image-ok';
+    resultEl.textContent = 'Published successfully to your Page feed! Post ID: ' + (data.post ? data.post.id : 'OK');
+    resultEl.style.display = 'block';
+    stats.approved++;
+    updateStats();
+    addLog('OK','Published message to Facebook Page feed.');
+  } catch(e) {
+    resultEl.className = 'image-result image-error';
+    resultEl.textContent = 'Page post failed: ' + e.message;
+    resultEl.style.display = 'block';
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = '📢 Post to My Page Feed';
+    }
+  }
+}
+
+function fbScheduleCommentDirect(postId, commentText){
+  selectedScheduleComment = commentText;
+  document.getElementById('scheduled-comment-preview').textContent = commentText;
+  document.getElementById('schedule-feedback').textContent = 'Scheduling comment for Facebook Post (ID: ' + postId + ')';
+  scheduleDateTimeDefaults();
+  selectSchedulePlatform('facebook');
+  openScheduler();
+}
+
 // ══════════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════════
-// Welcome message
-(function(){
+function showWelcome(){
   var msgs=document.getElementById('msgs');
   var d=document.createElement('div');
-  d.className='msg';
-  d.innerHTML='<div class="av av-b">🤖</div><div class="bbl bbl-b">'
-    +'<b>🎓 Intelligent Social Bot — All 40 Features Active</b><br><br>'
-    +'Built for BRAC University CSE400 Pre-Thesis. Powered by <b>Claude API + BERT + XGBoost + Random Forest + VADER</b>.<br><br>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;margin-top:6px">'
-    +'<span>💬 Comment Gen (F15–21)</span><span>😊 Sentiment (F8–14)</span>'
-    +'<span>🛡️ Toxicity (F22–26)</span><span>📅 Schedule (F27–32)</span>'
-    +'<span>✅ Approval Queue (F34)</span><span>📝 Drafts (F35)</span>'
-    +'<span>🗂️ Error Logs (F36)</span><span>📊 Analytics (F40)</span>'
-    +'</div><br>'
-    +'Select a mode from the sidebar and start typing!'
+  d.className='msg welcome';
+  d.innerHTML='<div class="bbl bbl-b">'
+    +'<div class="welcome-mark">◈</div>'
+    +'<div class="welcome-eyebrow">LOCAL AI · SOCIAL CONTENT</div>'
+    +'<h2 class="welcome-title">Make every reply<br>feel like it belongs.</h2>'
+    +'<p class="welcome-copy">Generate natural comments, understand the conversation, and plan what to say next.</p>'
+    +'<div class="quick-action-grid">'
+    +'<button type="button" class="quick-action" data-mode="comment"><span class="quick-icon">✎</span><span class="quick-copy"><b>Write comments</b><small>Three distinct replies</small></span><span class="quick-arrow">→</span></button>'
+    +'<button type="button" class="quick-action" data-mode="sentiment"><span class="quick-icon teal">◉</span><span class="quick-copy"><b>Analyze sentiment</b><small>Tone and key topics</small></span><span class="quick-arrow">→</span></button>'
+    +'<button type="button" class="quick-action" data-mode="schedule"><span class="quick-icon amber">▦</span><span class="quick-copy"><b>Plan a post</b><small>Timing and engagement</small></span><span class="quick-arrow">→</span></button>'
+    +'<button type="button" class="quick-action" data-panel="image"><span class="quick-icon coral">▧</span><span class="quick-copy"><b>Comment on an image</b><small>Generate from a photo</small></span><span class="quick-arrow">→</span></button>'
+    +'</div>'
     +'</div>';
   msgs.appendChild(d);
-})();
+  d.querySelectorAll('[data-mode]').forEach(function(button){button.addEventListener('click',function(){setMode(button.dataset.mode);document.getElementById('inp').focus();});});
+  d.querySelectorAll('[data-panel]').forEach(function(button){button.addEventListener('click',function(){showPanel(button.dataset.panel);});});
+}
+
+function applyTheme(dayMode, persist){
+  document.body.classList.toggle('day-mode',dayMode);
+  var toggle=document.getElementById('theme-toggle');
+  if(toggle){
+    toggle.setAttribute('aria-pressed',String(dayMode));
+    toggle.setAttribute('aria-label','Switch to '+(dayMode?'night':'day')+' mode');
+    document.querySelector('#theme-toggle .theme-icon').textContent=dayMode?'☾':'☀';
+    document.getElementById('theme-toggle-label').textContent=dayMode?'Night mode':'Day mode';
+  }
+  if(persist){
+    try{localStorage.setItem('commentbot-theme',dayMode?'day':'night');}catch(_){ }
+  }
+}
+
+function toggleTheme(){
+  applyTheme(!document.body.classList.contains('day-mode'),true);
+}
+
+var savedTheme='night';
+try{savedTheme=localStorage.getItem('commentbot-theme')||'night';}catch(_){ }
+applyTheme(savedTheme==='day',false);
+showWelcome();
 
 setMode('comment');
-addLog('OK','Intelligent Bot initialized — all 40 features loaded');
+handleSocialAuthResult();
+addLog('OK','Intelligent Bot initialized — backend, model pipeline, persistence, and image workflow ready');
 syncBackendStatus();
 addLog('INFO','AI calls are routed through the Python backend and saved to SQLite');
-addLog('INFO','Feature modules: Preprocessing(7) + Sentiment(7) + Generation(7) + Safety(5) + Scheduling(6) + Optimization(8) = 40');
+addLog('INFO','Ready: text analysis, human-style comments, image workflow, scheduling, safety, and persistence');
+
+
+// ══════════════════════════════════════════════════════════
+//  BOT PACKAGES & SSLCOMMERZ PAYMENT LOGIC
+// ══════════════════════════════════════════════════════════
+var selectedPackageId = 'creator_pro';
+var cachedPackages = {};
+var pollPaymentTimer = null;
+
+function selectCheckoutMethod(method) {
+  document.getElementById('rad-hosted').checked = (method === 'hosted');
+  document.getElementById('rad-easy').checked = (method === 'easy');
+  document.getElementById('opt-hosted').classList.toggle('selected', method === 'hosted');
+  document.getElementById('opt-easy').classList.toggle('selected', method === 'easy');
+}
+
+function openCheckoutModal(pkgId) {
+  selectedPackageId = pkgId || 'creator_pro';
+  var pkg = cachedPackages[selectedPackageId] || {
+    starter: { name: 'Starter Bot', price_bdt: 500, description: '500 AI comments/month, BERT sentiment & sarcasm, toxicity filter.' },
+    creator_pro: { name: 'Creator Bot (Pro)', price_bdt: 1500, description: '2,500 AI comments/month, Vision BLIP scene analysis, smart scheduler, FB & IG reply.' },
+    business_agency: { name: 'Business Bot (Agency)', price_bdt: 3500, description: '10,000 AI comments/month, unlimited pages, batch generation, automated reply.' },
+    enterprise_unlimited: { name: 'Enterprise Bot (Unlimited)', price_bdt: 7500, description: 'Unlimited comments, fine-tuned BERT models, custom hooks & dedicated SLA.' }
+  }[selectedPackageId];
+
+  if (pkg) {
+    document.getElementById('modal-pkg-name').textContent = pkg.name;
+    document.getElementById('modal-pkg-price').textContent = '৳' + Number(pkg.price_bdt).toLocaleString() + ' BDT / month';
+    document.getElementById('modal-pkg-summary').textContent = pkg.description || '';
+    document.getElementById('btn-pay-amount').textContent = '৳' + Number(pkg.price_bdt).toLocaleString() + ' BDT';
+  }
+  document.getElementById('checkout-error-msg').style.display = 'none';
+  document.getElementById('btn-pay-now').disabled = false;
+  document.getElementById('btn-pay-now').textContent = '🔒 Pay ' + (pkg ? '৳' + Number(pkg.price_bdt).toLocaleString() + ' BDT' : '') + ' with SSLCommerz';
+  document.getElementById('ssl-checkout-modal').classList.add('is-open');
+}
+
+function closeCheckoutModal() {
+  document.getElementById('ssl-checkout-modal').classList.remove('is-open');
+}
+
+async function executeSslPayment(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  var errEl = document.getElementById('checkout-error-msg');
+  var btn = document.getElementById('btn-pay-now');
+  errEl.style.display = 'none';
+
+  var name = document.getElementById('cust-name').value.trim();
+  var email = document.getElementById('cust-email').value.trim();
+  var phone = document.getElementById('cust-phone').value.trim();
+  var city = document.getElementById('cust-city').value.trim();
+  var method = document.querySelector('input[name="checkout_type"]:checked').value;
+
+  if (!name || !email || !phone) {
+    errEl.textContent = 'Please fill in all customer details before proceeding.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Contacting SSLCommerz Gateway...';
+
+  try {
+    var res = await fetch(API_BASE + '/initiate-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        package_id: selectedPackageId,
+        cus_name: name,
+        cus_email: email,
+        cus_phone: phone,
+        cus_city: city,
+        cus_country: 'Bangladesh'
+      })
+    });
+
+    var data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to initiate payment with SSLCommerz.');
+    }
+
+    addLog('OK', 'SSLCommerz payment initiated: ' + data.tran_id);
+
+    if (method === 'hosted') {
+      // 1. Hosted Checkout: Redirect to SSLCommerz GatewayPageURL
+      btn.textContent = 'Redirecting to SSLCommerz...';
+      window.location.href = data.GatewayPageURL;
+    } else {
+      // 2. EasyCheckout (Seamless Modal)
+      closeCheckoutModal();
+      btn.textContent = '🔒 Pay with SSLCommerz';
+      btn.disabled = false;
+
+      var popup = window.open(
+        data.GatewayPageURL,
+        'SSLCommerzPaymentPopup',
+        'width=780,height=820,top=60,left=150,scrollbars=yes,status=no,resizable=yes'
+      );
+
+      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+        // Popup blocked by browser: fallback to hosted redirect smoothly
+        showPaymentAlert('Popup was blocked by your browser. Redirecting directly to SSLCommerz Hosted Checkout...', 'info');
+        setTimeout(function() { window.location.href = data.GatewayPageURL; }, 1200);
+      } else {
+        showPaymentAlert('SSLCommerz gateway opened in popup window. Complete your payment to unlock ' + (data.package ? data.package.name : 'your plan') + '.', 'info');
+        startPaymentPoll(data.tran_id);
+      }
+    }
+  } catch (err) {
+    errEl.textContent = err.message || 'Payment initiation error.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '🔒 Pay with SSLCommerz';
+    addLog('ERR', 'Payment initiation error: ' + err.message);
+  }
+}
+
+function startPaymentPoll(tranId) {
+  if (pollPaymentTimer) clearInterval(pollPaymentTimer);
+  var attempts = 0;
+  pollPaymentTimer = setInterval(async function() {
+    attempts++;
+    if (attempts > 60) {
+      clearInterval(pollPaymentTimer);
+      return;
+    }
+    try {
+      var res = await fetch(API_BASE + '/api/payment/status');
+      if (res.ok) {
+        var d = await res.json();
+        var txs = d.recent_payments || [];
+        var matched = txs.find(function(t) { return t.tran_id === tranId; });
+        if (matched && matched.status === 'VALID') {
+          clearInterval(pollPaymentTimer);
+          showPaymentAlert('🎉 Payment confirmed via SSLCommerz IPN! Your ' + matched.package_name + ' has been activated.', 'success');
+          loadPricingData();
+        }
+      }
+    } catch (e) {}
+  }, 5000);
+}
+
+async function simulateSandboxPayment(tranId) {
+  if (!confirm('Simulate successful SSLCommerz IPN validation for transaction ' + tranId + '?')) return;
+  try {
+    var res = await fetch(API_BASE + '/api/payment/simulate-test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tran_id: tranId })
+    });
+    var data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || 'Simulation failed.');
+    showPaymentAlert('✅ ' + data.message, 'success');
+    addLog('OK', 'Simulated SSLCommerz IPN validation for ' + tranId);
+    loadPricingData();
+  } catch (err) {
+    alert('Simulation error: ' + err.message);
+    addLog('ERR', 'Simulation error: ' + err.message);
+  }
+}
+
+async function verifyPaymentTx(valId, tranId) {
+  try {
+    addLog('INFO', 'Validating transaction with SSLCommerz Gateway: ' + tranId);
+    var res = await fetch(API_BASE + '/api/payment/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ val_id: valId, tran_id: tranId })
+    });
+    var data = await res.json();
+    if (data.success) {
+      showPaymentAlert('✅ Transaction verified successfully! Bot plan is ACTIVE.', 'success');
+      loadPricingData();
+    } else {
+      showPaymentAlert('❌ Gateway verification rejected: ' + (data.error || 'Invalid payment'), 'error');
+    }
+  } catch (err) {
+    alert('Verification request error: ' + err.message);
+  }
+}
+
+function showPaymentAlert(text, type) {
+  var b = document.getElementById('payment-alert-banner');
+  var t = document.getElementById('payment-alert-text');
+  if (!b || !t) return;
+  t.textContent = text;
+  b.style.display = 'flex';
+  if (type === 'success') {
+    b.style.background = 'var(--success-l)';
+    b.style.color = '#0F6E56';
+    b.style.border = '1px solid #b8e2db';
+  } else if (type === 'error') {
+    b.style.background = 'var(--danger-l)';
+    b.style.color = '#A32D2D';
+    b.style.border = '1px solid #f6c2c2';
+  } else {
+    b.style.background = 'var(--primary-l)';
+    b.style.color = 'var(--primary-d)';
+    b.style.border = '1px solid #c3daf9';
+  }
+}
+
+async function loadPricingData() {
+  try {
+    var res = await fetch(API_BASE + '/api/payment/packages');
+    if (!res.ok) return;
+    var data = await res.json();
+    cachedPackages = data.packages || {};
+    var plan = data.active_plan || {};
+
+    var titleEl = document.getElementById('active-plan-title');
+    var descEl = document.getElementById('active-plan-desc');
+    var badgeEl = document.getElementById('active-plan-status-badge');
+    var expiryEl = document.getElementById('active-plan-expiry');
+    var headerBadge = document.getElementById('header-tier-badge');
+
+    if (plan.is_active) {
+      if (titleEl) titleEl.textContent = plan.package_name + ' (' + plan.tier + ' Tier)';
+      if (descEl) descEl.textContent = 'Limit: ' + (plan.comment_limit < 0 ? 'Unlimited' : Number(plan.comment_limit).toLocaleString()) + ' comments/month · Priority pipeline active.';
+      if (badgeEl) {
+        badgeEl.textContent = '● ACTIVE';
+        badgeEl.style.background = 'var(--success-l)';
+        badgeEl.style.color = '#0F6E56';
+      }
+      if (expiryEl && plan.expires_at) {
+        var d = new Date(plan.expires_at);
+        expiryEl.textContent = 'Active until: ' + d.toLocaleDateString();
+      }
+      if (headerBadge) {
+        headerBadge.textContent = '💎 ' + plan.tier + ' Plan';
+        headerBadge.style.background = '#168B83';
+      }
+    } else {
+      if (titleEl) titleEl.textContent = 'Free Community Tier';
+      if (descEl) descEl.textContent = '50 basic comments/month · Standard VADER sentiment analysis.';
+      if (badgeEl) {
+        badgeEl.textContent = 'FREE TIER';
+        badgeEl.style.background = '#eef2f6';
+        badgeEl.style.color = 'var(--muted)';
+      }
+      if (expiryEl) expiryEl.textContent = 'Renews: Never (Free)';
+      if (headerBadge) {
+        headerBadge.textContent = '⚡ Free Tier';
+        headerBadge.style.background = 'rgba(255,255,255,0.22)';
+      }
+    }
+
+    var histRes = await fetch(API_BASE + '/api/payment/history');
+    if (histRes.ok) {
+      var histData = await histRes.json();
+      renderTransactionHistory(histData.payments || []);
+    }
+  } catch (e) {
+    console.error('Error loading pricing data:', e);
+  }
+}
+
+function renderTransactionHistory(txs) {
+  var container = document.getElementById('tx-history-container');
+  if (!container) return;
+  if (!txs || txs.length === 0) {
+    container.innerHTML = '<div class="empty">No payment transactions recorded yet. Choose a package above to begin.</div>';
+    return;
+  }
+
+  var html = '<table class="tx-table"><thead><tr>'
+    + '<th>Date</th><th>Transaction ID</th><th>Package</th><th>Amount</th><th>Status</th><th>Validation</th><th>Action</th>'
+    + '</tr></thead><tbody>';
+
+  txs.forEach(function(tx) {
+    var dt = new Date(tx.created_at).toLocaleString();
+    var sColor = tx.status === 'VALID' ? 'var(--success-l)' : (tx.status === 'PENDING' ? 'var(--warn-l)' : 'var(--danger-l)');
+    var sText = tx.status === 'VALID' ? '#0F6E56' : (tx.status === 'PENDING' ? '#7A4A00' : '#A32D2D');
+
+    html += '<tr>'
+      + '<td style="white-space:nowrap;color:var(--muted)">' + escHtml(dt) + '</td>'
+      + '<td style="font-family:monospace;font-weight:600">' + escHtml(tx.tran_id) + '</td>'
+      + '<td><b>' + escHtml(tx.package_name) + '</b></td>'
+      + '<td style="font-weight:700">৳' + Number(tx.amount).toLocaleString() + ' ' + escHtml(tx.currency) + '</td>'
+      + '<td><span class="badge" style="background:' + sColor + ';color:' + sText + '">' + escHtml(tx.status) + '</span></td>'
+      + '<td style="font-size:11px;color:var(--muted)">' + (tx.val_id ? escHtml(tx.val_id.substring(0, 16)) + '...' : 'Awaiting IPN') + '</td>'
+      + '<td>';
+
+    if (tx.status === 'PENDING') {
+      html += '<button class="qbtn qbtn-app" style="padding:2px 8px;font-size:11px;margin-right:4px" onclick="simulateSandboxPayment(\'' + tx.tran_id + '\')">⚡ Simulate IPN</button>';
+    } else if (tx.status === 'VALID') {
+      html += '<span style="color:var(--success);font-weight:600">✓ Verified</span>';
+    } else {
+      html += '<span style="color:var(--danger)">Failed</span>';
+    }
+
+    html += '</td></tr>';
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function handlePaymentRedirectResult() {
+  var params = new URLSearchParams(window.location.search);
+  var payment = params.get('payment');
+  var tranId = params.get('tran_id');
+  var plan = params.get('plan');
+  var err = params.get('payment_error');
+
+  if (payment) {
+    showPanel('pricing');
+    if (payment === 'success') {
+      showPaymentAlert('🎉 Payment successful! Transaction ' + (tranId || '') + ' confirmed. Your ' + (plan || 'bot') + ' package is now active.', 'success');
+      addLog('OK', 'Payment verified and subscription activated: ' + (tranId || ''));
+    } else if (payment === 'failed') {
+      showPaymentAlert('❌ Payment was not completed: ' + (err || 'The transaction failed or was declined by the bank.'), 'error');
+      addLog('ERR', 'Payment failed: ' + (err || 'Declined'));
+    } else if (payment === 'cancelled') {
+      showPaymentAlert('⚠️ Checkout session was cancelled by user.', 'info');
+      addLog('WARN', 'Payment cancelled for ' + (tranId || ''));
+    }
+    window.history.replaceState({}, document.title, window.location.pathname);
+    loadPricingData();
+  }
+}
+
+// Init payment & billing
+handlePaymentRedirectResult();
+loadPricingData();
+
 </script>
 </body>
 </html>
