@@ -506,6 +506,12 @@ def fetch_facebook_post(url_or_id):
         code, msg = last_error
         if code == 408 or "timed out" in str(msg).lower():
             raise RuntimeError("Connection to Facebook timed out. Please check your internet connection or enter the post text directly below.")
+        if "pages_read_engagement" in str(msg) or "Page Public Content Access" in str(msg):
+            raise RuntimeError(
+                "Facebook Permission Notice (#10): Meta restricts automated reading of this post via API. "
+                "If this is your own Page, grant 'pages_read_engagement' to your token in Meta Developer Console. "
+                "Or simply type/paste the post text manually below to generate comments!"
+            )
         raise RuntimeError(f"Could not fetch Facebook post (HTTP {code}): {str(msg)[:300]}")
     raise RuntimeError("Could not fetch Facebook post. Check the post URL or ID.")
 
@@ -1285,6 +1291,9 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
             return send_json(self, {"error": str(exc)}, HTTPStatus.UNPROCESSABLE_ENTITY)
         except json.JSONDecodeError:
             return send_json(self, {"error": "Webhook payload must be valid JSON."}, HTTPStatus.BAD_REQUEST)
+        except Exception as exc:
+            logger.exception("Image comment handling failed: %s", exc)
+            return send_json(self, {"error": f"Image processing error: {str(exc)}"}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
     def handle_model_endpoint(self):
         payload = read_json(self)
@@ -1380,21 +1389,31 @@ class WSGIHandler(ChatbotHandler):
 
 
 def application(environ, start_response):
-    database.init()
-    handler = WSGIHandler(environ, start_response)
-    method = handler.command.upper()
-    if method == "GET":
-        handler.do_GET()
-    elif method == "POST":
-        handler.do_POST()
-    elif method == "HEAD":
-        handler.do_HEAD()
-    else:
-        handler.send_error(HTTPStatus.NOT_IMPLEMENTED, "Unsupported method")
+    try:
+        database.init()
+        handler = WSGIHandler(environ, start_response)
+        method = handler.command.upper()
+        if method == "GET":
+            handler.do_GET()
+        elif method == "POST":
+            handler.do_POST()
+        elif method == "HEAD":
+            handler.do_HEAD()
+        else:
+            handler.send_error(HTTPStatus.NOT_IMPLEMENTED, "Unsupported method")
 
-    status_str = f"{handler.status_code} {handler.status_message}"
-    start_response(status_str, handler.headers_set)
-    return [handler.wfile.getvalue()]
+        status_str = f"{handler.status_code} {handler.status_message}"
+        start_response(status_str, handler.headers_set)
+        return [handler.wfile.getvalue()]
+    except Exception as exc:
+        logger.exception("WSGI unhandled exception: %s", exc)
+        err_body = json.dumps({"error": f"Server processing error: {str(exc)}"}).encode("utf-8")
+        headers = [
+            ("Content-Type", "application/json; charset=utf-8"),
+            ("Content-Length", str(len(err_body))),
+        ]
+        start_response("500 Internal Server Error", headers)
+        return [err_body]
 
 
 app = application

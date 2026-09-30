@@ -1,7 +1,8 @@
 import io
 import logging
+import os
 import random
-from PIL import Image
+from PIL import Image, ImageStat
 
 logger = logging.getLogger("chatbot.vision")
 
@@ -15,6 +16,8 @@ class LocalVisionModel:
 
     def _ensure_loaded(self):
         """Lazy-load the BLIP model on first call to optimize startup time."""
+        if os.environ.get("RENDER") or os.environ.get("DISABLE_BLIP") or os.environ.get("LOW_MEMORY"):
+            return False
         if self._load_attempted:
             return self.model is not None
 
@@ -41,7 +44,7 @@ class LocalVisionModel:
             logger.warning("Failed to open image for vision captioning: %s", exc)
             return "An uploaded photograph with distinct visual subjects."
 
-        # 1. Try BLIP AI captioning
+        # 1. Try BLIP AI captioning if loaded
         if self._ensure_loaded():
             try:
                 inputs = self.processor(img, return_tensors="pt")
@@ -55,10 +58,31 @@ class LocalVisionModel:
             except Exception as exc:
                 logger.warning("BLIP generation failed: %s", exc)
 
-        # 2. Heuristic fallback based on image composition
+        # 2. Fast heuristic analysis based on image composition, colors and lighting
         width, height = img.size
         orientation = "landscape" if width > height else "portrait" if height > width else "square"
-        return f"A {orientation} image ({width}x{height}) showing a focused visual scene with rich contrast."
+
+        try:
+            stat = ImageStat.Stat(img)
+            mean_r, mean_g, mean_b = stat.mean[:3] if len(stat.mean) >= 3 else (128, 128, 128)
+            cues = []
+            if mean_g > mean_r + 15 and mean_g > mean_b + 15:
+                cues.append("lush greenery, floral nature, or an outdoor environment")
+            elif mean_b > mean_r + 20 and mean_b > mean_g:
+                cues.append("bright sky, scenic background, or water backdrop")
+            elif mean_r > 150 and mean_g < 120:
+                cues.append("vivid warm tones, flowers, or distinct foreground objects")
+            elif (mean_r + mean_g + mean_b) / 3 > 200:
+                cues.append("a brightly lit, modern atmospheric setting")
+            elif (mean_r + mean_g + mean_b) / 3 < 70:
+                cues.append("dramatic night-time ambience and artistic lighting")
+            else:
+                cues.append("focused visual subjects with balanced composition")
+
+            scene = " with ".join(cues) if cues else "clear visual subjects"
+            return f"A {orientation} photograph ({width}x{height}) highlighting {scene}."
+        except Exception:
+            return f"A {orientation} visual image ({width}x{height}) showing a focused scene with distinct details."
 
     def generate_comment(self, description, tone="friendly", platform="facebook"):
         """Generate a social media comment reacting specifically to what is in the image."""

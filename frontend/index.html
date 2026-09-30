@@ -2609,7 +2609,28 @@ async function fbFetchPost(){
     // Automatically trigger AI comment generation upon fetch
     fbGenCommentOnPost(post.id, postText, genBtn, candArea);
   } catch(e) {
-    html.innerHTML = '<p style="color:var(--danger)">'+escHtml(e.message)+'</p>';
+    html.replaceChildren();
+    var errBox = document.createElement('div');
+    errBox.style.cssText = 'border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:16px;background:var(--card);margin-top:8px;';
+    errBox.innerHTML = '<div style="color:var(--danger);font-weight:700;margin-bottom:8px">⚠️ ' + escHtml(e.message) + '</div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Meta restricts third-party apps from reading public posts automatically via API. You can still generate comments for this post by typing or pasting its text below:</div>'
+      + '<textarea id="manual-post-text" placeholder="Paste the Facebook post or caption text here..." style="width:100%;min-height:80px;border:1px solid var(--border);border-radius:8px;padding:10px;font:inherit;background:var(--bg);color:var(--text);margin-bottom:10px;box-sizing:border-box;resize:vertical;"></textarea>'
+      + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+      + '<button type="button" class="qbtn qbtn-post" id="manual-gen-btn">✨ Generate AI Comments for this Post</button>'
+      + (url ? '<button type="button" class="qbtn qbtn-blue" onclick="window.open(\'' + escHtml(url) + '\', \'_blank\')">🔗 Open Post on Facebook</button>' : '')
+      + '</div>'
+      + '<div id="manual-candidates-area" style="margin-top:14px"></div>';
+    html.appendChild(errBox);
+
+    var manualGenBtn = document.getElementById('manual-gen-btn');
+    if(manualGenBtn){
+      manualGenBtn.addEventListener('click', function(){
+        var manualText = document.getElementById('manual-post-text').value.trim();
+        if(!manualText){ alert('Please enter or paste the post text first.'); return; }
+        var candArea = document.getElementById('manual-candidates-area');
+        fbGenCommentOnPost('manual_post', manualText, manualGenBtn, candArea);
+      });
+    }
     addLog('ERR','Fetch failed: '+e.message);
   } finally { btn.disabled = false; }
 }
