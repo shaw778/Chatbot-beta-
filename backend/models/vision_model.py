@@ -42,12 +42,12 @@ class LocalVisionModel:
             return False
 
     def _try_gemini_vision(self, image_bytes):
-        """Query Google Gemini 2.5 Flash multimodal vision API if GEMINI_API_KEY is configured."""
+        """Query Google Gemini 3.8 Flash multimodal vision API if GEMINI_API_KEY is configured."""
         gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
         if not gemini_key:
             return None
         try:
-            model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+            model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
             encoded = base64.b64encode(image_bytes).decode("ascii")
             payload = {
                 "contents": [{
@@ -298,7 +298,7 @@ class LocalVisionModel:
             except Exception as exc:
                 logger.warning("BLIP generation failed: %s", exc)
 
-        # 2. Try Gemini 2.5 Flash Multimodal Vision if key is configured (0 MB RAM, free, state-of-the-art)
+        # 2. Try Gemini 3.8 Flash Multimodal Vision if key is configured (0 MB RAM, free, state-of-the-art)
         gemini_caption = self._try_gemini_vision(image_bytes)
         if gemini_caption:
             return gemini_caption

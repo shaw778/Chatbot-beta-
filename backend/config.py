@@ -45,7 +45,7 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 # different approved model.
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.6")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 META_APP_ID = os.environ.get("META_APP_ID", "")
