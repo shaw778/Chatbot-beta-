@@ -257,7 +257,7 @@ class BertCommentGeneratorModel:
         )) or any(w in lower for w in ["সার্ভিস", "ডেলিভারি", "অর্ডার", "টাকা ফেরত", "রিফান্ড", "প্রতারণা", "নষ্ট পণ্য", "দেরি", "কাস্টমার কেয়ার"])
 
         # 3. Happy / Celebration / Good News / High-Energy Positive
-        is_happy_celebration = (sentiment == "positive") or bool(
+        is_happy_celebration = bool(
             re.search(
                 r"\b(?:happy|happiness|joy|joyful|blessed|grateful|celebrating|celebrate|congratulations|congrats|married|wedding|marriage|engaged|baby|born|promoted|promotion|dream job|new job|hired|graduated|graduation|degree|passed|bought|new home|new house|new car|best day|wonderful day|amazing day|won|win|proud|excited|exciting|thrilled|super happy|so happy|love life|cheers|victory|championship|trophy|achievement)\b",
                 lower,
@@ -324,10 +324,6 @@ class BertCommentGeneratorModel:
             category = "grief_sadness"
         elif is_travel_or_delay:
             category = "travel_delay"
-        elif is_happy_celebration or (sentiment == "positive" and not is_food and not is_pet and not is_sports and not is_tech and not is_creative):
-            category = "happy_celebration"
-        elif is_question:
-            category = "question_advice"
         elif is_food:
             category = "food"
         elif is_pet:
@@ -340,6 +336,10 @@ class BertCommentGeneratorModel:
             category = "creative"
         elif is_opinion:
             category = "opinion"
+        elif is_happy_celebration or sentiment == "positive":
+            category = "happy_celebration"
+        elif is_question:
+            category = "question_advice"
         else:
             category = "casual"
 
@@ -396,12 +396,16 @@ class BertCommentGeneratorModel:
                     subject = "graduating"
                 elif "house" in lower or "home" in lower:
                     subject = "your new home"
+                elif "launch" in lower or "product" in lower:
+                    subject = "the product launch"
                 elif "birthday" in lower:
                     subject = "your birthday"
                 elif "anniversary" in lower:
                     subject = "your anniversary"
                 elif "won" in lower or "win" in lower or "victory" in lower:
                     subject = "this big win"
+                elif topics and topics[0] not in {"general", "social update"}:
+                    subject = f"the {topics[0]}"
                 else:
                     subject = "this wonderful milestone"
             elif category == "question_advice":
@@ -714,13 +718,13 @@ class BertCommentGeneratorModel:
     def _generate_happy_celebration(self, subject, detail, archetype):
         """Generate genuinely happy, celebratory, and cheerful replies for positive posts."""
         templates = [
-            f"Huge congratulations! This is such wonderful news, so genuinely thrilled and happy for you! 🎉🥳✨",
-            f"Love seeing you this happy! Celebrate big today, you truly deserve every bit of this joy and success! 💖🥂",
-            f"That is absolutely fantastic news! Wishing you endless happiness, blessings, and success on this incredible chapter! 🌟✨",
-            f"Such a beautiful and heartwarming moment! Wishing you all the love, happiness, and wonderful memories ahead! ❤️🎊",
-            f"This just made my entire day! So proud of you and cheering you on always! 👏🎉🔥",
-            f"What an awesome achievement! Celebrating right along with you, here's to many more victories ahead! 🥂✨",
-            f"Pure joy! Your happiness is completely contagious—so thrilled to celebrate this with you! 🥳💖",
+            f"Huge congratulations on {subject}! This is such wonderful news, so genuinely thrilled and happy for you! 🎉🥳✨",
+            f"Love seeing you this happy about {subject}! Celebrate big today, you truly deserve every bit of this joy and success! 💖🥂",
+            f"That is absolutely fantastic news regarding {subject}! Wishing you endless happiness, blessings, and success on this incredible chapter! 🌟✨",
+            f"Such a beautiful and heartwarming moment with {subject}! Wishing you all the love, happiness, and wonderful memories ahead! ❤️🎊",
+            f"This just made my entire day! So proud of the amazing work on {subject} and cheering you on always! 👏🎉🔥",
+            f"What an awesome achievement with {subject}! Celebrating right along with you, here's to many more victories ahead! 🥂✨",
+            f"Pure joy! Seeing your happiness around {subject} is completely contagious—so thrilled to celebrate this with you! 🥳💖",
         ]
         return random.choice(templates)
 
