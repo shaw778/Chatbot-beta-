@@ -1887,20 +1887,6 @@ body:not(.day-mode) .g-disclaimer {
   </div><!-- /content -->
 </div><!-- /main -->
 
-<!-- Right samples panel -->
-<div class="rpanel open" id="rpanel">
-  <div class="rpi">
-    <div class="sidebar-tools">
-      <button class="new-chat-btn" type="button" onclick="startNewChat()"><span class="new-chat-icon">＋</span><span>New analysis</span></button>
-      <label class="workspace-search"><span aria-hidden="true">⌕</span><input id="workspace-search" type="search" placeholder="Find a tool or example" oninput="filterWorkspace(this.value)" aria-label="Find a tool or example"></label>
-    </div>
-    <div class="workspace-pane-head"><div class="workspace-pane-kicker">WORKSPACE</div><div class="workspace-pane-title">Quick start</div></div>
-    <h3 id="rp-title">Sample Posts</h3>
-    <div id="rp-content"></div>
-    <div class="workspace-pane-foot"><span class="pane-status-dot"></span>Ready to analyze</div>
-  </div>
-</div>
-
 </div><!-- /wrap -->
 
 <div id="ai-keys-modal" class="modal-overlay" onclick="if(event.target===this)closeKeyModal()">
@@ -2003,19 +1989,6 @@ body:not(.day-mode) .g-disclaimer {
         </form>
       </div>
     </div>
-
-  </div><!-- /content -->
-</div><!-- /main -->
-
-<!-- Right samples panel -->
-<div class="rpanel open" id="rpanel">
-  <div class="rpi">
-    <h3 id="rp-title">Sample Posts</h3>
-    <div id="rp-content"></div>
-  </div>
-</div>
-
-</div>
 
 <script>
 // ══════════════════════════════════════════════════════════
@@ -3437,13 +3410,15 @@ function setMode(m){
     schedule:'Paste a post to predict engagement (XGBoost) and best posting time (RF + Claude)...',
     qa:'Ask anything about the thesis: BERT, XGBoost, datasets, model accuracy, features...'
   }[m];
-  var slist=samples[m]||[];
   var rp=document.getElementById('rpanel');
   var rt=document.getElementById('rp-title');
   var rc=document.getElementById('rp-content');
-  rp.classList.add('open');
-  rt.textContent=m==='qa'?'Sample questions':'Try these';
-  rc.innerHTML=slist.map(function(s){return'<div class="samp" onclick="useSamp(this)">'+s+'</div>';}).join('');
+  if(rp) rp.classList.add('open');
+  if(rt) rt.textContent=m==='qa'?'Sample questions':'Try these';
+  if(rc){
+    var slist=samples[m]||[];
+    rc.innerHTML=slist.map(function(s){return'<div class="samp" onclick="useSamp(this)">'+s+'</div>';}).join('');
+  }
   document.getElementById('view-title').textContent={comment:'Comment generation',sentiment:'Sentiment analysis',toxicity:'Safety analysis',schedule:'Scheduling',qa:'Ask the assistant'}[m]||'Comment generation';
   showPanel('chat');
 }
