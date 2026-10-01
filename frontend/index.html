@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>CommentBot | BRAC CSE400</title>
+<title>INTSocialMedia BOT | BRAC CSE400</title>
 <style>
 :root{
   --primary:#1769E0;--primary-l:#EAF2FF;--primary-d:#0B4EA2;
@@ -606,18 +606,809 @@ body.day-mode .modal-overlay{background:rgba(15,23,42,0.45);backdrop-filter:blur
 body.day-mode .pkg-card{box-shadow:0 4px 18px rgba(22,44,68,0.06)}
 body.day-mode .pkg-card:hover{box-shadow:0 8px 24px rgba(23,105,176,0.14)}
 
+/* ── Login Screen / Feed Styles ── */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: radial-gradient(circle at 50% 18%, #10243d 0%, #07111f 75%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  opacity: 1;
+  transition: opacity .35s ease, visibility .35s ease;
+}
+.login-overlay.login-fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+body.day-mode .login-overlay {
+  background: radial-gradient(circle at 50% 18%, #e3edf7 0%, #f3f6fa 75%);
+}
+
+.login-topbar {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: auto;
+}
+.login-brand-mini {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 650;
+  font-size: 14px;
+  color: var(--text);
+}
+.login-logo-glow {
+  color: var(--primary);
+  font-size: 18px;
+  text-shadow: 0 0 12px rgba(84, 168, 255, 0.6);
+}
+.login-pill-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--primary-l);
+  color: var(--primary);
+  border: 1px solid var(--border);
+}
+
+.login-card-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  margin: auto;
+}
+.login-glow-aura {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  background: radial-gradient(ellipse at 50% 40%, rgba(84, 168, 255, 0.12), transparent 70%);
+  pointer-events: none;
+  filter: blur(25px);
+  z-index: 0;
+}
+body.day-mode .login-glow-aura {
+  background: radial-gradient(ellipse at 50% 40%, rgba(23, 105, 176, 0.08), transparent 70%);
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+body.day-mode .login-card {
+  background: #ffffff;
+  border-color: #d9e2ec;
+  box-shadow: 0 16px 40px rgba(22, 44, 68, 0.1);
+}
+
+.login-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.login-brand-glyph {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1b66bc, var(--primary));
+  color: #fff;
+  font-size: 22px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 18px rgba(39, 135, 239, 0.35);
+  margin-bottom: 4px;
+}
+.login-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.login-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.login-error-banner {
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(255, 119, 128, 0.12);
+  border: 1px solid rgba(255, 119, 128, 0.35);
+  color: var(--danger);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+}
+body.day-mode .login-error-banner {
+  background: #fcebeb;
+  border-color: #f7b4b4;
+  color: #c54350;
+}
+.login-error-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.login-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.login-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.login-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.login-input-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 14px;
+  opacity: 0.65;
+  pointer-events: none;
+}
+.login-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 38px 0 36px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+}
+.login-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(84, 168, 255, 0.16);
+}
+body.day-mode .login-input {
+  background: #f8fafc;
+  border-color: #cfdbe6;
+  color: #1c2937;
+}
+body.day-mode .login-input:focus {
+  border-color: #1769b0;
+  box-shadow: 0 0 0 3px rgba(23, 105, 176, 0.12);
+}
+.login-toggle-pw {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.7;
+  color: var(--text);
+  transition: opacity .15s;
+}
+.login-toggle-pw:hover {
+  opacity: 1;
+}
+
+.login-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.login-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  user-select: none;
+}
+.login-checkbox-label input {
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.login-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.login-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5ed3aa;
+  box-shadow: 0 0 8px rgba(94, 211, 170, 0.6);
+}
+
+.login-btn-primary {
+  width: 100%;
+  height: 42px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1b66bc, var(--primary));
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 22px rgba(39, 135, 239, 0.3);
+  transition: transform .15s, box-shadow .15s, opacity .15s;
+}
+.login-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(39, 135, 239, 0.4);
+}
+.login-btn-primary:active {
+  transform: translateY(0);
+}
+body.day-mode .login-btn-primary {
+  background: linear-gradient(135deg, #1769b0, #2588d8);
+  box-shadow: 0 8px 20px rgba(23, 105, 176, 0.25);
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 4px 0;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+.login-divider span {
+  padding: 0 10px;
+}
+
+.login-btn-gmail {
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all .16s ease;
+}
+.login-btn-gmail:hover {
+  background: #17283d;
+  border-color: #3b5a7e;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+body.day-mode .login-btn-gmail {
+  background: #ffffff;
+  border-color: #d1dde8;
+  color: #243547;
+}
+body.day-mode .login-btn-gmail:hover {
+  background: #f1f6fa;
+  border-color: #a8c1d6;
+  box-shadow: 0 4px 14px rgba(22, 44, 68, 0.08);
+}
+.gmail-svg-icon {
+  flex-shrink: 0;
+}
+
+.login-footer {
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--faint);
+  margin-top: 2px;
+}
+
+@keyframes loginShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.login-shake {
+  animation: loginShake 0.35s ease-in-out;
+}
+
+/* ── Google Account Chooser Modal ── */
+.g-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000000;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  animation: gFadeIn .2s ease-out;
+}
+@keyframes gFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.g-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  color: #202124;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  padding: 34px 28px 26px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  animation: gScaleUp .22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes gScaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+body:not(.day-mode) .g-modal-card {
+  background: #202124;
+  color: #e8eaed;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  border: 1px solid #3c4043;
+}
+
+.g-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #5f6368;
+  padding: 6px;
+  border-radius: 50%;
+  line-height: 1;
+  transition: background .15s, color .15s;
+}
+.g-close-btn:hover {
+  background: rgba(0,0,0,0.06);
+  color: #202124;
+}
+body:not(.day-mode) .g-close-btn {
+  color: #9aa0a6;
+}
+body:not(.day-mode) .g-close-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+.g-loading-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  background: #e8f0fe;
+  overflow: hidden;
+}
+body:not(.day-mode) .g-loading-bar {
+  background: #303134;
+}
+.g-loading-fill {
+  width: 40%;
+  height: 100%;
+  background: #1a73e8;
+  animation: gLoadingIndeterminate 1.2s infinite ease-in-out;
+}
+@keyframes gLoadingIndeterminate {
+  0% { transform: translateX(-100%); width: 30%; }
+  50% { transform: translateX(100%); width: 60%; }
+  100% { transform: translateX(250%); width: 30%; }
+}
+
+.g-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.g-title {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 12px 0 4px;
+  color: inherit;
+  letter-spacing: -0.01em;
+}
+.g-subtitle {
+  font-size: 13.5px;
+  color: #5f6368;
+  margin: 0;
+}
+body:not(.day-mode) .g-subtitle {
+  color: #9aa0a6;
+}
+.g-subtitle strong {
+  color: #1a73e8;
+}
+body:not(.day-mode) .g-subtitle strong {
+  color: #8ab4f8;
+}
+
+.g-status-banner {
+  padding: 9px 12px;
+  background: #e8f0fe;
+  color: #1a73e8;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+body:not(.day-mode) .g-status-banner {
+  background: #172b4d;
+  color: #8ab4f8;
+}
+
+.g-accounts-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #dadce0;
+  border-bottom: 1px solid #dadce0;
+  margin-bottom: 16px;
+}
+body:not(.day-mode) .g-accounts-list {
+  border-color: #3c4043;
+}
+
+.g-account-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 10px;
+  cursor: pointer;
+  transition: background .15s ease;
+  border-bottom: 1px solid #f1f3f4;
+  border-radius: 6px;
+}
+.g-account-item:last-child {
+  border-bottom: none;
+}
+.g-account-item:hover {
+  background: #f8fafd;
+}
+body:not(.day-mode) .g-account-item {
+  border-bottom-color: #2b2c2f;
+}
+body:not(.day-mode) .g-account-item:hover {
+  background: #303134;
+}
+
+.g-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 15px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+.g-avatar-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid #dadce0;
+  display: grid;
+  place-items: center;
+  color: #5f6368;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+body:not(.day-mode) .g-avatar-icon {
+  border-color: #5f6368;
+  color: #9aa0a6;
+}
+
+.g-account-info {
+  flex: 1;
+  min-width: 0;
+}
+.g-account-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #202124;
+  line-height: 1.3;
+}
+body:not(.day-mode) .g-account-name {
+  color: #e8eaed;
+}
+.g-account-email {
+  font-size: 12px;
+  color: #5f6368;
+  line-height: 1.3;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body:not(.day-mode) .g-account-email {
+  color: #9aa0a6;
+}
+.g-account-badge {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #1a73e8;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: #e8f0fe;
+  flex-shrink: 0;
+}
+body:not(.day-mode) .g-account-badge {
+  background: #172b4d;
+  color: #8ab4f8;
+}
+
+.g-use-another-section {
+  padding: 12px 10px;
+  margin-bottom: 14px;
+  background: #f8fafd;
+  border-radius: 8px;
+  border: 1px solid #e1e7ef;
+}
+body:not(.day-mode) .g-use-another-section {
+  background: #282a2d;
+  border-color: #3c4043;
+}
+.g-custom-label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #5f6368;
+}
+body:not(.day-mode) .g-custom-label {
+  color: #9aa0a6;
+}
+.g-custom-input-wrap {
+  display: flex;
+  gap: 8px;
+}
+.g-custom-input {
+  flex: 1;
+  height: 38px;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+  color: #202124;
+}
+body:not(.day-mode) .g-custom-input {
+  background: #202124;
+  color: #fff;
+  border-color: #5f6368;
+}
+.g-custom-input:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26,115,232,0.18);
+}
+.g-custom-submit-btn {
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.g-custom-submit-btn:hover {
+  background: #1765c1;
+}
+
+.g-disclaimer {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #70757a;
+  text-align: center;
+  padding: 0 4px;
+}
+body:not(.day-mode) .g-disclaimer {
+  color: #9aa0a6;
+}
 </style>
   <script src="https://sandbox.sslcommerz.com/embed.min.js"></script>
 </head>
 <body>
 
+<!-- ── Login Screen Feed Gate ── -->
+<div id="login-screen" class="login-overlay">
+  <div class="login-topbar">
+    <div class="login-brand-mini">
+      <span class="login-logo-glow">◈</span>
+      <span class="login-brand-name">INTSocialMedia BOT <span class="login-pill-badge">v2.5</span></span>
+    </div>
+    <button class="theme-toggle" id="login-theme-toggle" type="button" aria-pressed="false" aria-label="Switch to day mode" onclick="toggleTheme()">
+      <span class="theme-icon" aria-hidden="true">☀</span>
+      <span class="login-theme-label" id="login-theme-toggle-label">Day mode</span>
+    </button>
+  </div>
+
+  <div class="login-card-wrapper">
+    <div class="login-glow-aura"></div>
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-brand-glyph">◈</div>
+        <h1 class="login-title">Sign in to INTSocialMedia BOT</h1>
+        <p class="login-subtitle">AI Social Automation &amp; Intelligence Workspace</p>
+      </div>
+
+      <div id="login-error" class="login-error-banner" style="display:none;">
+        <span class="login-error-icon">⚠️</span>
+        <span id="login-error-msg">Invalid ID or password. Default is <b>admin</b> / <b>admin</b>.</span>
+      </div>
+
+      <form id="login-form" onsubmit="handleLoginSubmit(event)" autocomplete="off">
+        <div class="login-field-group">
+          <label for="login-id" class="login-label">Login ID</label>
+          <div class="login-input-wrap">
+            <span class="login-input-icon">👤</span>
+            <input type="text" id="login-id" class="login-input" placeholder="Enter username (admin)" required autocomplete="off">
+          </div>
+        </div>
+
+        <div class="login-field-group">
+          <label for="login-pass" class="login-label">Password</label>
+          <div class="login-input-wrap">
+            <span class="login-input-icon">🔒</span>
+            <input type="password" id="login-pass" class="login-input" placeholder="Enter password (admin)" required autocomplete="new-password">
+            <button type="button" class="login-toggle-pw" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility" title="Show/Hide password">👁️</button>
+          </div>
+        </div>
+
+        <div class="login-options-row">
+          <label class="login-checkbox-label">
+            <input type="checkbox" id="login-remember" checked>
+            <span>Stay signed in</span>
+          </label>
+          <span class="login-status-indicator"><span class="login-dot"></span> System Online</span>
+        </div>
+
+        <button type="submit" id="login-submit-btn" class="login-btn-primary">
+          <span class="login-btn-text">Sign In with ID</span>
+          <span class="login-btn-arrow">→</span>
+        </button>
+      </form>
+
+      <div class="login-divider">
+        <span>OR</span>
+      </div>
+
+      <button type="button" class="login-btn-gmail" onclick="openGoogleAccountChooser()" title="Sign in with Google">
+        <svg class="gmail-svg-icon" viewBox="0 0 24 24" width="18" height="18">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+        </svg>
+        <span class="gmail-btn-text">Sign in with Gmail</span>
+      </button>
+
+      <div class="login-footer">
+        BRAC University · CSE400 Research Project
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Google Account Chooser Modal ── -->
+<div id="google-account-modal" class="g-modal-overlay" style="display:none;" onclick="handleGModalBackdrop(event)">
+  <div class="g-modal-card">
+    <div id="g-loading-bar" class="g-loading-bar" style="display:none;">
+      <div class="g-loading-fill"></div>
+    </div>
+
+    <button type="button" class="g-close-btn" onclick="closeGoogleAccountChooser()" aria-label="Close" title="Close">✕</button>
+
+    <div class="g-header">
+      <svg class="g-logo-svg" viewBox="0 0 24 24" width="28" height="28">
+        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+      </svg>
+      <h2 class="g-title">Choose an account</h2>
+      <p class="g-subtitle">to continue to <strong>INTSocialMedia BOT</strong></p>
+    </div>
+
+    <div id="g-status-banner" class="g-status-banner" style="display:none;"></div>
+
+    <div id="g-accounts-list" class="g-accounts-list">
+      <!-- Rendered dynamically -->
+    </div>
+
+    <div id="g-use-another-section" class="g-use-another-section" style="display:none;">
+      <form onsubmit="handleCustomGoogleSignIn(event)">
+        <label for="g-custom-email" class="g-custom-label">Enter your Gmail address</label>
+        <div class="g-custom-input-wrap">
+          <input type="email" id="g-custom-email" class="g-custom-input" placeholder="e.g. yourname@gmail.com" required autocomplete="email">
+          <button type="submit" class="g-custom-submit-btn">Next</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="g-disclaimer">
+      To continue, Google will share your name, email address, language preference, and profile picture with <b>INTSocialMedia BOT</b>.
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="hlogo">◈</div>
-  <div class="brand-copy"><div class="htitle">CommentBot</div></div>
+  <div class="brand-copy"><div class="htitle">INTSocialMedia BOT</div></div>
   <div class="header-divider"></div>
   <div class="header-context">AI workspace <span class="header-version" id="provider-mode-tag">LOCAL</span></div>
-  <div class="hstatus"><span id="header-tier-badge" onclick="showPanel('pricing')" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:rgba(255,255,255,0.12);color:inherit;font-weight:600;font-size:11px;transition:all .2s;border:1px solid var(--border);display:inline-flex;align-items:center;gap:4px" title="Click to view bot packages">⚡ Free Tier</span>
-    <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to day mode" onclick="toggleTheme()"><span class="theme-icon" aria-hidden="true">☀</span><span id="theme-toggle-label">Day mode</span></button></div>
+  <div class="hstatus">
+    <div id="header-user-badge" style="display:none;align-items:center;gap:7px;padding:3px 9px;border-radius:6px;background:var(--surface);border:1px solid var(--border);font-size:11px">
+      <span style="width:7px;height:7px;border-radius:50%;background:#57d4b1"></span>
+      <span id="header-user-name" style="font-weight:600">admin</span>
+      <button type="button" onclick="handleLogout()" title="Sign out" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px;font-weight:600;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:2px">
+        <span style="font-size:12px">⎋</span> Log out
+      </button>
+    </div>
+    <span id="header-tier-badge" onclick="showPanel('pricing')" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:rgba(255,255,255,0.12);color:inherit;font-weight:600;font-size:11px;transition:all .2s;border:1px solid var(--border);display:inline-flex;align-items:center;gap:4px" title="Click to view bot packages">⚡ Free Tier</span>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to day mode" onclick="toggleTheme()"><span class="theme-icon" aria-hidden="true">☀</span><span id="theme-toggle-label">Day mode</span></button>
+  </div>
 </header>
 
 <div class="wrap">
@@ -869,7 +1660,7 @@ body.day-mode .pkg-card:hover{box-shadow:0 8px 24px rgba(23,105,176,0.14)}
 
     <section id="panel-models" class="models-panel" style="display:none" aria-labelledby="models-heading">
       <div class="models-title-row">
-        <div><div class="view-eyebrow">COMMENTBOT STACK</div><h2 id="models-heading">Models</h2><p>Models and providers used across comments, analysis, safety, and scheduling.</p></div>
+        <div><div class="view-eyebrow">INTSOCIALMEDIA BOT STACK</div><h2 id="models-heading">Models</h2><p>Models and providers used across comments, analysis, safety, and scheduling.</p></div>
         <div class="models-count"><span>9</span> models &amp; providers</div>
       </div>
       <div class="models-group-label">LOCAL &amp; FALLBACK</div>
@@ -3101,8 +3892,19 @@ function applyTheme(dayMode, persist){
   if(toggle){
     toggle.setAttribute('aria-pressed',String(dayMode));
     toggle.setAttribute('aria-label','Switch to '+(dayMode?'night':'day')+' mode');
-    document.querySelector('#theme-toggle .theme-icon').textContent=dayMode?'☾':'☀';
-    document.getElementById('theme-toggle-label').textContent=dayMode?'Night mode':'Day mode';
+    var icon = document.querySelector('#theme-toggle .theme-icon');
+    if(icon) icon.textContent=dayMode?'☾':'☀';
+    var label = document.getElementById('theme-toggle-label');
+    if(label) label.textContent=dayMode?'Night mode':'Day mode';
+  }
+  var loginToggle=document.getElementById('login-theme-toggle');
+  if(loginToggle){
+    loginToggle.setAttribute('aria-pressed',String(dayMode));
+    loginToggle.setAttribute('aria-label','Switch to '+(dayMode?'night':'day')+' mode');
+    var loginIcon = loginToggle.querySelector('.theme-icon');
+    if(loginIcon) loginIcon.textContent=dayMode?'☾':'☀';
+    var loginLabel = document.getElementById('login-theme-toggle-label');
+    if(loginLabel) loginLabel.textContent=dayMode?'Night mode':'Day mode';
   }
   if(persist){
     try{localStorage.setItem('commentbot-theme',dayMode?'day':'night');}catch(_){ }
@@ -3113,9 +3915,300 @@ function toggleTheme(){
   applyTheme(!document.body.classList.contains('day-mode'),true);
 }
 
+// ══════════════════════════════════════════════════════════
+//  AUTHENTICATION & LOGIN FEED GATE
+// ══════════════════════════════════════════════════════════
+function checkAuthStatus() {
+  var authUser = null;
+  try {
+    authUser = sessionStorage.getItem('commentbot_auth_user') || localStorage.getItem('commentbot_auth_user');
+  } catch(e) { }
+
+  var loginScreen = document.getElementById('login-screen');
+  var headerUser = document.getElementById('header-user-badge');
+  var headerUserName = document.getElementById('header-user-name');
+
+  if (authUser) {
+    if (loginScreen) {
+      loginScreen.style.display = 'none';
+      loginScreen.classList.remove('login-fade-out');
+    }
+    if (headerUser) {
+      headerUser.style.display = 'inline-flex';
+      if (headerUserName) headerUserName.textContent = authUser;
+    }
+  } else {
+    if (loginScreen) {
+      loginScreen.style.display = 'flex';
+      loginScreen.classList.remove('login-fade-out');
+    }
+    if (headerUser) {
+      headerUser.style.display = 'none';
+    }
+  }
+}
+
+function handleLoginSubmit(event) {
+  if (event) event.preventDefault();
+  var idInput = document.getElementById('login-id');
+  var passInput = document.getElementById('login-pass');
+  var errorBanner = document.getElementById('login-error');
+  var submitBtn = document.getElementById('login-submit-btn');
+  var remember = document.getElementById('login-remember');
+
+  var id = (idInput ? idInput.value : '').trim();
+  var pass = (passInput ? passInput.value : '').trim();
+
+  // Validate ID & Password: default admin, admin
+  if (id.toLowerCase() === 'admin' && pass === 'admin') {
+    if (errorBanner) errorBanner.style.display = 'none';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Verifying...</span>';
+    }
+
+    setTimeout(function() {
+      try {
+        sessionStorage.setItem('commentbot_auth_user', 'admin');
+        if (remember && remember.checked) {
+          localStorage.setItem('commentbot_auth_user', 'admin');
+        }
+      } catch(err) { }
+
+      var loginScreen = document.getElementById('login-screen');
+      if (loginScreen) {
+        loginScreen.classList.add('login-fade-out');
+        setTimeout(function() {
+          loginScreen.style.display = 'none';
+          loginScreen.classList.remove('login-fade-out');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span class="login-btn-text">Sign In with ID</span><span class="login-btn-arrow">→</span>';
+          }
+        }, 320);
+      }
+
+      var headerUser = document.getElementById('header-user-badge');
+      var headerUserName = document.getElementById('header-user-name');
+      if (headerUser) {
+        headerUser.style.display = 'inline-flex';
+        if (headerUserName) headerUserName.textContent = 'admin';
+      }
+
+      addLog('OK', 'User "admin" signed in successfully.');
+    }, 280);
+  } else {
+    if (errorBanner) {
+      errorBanner.style.display = 'flex';
+      var errorMsg = document.getElementById('login-error-msg');
+      if (errorMsg) {
+        errorMsg.innerHTML = 'Invalid credentials. Default ID: <b>admin</b>, Password: <b>admin</b>.';
+      }
+    }
+    var card = document.querySelector('.login-card');
+    if (card) {
+      card.classList.remove('login-shake');
+      void card.offsetWidth;
+      card.classList.add('login-shake');
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  GOOGLE ACCOUNT CHOOSER (SAVED GOOGLE ACCOUNTS)
+// ══════════════════════════════════════════════════════════
+var defaultGoogleAccounts = [
+  { name: 'Masfi (Admin)', email: 'masfi.admin@gmail.com', initial: 'M', color: '#1a73e8' },
+  { name: 'Masfi CSE400', email: 'masfi.cse400@gmail.com', initial: 'M', color: '#ea4335' }
+];
+
+function getSavedGoogleAccounts() {
+  try {
+    var saved = localStorage.getItem('google_saved_accounts');
+    if (saved) {
+      var parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch(e) { }
+  return defaultGoogleAccounts;
+}
+
+function openGoogleAccountChooser() {
+  var modal = document.getElementById('google-account-modal');
+  if (!modal) return;
+  renderGoogleAccounts();
+  var loadingBar = document.getElementById('g-loading-bar');
+  if (loadingBar) loadingBar.style.display = 'none';
+  var statusBanner = document.getElementById('g-status-banner');
+  if (statusBanner) statusBanner.style.display = 'none';
+  var useAnother = document.getElementById('g-use-another-section');
+  if (useAnother) useAnother.style.display = 'none';
+  modal.style.display = 'flex';
+}
+
+function closeGoogleAccountChooser() {
+  var modal = document.getElementById('google-account-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function handleGModalBackdrop(event) {
+  if (event.target && event.target.id === 'google-account-modal') {
+    closeGoogleAccountChooser();
+  }
+}
+
+function renderGoogleAccounts() {
+  var list = document.getElementById('g-accounts-list');
+  if (!list) return;
+  var accounts = getSavedGoogleAccounts();
+
+  var html = '';
+  accounts.forEach(function(acc, idx) {
+    html += '<div class="g-account-item" onclick="selectGoogleAccount(' + idx + ')">';
+    html += '  <div class="g-avatar" style="background:' + (acc.color || '#1a73e8') + '">' + (acc.initial || acc.name.charAt(0)) + '</div>';
+    html += '  <div class="g-account-info">';
+    html += '    <div class="g-account-name">' + escapeHtml(acc.name) + '</div>';
+    html += '    <div class="g-account-email">' + escapeHtml(acc.email) + '</div>';
+    html += '  </div>';
+    html += '  <span class="g-account-badge">Signed in</span>';
+    html += '</div>';
+  });
+
+  html += '<div class="g-account-item" onclick="toggleUseAnotherGoogleAccount()">';
+  html += '  <div class="g-avatar-icon">👤+</div>';
+  html += '  <div class="g-account-info">';
+  html += '    <div class="g-account-name">Use another account</div>';
+  html += '    <div class="g-account-email">Sign in with a different Gmail address</div>';
+  html += '  </div>';
+  html += '</div>';
+
+  list.innerHTML = html;
+}
+
+function toggleUseAnotherGoogleAccount() {
+  var section = document.getElementById('g-use-another-section');
+  if (!section) return;
+  section.style.display = (section.style.display === 'none' || !section.style.display) ? 'block' : 'none';
+  if (section.style.display === 'block') {
+    var input = document.getElementById('g-custom-email');
+    if (input) input.focus();
+  }
+}
+
+function selectGoogleAccount(index) {
+  var accounts = getSavedGoogleAccounts();
+  var account = accounts[index] || accounts[0];
+  completeGoogleSignIn(account.name, account.email);
+}
+
+function handleCustomGoogleSignIn(event) {
+  if (event) event.preventDefault();
+  var input = document.getElementById('g-custom-email');
+  var email = (input ? input.value : '').trim();
+  if (!email) return;
+
+  var name = email.split('@')[0];
+  name = name.charAt(0).toUpperCase() + name.slice(1);
+
+  var accounts = getSavedGoogleAccounts();
+  var exists = accounts.some(function(a){ return a.email.toLowerCase() === email.toLowerCase(); });
+  if (!exists) {
+    var colors = ['#1a73e8', '#ea4335', '#fbbc05', '#34a853', '#9c27b0', '#e91e63'];
+    var randomColor = colors[Math.floor(Math.random() * colors.length)];
+    accounts.unshift({
+      name: name,
+      email: email,
+      initial: name.charAt(0).toUpperCase(),
+      color: randomColor
+    });
+    try {
+      localStorage.setItem('google_saved_accounts', JSON.stringify(accounts));
+    } catch(e) { }
+  }
+
+  completeGoogleSignIn(name, email);
+}
+
+function completeGoogleSignIn(name, email) {
+  var loadingBar = document.getElementById('g-loading-bar');
+  if (loadingBar) loadingBar.style.display = 'block';
+
+  var statusBanner = document.getElementById('g-status-banner');
+  if (statusBanner) {
+    statusBanner.textContent = 'Signing you into INTSocialMedia BOT as ' + email + '...';
+    statusBanner.style.display = 'block';
+  }
+
+  setTimeout(function() {
+    try {
+      sessionStorage.setItem('commentbot_auth_user', email);
+      localStorage.setItem('commentbot_auth_user', email);
+    } catch(err) { }
+
+    closeGoogleAccountChooser();
+
+    var loginScreen = document.getElementById('login-screen');
+    if (loginScreen) {
+      loginScreen.classList.add('login-fade-out');
+      setTimeout(function() {
+        loginScreen.style.display = 'none';
+        loginScreen.classList.remove('login-fade-out');
+      }, 300);
+    }
+
+    var headerUser = document.getElementById('header-user-badge');
+    var headerUserName = document.getElementById('header-user-name');
+    if (headerUser) {
+      headerUser.style.display = 'inline-flex';
+      if (headerUserName) headerUserName.textContent = email;
+    }
+
+    addLog('OK', 'Google account authenticated: ' + email);
+  }, 450);
+}
+
+function togglePasswordVisibility() {
+  var passInput = document.getElementById('login-pass');
+  var toggleBtn = document.querySelector('.login-toggle-pw');
+  if (!passInput) return;
+  if (passInput.type === 'password') {
+    passInput.type = 'text';
+    if (toggleBtn) toggleBtn.textContent = '🙈';
+  } else {
+    passInput.type = 'password';
+    if (toggleBtn) toggleBtn.textContent = '👁️';
+  }
+}
+
+function handleLogout() {
+  try {
+    sessionStorage.removeItem('commentbot_auth_user');
+    localStorage.removeItem('commentbot_auth_user');
+  } catch(e) { }
+
+  var headerUser = document.getElementById('header-user-badge');
+  if (headerUser) headerUser.style.display = 'none';
+
+  var loginScreen = document.getElementById('login-screen');
+  if (loginScreen) {
+    loginScreen.style.display = 'flex';
+    loginScreen.classList.remove('login-fade-out');
+  }
+
+  var idInput = document.getElementById('login-id');
+  var passInput = document.getElementById('login-pass');
+  var errorBanner = document.getElementById('login-error');
+  if (idInput) idInput.value = '';
+  if (passInput) passInput.value = '';
+  if (errorBanner) errorBanner.style.display = 'none';
+
+  addLog('INFO', 'User signed out. Login screen presented.');
+}
+
 var savedTheme='night';
 try{savedTheme=localStorage.getItem('commentbot-theme')||'night';}catch(_){ }
 applyTheme(savedTheme==='day',false);
+checkAuthStatus();
 showWelcome();
 
 setMode('comment');
