@@ -1601,11 +1601,6 @@ body:not(.day-mode) .g-disclaimer {
             <span style="font-size:9.5px;padding:2px 7px;border-radius:10px;background:var(--success-l);color:var(--success);font-weight:700">~$0.15 / POST</span>
           </button>
         </div>
-        <div style="margin-top:18px;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);display:grid;gap:10px;">
-          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">X auto-comment</div>
-          <input id="x-post-url" type="text" placeholder="Paste a Twitter/X post link here" style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit;">
-          <button type="button" class="schedule-submit" onclick="postGeneratedXComment()">Generate & Post Reply</button>
-        </div>
         <div class="security-note"><b>Security by design</b><br>Login happens on the platform's official authorization page. The backend validates a signed OAuth state value, exchanges authorization codes server-side, and stores only encrypted tokens when token storage is enabled.</div>
         <div class="connect-state" id="connect-state">No social account connected. Click Facebook to connect your Page, or click Instagram, X, or LinkedIn to review token requirements &amp; post pricing.</div>
       </div>
@@ -2875,49 +2870,13 @@ async function handleComment(text,targetPost){
   generatedComments=topComments.map(function(c){return {text:c.text,sentiment:sentiment,targetPostId:targetPost?targetPost.id:''};});
   var targetCard=targetPost?'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">Facebook post</div><div style="font-size:12px;line-height:1.6">'+escapeHtml(targetPost.text)+'</div></div>':'';
 
-  var cardsHtml=topComments.map(function(c,i){
-    var isTop=(i===0);
-    var rankLabel=isTop?'★ #1 Best Match':'Option #'+(i+1);
-    var scorePct=Math.round(c.score*100);
-    var postBtnText=targetPost?'💬 Comment on post':'🚀 Post now';
-    return'<div class="suggested-comment-card'+(isTop?' scc-featured':'')+'">'
-      +'<div class="scc-header">'
-      +  '<div class="scc-badge '+(isTop?'scc-badge-best':'scc-badge-alt')+'">'+rankLabel+'</div>'
-      +  '<div class="scc-meta">'
-      +    '<span class="scc-score" title="Relevance match score">⚡ '+scorePct+'% match</span>'
-      +    (c.truncated?'<span class="scc-tag" title="Length optimized for social platforms">✂️ Social limit</span>':'')
-      +    (c.penalized?'<span class="scc-tag" title="Variety boost applied">🔄 Unique</span>':'')
-      +    '<span class="scc-tag scc-safe-tag">🛡️ Safe</span>'
-      +  '</div>'
-      +'</div>'
-      +'<div class="scc-body" onclick="copyCommentByIndex('+i+', this)" title="Click to copy comment text">'
-      +  escapeHtml(c.text)
-      +'</div>'
-      +'<div class="scc-actions">'
-      +  '<button type="button" class="qbtn qbtn-post" onclick="postGeneratedComment('+i+')">'+postBtnText+'</button>'
-      +  '<button type="button" class="qbtn qbtn-app" onclick="scheduleGeneratedComment('+i+')">📅 Schedule</button>'
-      +  '<button type="button" class="qbtn qbtn-copy" onclick="copyCommentByIndex('+i+', this)">📋 Copy text</button>'
-      +'</div>'
-      +'</div>';
+  var chips=topComments.map(function(c,i){
+    return'<div class="chip'+(i===0?' r1':'')+'" onclick="copyChip(this)" title="Relevance: '+Math.round(c.score*100)+'%'+(c.penalized?' · Repeat penalty applied':'')+(c.truncated?' · Truncated for Twitter':'')+'">'
+      +'<span style="font-size:10px;color:var(--faint)">#'+(i+1)+'</span> '+escapeHtml(c.text)+'</div>'
+      +'<div class="comment-actions"><span style="width:100%;font-size:11px;color:var(--muted)">Do you want to post it or schedule it?</span>'
+      +'<button class="qbtn qbtn-post" onclick="postGeneratedComment('+i+')">'+(targetPost?'💬 Comment on this post':'Post it')+'</button>'
+      +'<button class="qbtn qbtn-app" onclick="scheduleGeneratedComment('+i+')">Schedule it</button></div>';
   }).join('');
-
-  var suggestedCommentsSection='<div class="suggested-comments-section" role="region" aria-label="Suggested Comments">'
-    +'<div class="scs-header">'
-    +  '<div class="scs-title-group">'
-    +    '<div class="scs-icon">💬</div>'
-    +    '<div>'
-    +      '<div class="scs-title">Suggested Comments</div>'
-    +      '<div class="scs-subtitle">AI-ranked &amp; sentiment-tailored candidates ready to publish</div>'
-    +    '</div>'
-    +  '</div>'
-    +  '<div class="scs-badge-count">'+topComments.length+' Generated</div>'
-    +'</div>'
-    +'<div class="scs-list">'+cardsHtml+'</div>'
-    +(lowConf.length?'<div class="warn-box" style="margin-top:10px">⚠️ '+lowConf.length+' low-confidence comment(s) sent to <b>Approval Queue</b> for manual review (Feature 26)</div>':'')
-    +'<div class="scs-footer">'
-    +  '<span>💡 Click any comment or "Copy" to copy text · Boundary optimized · Repeat penalty applied</span>'
-    +'</div>'
-    +'</div>';
 
   var aiCard=aiAnalysis?'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">🤖 AI Analysis (Features 9,13,14)</div>'
     +'<div class="crow"><span class="clabel">Tone</span><span style="font-size:11px;font-weight:500">'+aiAnalysis.tone+'</span></div>'
@@ -2934,7 +2893,10 @@ async function handleComment(text,targetPost){
     +'</div>'
     +aiCard
     +generationMetrics
-    +suggestedCommentsSection;
+    +'<div style="margin-top:8px"><b>🏆 Ranked Comments</b> (F18) — '+topComments.length+' safe / '+blocked+' blocked (F22) / '+lowConf.length+' in queue (F26)</div>'
+    +'<div class="chips">'+chips+'</div>'
+    +(lowConf.length?'<div class="warn-box">⚠️ '+lowConf.length+' low-confidence comment(s) sent to <b>Approval Queue</b> for manual review (Feature 26)</div>':'')
+    +'<div style="margin-top:6px;font-size:11px;color:var(--faint)">Click comment to copy · Boundary optimized for Twitter (F20) · Repeat penalty applied (F19)</div>';
 }
 
 async function handleSentiment(text){
@@ -4298,74 +4260,6 @@ function showWelcome(){
     +'<button type="button" class="quick-action" data-mode="sentiment"><span class="quick-icon teal">◉</span><span class="quick-copy"><b>Analyze sentiment</b><small>Tone and key topics</small></span><span class="quick-arrow">→</span></button>'
     +'<button type="button" class="quick-action" data-mode="schedule"><span class="quick-icon amber">▦</span><span class="quick-copy"><b>Plan a post</b><small>Timing and engagement</small></span><span class="quick-arrow">→</span></button>'
     +'<button type="button" class="quick-action" data-panel="image"><span class="quick-icon coral">▧</span><span class="quick-copy"><b>Comment on an image</b><small>Generate from a photo</small></span><span class="quick-arrow">→</span></button>'
-    +'</div>'
-    +'<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-    +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Live Example · Ready-to-Use Suggestions</div>'
-    +'<span class="tag">Interactive</span>'
-    +'</div>'
-    +'<div style="font-size:12.5px;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;line-height:1.5">'
-    +'📌 <em>"Just launched our new product line! Excited for what\'s next 🚀 #launch #startup"</em>'
-    +'</div>'
-    +'<div class="suggested-comments-section" role="region" aria-label="Suggested Comments" style="margin-top:0">'
-    +'<div class="scs-header">'
-    +'<div class="scs-title-group">'
-    +'<div class="scs-icon">💬</div>'
-    +'<div>'
-    +'<div class="scs-title">Suggested Comments</div>'
-    +'<div class="scs-subtitle">AI-ranked &amp; sentiment-tailored candidates ready to publish</div>'
-    +'</div>'
-    +'</div>'
-    +'<div class="scs-badge-count">3 Generated</div>'
-    +'</div>'
-    +'<div class="scs-list">'
-    +'<div class="suggested-comment-card scc-featured">'
-    +'<div class="scc-header">'
-    +'<div class="scc-badge scc-badge-best">★ #1 Best Match</div>'
-    +'<div class="scc-meta"><span class="scc-score" title="Relevance match score">⚡ 96% match</span><span class="scc-tag scc-safe-tag">🛡️ Safe</span></div>'
-    +'</div>'
-    +'<div class="scc-body" onclick="copyCommentByIndex(0, this)" title="Click to copy comment text">'
-    +'Huge congratulations on the milestone launch! The hard work really shines through — excited to see where you take this next! 🚀'
-    +'</div>'
-    +'<div class="scc-actions">'
-    +'<button type="button" class="qbtn qbtn-post" onclick="postGeneratedComment(0)">🚀 Post now</button>'
-    +'<button type="button" class="qbtn qbtn-app" onclick="scheduleGeneratedComment(0)">📅 Schedule</button>'
-    +'<button type="button" class="qbtn qbtn-copy" onclick="copyCommentByIndex(0, this)">📋 Copy text</button>'
-    +'</div>'
-    +'</div>'
-    +'<div class="suggested-comment-card">'
-    +'<div class="scc-header">'
-    +'<div class="scc-badge scc-badge-alt">Option #2</div>'
-    +'<div class="scc-meta"><span class="scc-score" title="Relevance match score">⚡ 91% match</span><span class="scc-tag scc-safe-tag">🛡️ Safe</span></div>'
-    +'</div>'
-    +'<div class="scc-body" onclick="copyCommentByIndex(1, this)" title="Click to copy comment text">'
-    +'Incredible effort and a well-deserved milestone! Wishing the entire team continued momentum and success. 🎉'
-    +'</div>'
-    +'<div class="scc-actions">'
-    +'<button type="button" class="qbtn qbtn-post" onclick="postGeneratedComment(1)">🚀 Post now</button>'
-    +'<button type="button" class="qbtn qbtn-app" onclick="scheduleGeneratedComment(1)">📅 Schedule</button>'
-    +'<button type="button" class="qbtn qbtn-copy" onclick="copyCommentByIndex(1, this)">📋 Copy text</button>'
-    +'</div>'
-    +'</div>'
-    +'<div class="suggested-comment-card">'
-    +'<div class="scc-header">'
-    +'<div class="scc-badge scc-badge-alt">Option #3</div>'
-    +'<div class="scc-meta"><span class="scc-score" title="Relevance match score">⚡ 86% match</span><span class="scc-tag scc-safe-tag">🛡️ Safe</span></div>'
-    +'</div>'
-    +'<div class="scc-body" onclick="copyCommentByIndex(2, this)" title="Click to copy comment text">'
-    +'This is truly inspiring to see. Thank you for sharing the journey with all of us! Looking forward to more updates. ✨'
-    +'</div>'
-    +'<div class="scc-actions">'
-    +'<button type="button" class="qbtn qbtn-post" onclick="postGeneratedComment(2)">🚀 Post now</button>'
-    +'<button type="button" class="qbtn qbtn-app" onclick="scheduleGeneratedComment(2)">📅 Schedule</button>'
-    +'<button type="button" class="qbtn qbtn-copy" onclick="copyCommentByIndex(2, this)">📋 Copy text</button>'
-    +'</div>'
-    +'</div>'
-    +'</div>'
-    +'<div class="scs-footer">'
-    +'<span>💡 Click any comment or "Copy" to copy text · Boundary optimized · Ready to publish</span>'
-    +'</div>'
-    +'</div>'
     +'</div>'
     +'</div>';
   msgs.appendChild(d);
