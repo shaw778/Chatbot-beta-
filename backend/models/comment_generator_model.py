@@ -36,7 +36,7 @@ class BertCommentGeneratorModel:
             language = detect_language(text)
 
         # 1. Check if input is a nested comment-reply prompt
-        reply_comment = self._check_comment_reply_prompt(text, language=language)
+        reply_comment = self._check_comment_reply_prompt(text, language=language, sentiment=sentiment)
         if reply_comment:
             return {
                 "model": "bert-comment-generator" if self.pipeline else "nlp-comment-generator",
@@ -121,7 +121,7 @@ class BertCommentGeneratorModel:
             "source": self.source,
         }
 
-    def _check_comment_reply_prompt(self, text, language=None):
+    def _check_comment_reply_prompt(self, text, language=None, sentiment="neutral"):
         """Detect and handle comment reply instructions from the UI for English and Bangla."""
         if "Someone commented on a Facebook post" in text:
             match = re.search(r'Comment:\s*"(.*?)"', text, re.DOTALL)
@@ -132,6 +132,15 @@ class BertCommentGeneratorModel:
             is_bangla = (language == "bn") or (detect_language(comment_text) == "bn") or any("\u0980" <= c <= "\u09FF" for c in comment_text)
 
             if is_bangla:
+                # 0. Negative sentiment / complaints / issues
+                is_neg_bn = (str(sentiment).lower() == "negative") or any(w in c_low for w in ["খারাপ", "বাজে", "সমস্যা", "ধোঁকা", "প্রতারণা", "নষ্ট", "দেরি", "হতাশ", "ক্ষতি", "ভুল", "অভিযোগ", "কাজ করে না", "ফালতু", "অসন্তুষ্ট"])
+                if is_neg_bn:
+                    replies = [
+                        "আপনার এই অনাকাঙ্ক্ষিত ও হতাশাজনক অভিজ্ঞতার জন্য আমরা আন্তরিকভাবে দুঃখিত। বিষয়টি দ্রুত খতিয়ে দেখে সমাধানের জন্য অনুগ্রহ করে বিস্তারিত তথ্য দিয়ে আমাদের পেজে ইনবক্স করুন।",
+                        "আমরা আপনার ভোগান্তির জন্য আন্তরিকভাবে ক্ষমাপ্রার্থী। আমরা আপনার ক্ষোভ বুঝতে পারছি এবং দ্রুত সমাধান দিতে প্রস্তুত। দয়া করে ইনবক্সে আমাদের সাথে যোগাযোগ করুন।",
+                        "যে অসুবিধার সম্মুখীন হয়েছেন তার জন্য আমরা গভীরভাবে দুঃখ প্রকাশ করছি। এই সমস্যা অবিলম্বে সমাধানে আমাদের টিম প্রস্তুত, অনুগ্রহ করে বিস্তারিত ইনবক্সে দিন।",
+                    ]
+                    return random.choice(replies)
                 # 1. Price / Order / Product inquiry
                 if any(w in c_low for w in ["দাম", "কত", "কতো", "টাকা", "প্রাইস", "কবে", "পাবো", "পাব", "অর্ডার", "কিভাবে", "কীভাবে", "ডিটেইলস", "ইনবক্স", "price", "cost", "dam", "koto", "inbox"]):
                     replies = [
@@ -163,6 +172,19 @@ class BertCommentGeneratorModel:
                 return random.choice(replies)
 
             # English replies
+            # 0. Negative sentiment / complaints / issues
+            is_neg_en = (str(sentiment).lower() == "negative") or any(w in c_low for w in [
+                "bad", "worst", "terrible", "horrible", "broken", "issue", "problem", "disappointed",
+                "disappointing", "poor", "scam", "waste", "failed", "crash", "bug", "hate", "sucks", "cheat", "fake", "delayed"
+            ])
+            if is_neg_en:
+                replies = [
+                    "We sincerely apologize for this frustrating experience. This is certainly not our standard, and we want to make things right. Please send us a direct message so we can resolve this immediately.",
+                    "We are truly sorry to hear about your experience. We understand your frustration and would like to look into this right away. Please reach out to our support team directly.",
+                    "Thank you for bringing this to our attention. We apologize for the inconvenience and frustration caused, and we are committed to resolving this issue promptly. Please send us a direct message.",
+                ]
+                return random.choice(replies)
+
             if any(w in c_low for w in ["congrat", "congrats", "well done", "awesome", "great"]):
                 replies = [
                     "Thank you so much! Really appreciate the kind words and support.",
@@ -242,10 +264,10 @@ class BertCommentGeneratorModel:
         ])
 
         # Priority order
-        if is_question:
-            category = "question_advice"
-        elif is_struggle:
+        if is_struggle:
             category = "struggle"
+        elif is_question:
+            category = "question_advice"
         elif is_food:
             category = "food"
         elif is_pet:
@@ -351,7 +373,7 @@ class BertCommentGeneratorModel:
         elif topics and topics[0] != "social update":
             subject = topics[0]
         else:
-            subject = "this moment"
+            subject = "this issue" if (category == "struggle" or is_struggle) else "this moment"
 
         # Extract concrete detail
         specific_detail = None
@@ -601,22 +623,24 @@ class BertCommentGeneratorModel:
         return self._format_for_platform(comment, platform)
 
     def _generate_negative_support(self, subject, detail, archetype):
-        """Generate empathetic and encouraging replies for negative situations."""
+        """Generate professional, apologetic, and empathetic customer-service crisis management replies for negative situations."""
+        clean_subj = subject.strip() if subject else "this matter"
         if archetype in ["celebratory", "punchy_social"]:
             templates = [
-                f"Tough break with {subject}, but the resilience shown here speaks volumes. Rooting for a big turnaround next time! 💪",
-                f"Really sorry to hear about {subject}. Keeping your head up through this is inspiring — brighter days ahead! ✨",
-                f"So sorry you had to deal with this headache! Hang in there, smoother days are right ahead. 💪",
+                f"We sincerely apologize for your frustrating experience with {clean_subj}. This is certainly not the standard we aim for. Please send us a direct message so our team can investigate and resolve this for you immediately.",
+                f"I am truly sorry to hear about the trouble you've experienced with {clean_subj}. We acknowledge your frustration and want to make this right. Please reach out to our support team directly.",
+                f"We deeply apologize for the inconvenience and frustration caused by {clean_subj}. Your satisfaction is very important to us, and we are committed to resolving this issue promptly. Please contact us directly.",
             ]
         elif archetype == "discussion_question":
             templates = [
-                f"Completely understandable to feel disappointed regarding {subject}. What’s the biggest lesson you’re taking into the next round?",
-                f"Hang in there! Is there anything the community can do to help support or share advice on {subject}?",
+                f"We are very sorry for the frustration caused by {clean_subj}. Could you please send us a direct message with your details so we can investigate and resolve this for you right away?",
+                f"We sincerely apologize for this disappointing experience with {clean_subj}. Please let us know how our team can best assist you in resolving this matter immediately.",
             ]
         else:
             templates = [
-                f"Sending strength your way. Setbacks around {subject} are always frustrating, but your persistence will carry you through.",
-                f"So sorry you had to deal with this situation regarding {subject}. Hoping things smooth out for you very quickly!",
+                f"We sincerely apologize for the frustration regarding {clean_subj}. We understand how difficult this is, and our team is ready to step in and resolve the issue for you immediately.",
+                f"I am so sorry for your negative experience with {clean_subj}. We take your feedback seriously and would appreciate the opportunity to make things right. Please send us a direct message.",
+                f"We apologize for falling short of your expectations with {clean_subj}. We acknowledge your frustration and want to assist in resolving this. Please connect with our support team so we can help.",
             ]
         return random.choice(templates)
 
@@ -635,10 +659,10 @@ class BertCommentGeneratorModel:
         if lang == "bn":
             if sentiment == "negative" or category == "struggle":
                 bn_neg = [
-                    f"{subject} নিয়ে এমন অপ্রত্যাশিত পরিস্থিতি সত্যিই কষ্টদায়ক ও বিরক্তিকর। আশা করি খুব দ্রুত সবকিছু ইতিবাচক ধারায় ফিরবে! 💪",
-                    f"কঠিন পরিস্থিতি আসতেই পারে, তবে আপনার ধৈর্য ও নিষ্ঠাই আপনাকে এগিয়ে নিয়ে যাবে। শুভকামনা সবসময়! ✨",
-                    f"এমন সময় শক্ত থাকাটাই সবচেয়ে বড় জয়। সামনের দিনগুলো অনেক সুন্দর ও মসৃণ হবে বিশ্বাস করি! 🌟",
-                    f"পরিস্থিতিটা সত্যিই হতাশাজনক। আশা করি দ্রুত সমাধান হবে এবং দিনটি ভালো যাবে! 💪",
+                    f"{subject} নিয়ে আপনার এই অনাকাঙ্ক্ষিত ও হতাশাজনক অভিজ্ঞতার জন্য আমরা আন্তরিকভাবে দুঃখিত। বিষয়টি দ্রুত সমাধানের জন্য অনুগ্রহ করে আমাদের বিস্তারিত জানান।",
+                    f"আপনার এই সমস্যার জন্য আমরা আন্তরিকভাবে ক্ষমাপ্রার্থী। আমরা আপনার ক্ষোভ ও হতাশা বুঝতে পারছি। দয়া করে আপনার বিবরণ দিয়ে আমাদের সাথে যোগাযোগ করুন, আমরা এখনই সমাধানের ব্যবস্থা নিচ্ছি।",
+                    f"{subject} নিয়ে যে ভোগান্তি হয়েছে তার জন্য আমরা গভীরভাবে দুঃখ প্রকাশ করছি। এই সমস্যাটি অবিলম্বে সমাধান করতে আমাদের টিম প্রস্তুত, অনুগ্রহ করে আমাদের ইনবক্সে মেসেজ দিন।",
+                    f"পরিস্থিতিটা সত্যিই হতাশাজনক এবং এর জন্য আমরা দুঃখ প্রকাশ করছি। অনুগ্রহ করে আমাদের সাথে সরাসরি যোগাযোগ করুন যাতে দ্রুত এটি সমাধান করতে পারি।",
                 ]
                 return bn_neg[archetype_idx % len(bn_neg)]
 
@@ -718,6 +742,47 @@ class BertCommentGeneratorModel:
             ]
             return bn_general[archetype_idx % len(bn_general)]
 
+        if sentiment == "negative" or category == "struggle":
+            multi_neg = {
+                "es": [
+                    f"Lamentamos sinceramente esta experiencia tan frustrante con {subject}. Esto no refleja nuestro estándar. Por favor, envíenos un mensaje directo para resolverlo de inmediato.",
+                    f"Sentimos mucho los inconvenientes con {subject}. Entendemos su frustración y queremos ayudarle a solucionarlo cuanto antes. Contáctenos directamente.",
+                ],
+                "fr": [
+                    f"Nous vous présentons nos sincères excuses pour cette expérience frustrante avec {subject}. Veuillez nous contacter en message privé afin que nous puissions résoudre ce problème immédiatement.",
+                    f"Nous regrettons profondément ce désagrément concernant {subject}. Nous comprenons votre frustration et souhaitons y remédier rapidement.",
+                ],
+                "de": [
+                    f"Wir entschuldigen uns aufrichtig für diese frustrierende Erfahrung mit {subject}. Bitte senden Sie uns eine Direktnachricht, damit unser Team das Problem umgehend lösen kann.",
+                    f"Es tut uns sehr leid zu hören, welche Unannehmlichkeiten {subject} verursacht hat. Wir möchten die Angelegenheit schnellstmöglich für Sie klären.",
+                ],
+                "pt": [
+                    f"Pedimos sinceras desculpas por essa experiência frustrante com {subject}. Por favor, envie-nos uma mensagem direta para que possamos resolver isso imediatamente.",
+                    f"Lamentamos muito o ocorrido com {subject}. Compreendemos sua frustração e queremos ajudá-lo a solucionar o problema o mais rápido possível.",
+                ],
+                "it": [
+                    f"Ci scusiamo sinceramente per questa spiacevole e frustrante esperienza con {subject}. Ti preghiamo di scriverci in privato per risolvere subito la situazione.",
+                    f"Siamo davvero spiacenti per l'inconveniente legato a {subject}. Comprendiamo la tua frustrazione e vogliamo risolvere al più presto.",
+                ],
+                "hi": [
+                    f"{subject} को लेकर हुए इस निराशाजनक अनुभव के लिए हम ईमानदारी से क्षमा चाहते हैं। कृपया हमें सीधा संदेश भेजें ताकि हमारी टीम इसे तुरंत हल कर सके।",
+                    f"हुई असुविधा के लिए हमें गहरा खेদ है। हम आपकी परेशानी को समझते हैं और तुरंत समाधान के लिए सहायता हेतु तैयार हैं।",
+                ],
+                "ar": [
+                    f"نعتذر بصدق عن هذه التجربة المحبطة بخصوص {subject}. هذا ليس المستوى الذي نطمح إليه. يرجى مراسلتنا لحل المشكلة فوراً.",
+                    f"نأسف بشدة للإزعاج الذي واجهته مع {subject}. نتفهم إحباطك ونرغب في مساعدتك لحل الأمر في أسرع وقت.",
+                ],
+                "zh": [
+                    f"对于在{subject}上给您带来的不愉快经历，我们深表歉意。请直接私信我们，以便我们立即为您调查并解决该问题。",
+                    f"非常抱歉给您带来困扰。我们完全理解您的感受，并希望能尽快为您解决问题，请随时与我们联系。",
+                ],
+                "ja": [
+                    f"{subject}に関してご不便とご迷惑をおかけしましたことを心よりお詫び申し上げます。迅速に対応いたしますので、DMにて詳細をお知らせください。",
+                    f"この度の不手際につき深くお詫び申し上げます。お客様の状況を真摯に受け止め、早急に解決へ向けて対応いたします。",
+                ],
+            }
+            options = multi_neg.get(lang, multi_neg["es"])
+            return options[archetype_idx % len(options)]
 
         multi_dict = {
             "es": [

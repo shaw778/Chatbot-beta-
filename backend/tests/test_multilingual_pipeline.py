@@ -78,3 +78,16 @@ def test_bangla_food_comment_generation():
     assert any("\u0980" <= c <= "\u09FF" for c in comment)
     assert any(w in comment for w in ["জিভে জল", "খাবার", "মজা", "রান্না", "ভোজন", "সুস্বাদু", "ক্ষুধা"])
 
+
+def test_bangla_negative_comment_crisis_management():
+    post = "অত্যন্ত বাজে সার্ভিস, পণ্য নষ্ট অবস্থায় পেয়েছি এবং টাকা ফেরত পাইনি।"
+    result = comment_generator(post, sentiment_label="negative", language="bn")
+    comment = result.get("comment", "")
+    assert result.get("language") == "bn"
+    assert any("\u0980" <= c <= "\u09FF" for c in comment)
+    # Check for professional apologetic customer service crisis resolution
+    assert any(w in comment for w in ["দুঃখিত", "ক্ষমা", "সমাধান", "যোগাযোগ", "ইনবক্স", "মেসেজ"])
+    # Ensure no cheerful emojis
+    assert "✨" not in comment and "🔥" not in comment and "💪" not in comment and "🌟" not in comment
+
+

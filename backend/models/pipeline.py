@@ -151,6 +151,10 @@ def schedule(text, sentiment_label='neutral', predicted_engagement=None, provide
 
 def comment_generator(text, sentiment_label='neutral', toxicity=False, style='casual', provider='anthropic', platform='general', num_comments=1, language=None):
     effective_lang = language if language and language != 'auto' else detect_language(text)
+    if str(sentiment_label or '').lower() == 'neutral':
+        fast_s = vader_analyze(text)
+        if fast_s.get('sentiment') == 'negative':
+            sentiment_label = 'negative'
     lang_note = f'Language: {effective_lang}. If Bengali/Bangla, write strictly in natural Bengali (বাংলা script).'
     system_extra = f'Target platform: {platform}. {lang_note} Ensure comments fit the platform length and style requirements.'
     # If requesting multiple comments, instruct cloud to return a JSON array
@@ -161,11 +165,21 @@ def comment_generator(text, sentiment_label='neutral', toxicity=False, style='ca
 
 
 def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', provider='anthropic', platform='general', num_comments=1, system_extra='', language='en'):
+    sentiment_str = str(sentiment_label or 'neutral').strip().lower()
+    negative_rule = ""
+    if sentiment_str == 'negative':
+        negative_rule = (
+            "System Rule: The user sentiment is NEGATIVE. Generate a professional, apologetic, and empathetic customer service reply. "
+            "Do not be cheerful. Do not use emojis like ✨ or 🔥. Acknowledge their frustration and offer to resolve the issue."
+        )
+
     lang_rule = (
         "LANGUAGE RULE: If the input post or comment is in Bengali / Bangla (বাংলা) or Banglish, or if requested language is 'bn', "
         "you MUST generate the comment(s) strictly in natural, fluent, conversational Bengali (বাংলা script). "
         "If in English, generate in English. Always match the language and cultural tone of the post."
     )
+    rule_suffix = f"{negative_rule} {lang_rule} {system_extra}".strip()
+
     # Build system prompt expecting either single JSON object or JSON array depending on num_comments
     if num_comments and int(num_comments) > 1:
         system = (
@@ -173,7 +187,7 @@ def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', pr
             '1) React to one concrete detail from the post 2) Match the platform, tone, and sentiment 3) Use conversational wording and natural pacing '
             '4) Never use generic phrases like "Nice post!" or "Great work!" 5) Never claim personal experiences or facts not present in the post '
             '6) Avoid AI cliches, over-polished marketing language, hashtags, and excessive emojis 7) No toxic/harmful content. '
-            f'{lang_rule} {system_extra} Return ONLY a JSON array of strings. No markdown, no explanation.'
+            f'{rule_suffix} Return ONLY a JSON array of strings. No markdown, no explanation.'
         )
     else:
         system = (
@@ -181,7 +195,7 @@ def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', pr
             '1) React to one concrete detail from the post 2) Match the platform, tone, and sentiment 3) Use conversational wording and natural pacing '
             '4) Never use generic phrases like "Nice post!" or "Great work!" 5) Never claim personal experiences or facts not present in the post '
             '6) Avoid AI cliches, over-polished marketing language, hashtags, and excessive emojis 7) No toxic/harmful content. '
-            f'{lang_rule} {system_extra} Return ONLY a JSON object with keys: comment, language, sentiment, toxic, source, explanation.'
+            f'{rule_suffix} Return ONLY a JSON object with keys: comment, language, sentiment, toxic, source, explanation.'
         )
 
     user = f'Post: "{text}"\nSentiment: {sentiment_label}\nToxic: {toxicity}\nStyle: {style}\nLanguage: {language}\nGenerate {num_comments} comment(s) that fit {platform}.'

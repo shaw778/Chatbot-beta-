@@ -62,16 +62,20 @@ def fallback_response(payload):
         num_comments = int(num_match.group(1)) if num_match else (5 if "json array of strings" in system else 1)
         sent_match = re.search(r'Sentiment:\s*([a-zA-Z]+)', user_text)
         sentiment_label = sent_match.group(1) if sent_match else "neutral"
+        if "sentiment is negative" in system.lower() or sentiment_label.lower() == "negative":
+            sentiment_label = "negative"
         toxic_match = re.search(r'Toxic:\s*(True|False)', user_text)
         is_toxic = toxic_match.group(1) == "True" if toxic_match else False
+        lang_match = re.search(r'Language:\s*([a-zA-Z_]+)', user_text)
+        lang_val = lang_match.group(1) if lang_match else None
 
         if "json array of strings" in system or num_comments > 1:
             multi = comment_generator_model.generate_multiple(
-                post_text, sentiment=sentiment_label, toxicity=is_toxic, num_comments=num_comments
+                post_text, sentiment=sentiment_label, toxicity=is_toxic, num_comments=num_comments, language=lang_val
             )
             return json.dumps(multi["comments"])
         else:
-            single = comment_generator_model.predict(post_text, sentiment=sentiment_label, toxicity=is_toxic)
+            single = comment_generator_model.predict(post_text, sentiment=sentiment_label, toxicity=is_toxic, language=lang_val)
             return json.dumps(single)
 
     if "engagement prediction expert" in system:

@@ -71,8 +71,25 @@ def test_comment_generator_negative_empathy():
     res = comment_generator(post, sentiment_label="negative", num_comments=3)
     comments = res.get("comments", [])
     assert len(comments) == 3
-    # Check for empathetic tone words
-    assert any(any(w in c.lower() for w in ["sorry", "tough", "strength", "brighter", "resilience", "frustrating"]) for c in comments)
+    # Check for professional apologetic customer service crisis resolution tone
+    assert any(any(w in c.lower() for w in ["sorry", "apologize", "frustrating", "frustration", "resolve", "support"]) for c in comments)
+    # Must NOT contain cheerful emojis
+    for c in comments:
+        assert "✨" not in c and "🔥" not in c and "💪" not in c and "☕" not in c
+
+
+def test_comment_generator_negative_fb_reply():
+    prompt = (
+        'Someone commented on a Facebook post. Write a short reply (1-2 sentences max).\n\n'
+        'Original post: "Our latest release is live."\n'
+        'Comment: "This is broken and the worst experience ever, total scam."\n\n'
+        'Reply:'
+    )
+    res = comment_generator(prompt, sentiment_label="negative", num_comments=1)
+    comment = res.get("comment", "")
+    assert isinstance(comment, str)
+    assert any(w in comment.lower() for w in ["apologize", "sorry", "frustrat", "resolve", "right", "message"])
+    assert "✨" not in comment and "🔥" not in comment
 
 
 def test_comment_generator_fb_comment_reply():

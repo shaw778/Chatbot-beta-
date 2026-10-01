@@ -2712,7 +2712,21 @@ async function handleComment(text,targetPost){
     // Fallback
     var langEl = document.getElementById('lang-select');
     var isBn = (langEl && langEl.value==='bn') || /[\u0980-\u09FF]/.test(text);
-    if(isBn){
+    if(sentiment==='negative'){
+      if(isBn){
+        rawComments=[
+          'আপনার এই অনাকাঙ্ক্ষিত ও হতাশাজনক অভিজ্ঞতার জন্য আমরা আন্তরিকভাবে দুঃখিত। বিষয়টি দ্রুত খতিয়ে দেখে সমাধানের জন্য অনুগ্রহ করে বিস্তারিত তথ্য দিয়ে আমাদের পেজে ইনবক্স করুন।',
+          'আমরা আপনার অসুবিধার জন্য আন্তরিকভাবে ক্ষমাপ্রার্থী। আমরা আপনার ক্ষোভ বুঝতে পারছি এবং দ্রুত সমাধান দিতে প্রস্তুত। দয়া করে ইনবক্সে যোগাযোগ করুন।',
+          'যে অসুবিধার সম্মুখীন হয়েছেন তার জন্য আমরা গভীরভাবে দুঃখ প্রকাশ করছি। এই সমস্যা অবিলম্বে সমাধানে আমাদের টিম প্রস্তুত।'
+        ];
+      } else {
+        rawComments=[
+          'We sincerely apologize for this frustrating experience. This is certainly not our standard, and we want to make things right. Please send us a direct message so we can resolve this immediately.',
+          'We are truly sorry to hear about your experience. We understand your frustration and would like to look into this right away. Please reach out to our support team directly.',
+          'Thank you for bringing this to our attention. We apologize for the inconvenience and frustration caused, and we are committed to resolving this issue promptly. Please send us a direct message.'
+        ];
+      }
+    } else if(isBn){
       rawComments=[
         'আমাদের সাথে এই সুন্দর আপডেটটি শেয়ার করার জন্য আন্তরিক ধন্যবাদ! শুভকামনা রইল।',
         'দারুণ লাগলো দেখে! প্রতিটি দিন এমন আনন্দ আর ইতিবাচকতায় ভরে উঠুক। ✨',
@@ -3719,10 +3733,16 @@ async function fbReplyWithAI(commentId, commentText, postText, btn){
   btn.disabled = true;
   btn.textContent = 'Generating...';
   try {
-    var prompt = 'Someone commented on a Facebook post. Write a short, friendly reply (1-2 sentences max).\n\nOriginal post: "'+postText+'"\nComment: "'+commentText+'"\n\nReply:';
+    var vSent = typeof vaderSentiment === 'function' ? vaderSentiment(commentText) : {label:'neutral'};
+    var detectedSent = (vSent && vSent.label) ? vSent.label : 'neutral';
+    var isNeg = detectedSent === 'negative';
+    var promptStyle = isNeg
+      ? 'Someone commented on a Facebook post with negative sentiment/frustration. Write a professional, apologetic, and empathetic customer service reply acknowledging their frustration and offering to resolve the issue (1-2 sentences max, no cheerful emojis).'
+      : 'Someone commented on a Facebook post. Write a short, friendly reply (1-2 sentences max).';
+    var prompt = promptStyle + '\n\nOriginal post: "'+postText+'"\nComment: "'+commentText+'"\n\nReply:';
     var res = await fetch(API_BASE+'/api/models/comment-generator', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({text: prompt, sentiment:'neutral', num_comments:1, platform:'facebook', provider:provider, language:language})
+      body: JSON.stringify({text: prompt, sentiment: detectedSent, num_comments:1, platform:'facebook', provider:provider, language:language})
     });
     var data = await res.json();
     if(!res.ok) throw new Error(data.error || 'AI generation failed.');
