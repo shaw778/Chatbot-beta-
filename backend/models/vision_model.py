@@ -157,7 +157,15 @@ class LocalVisionModel:
 
     def _extract_semantic_keywords(self, filename="", user_prompt=""):
         """Extract high-confidence domain tags from filename and optional prompt."""
-        text = f"{filename} {user_prompt}".lower()
+        prompt_clean = user_prompt or ""
+        # If user_prompt contains leaked system instructions or prompt examples, discard it
+        if any(marker in prompt_clean.lower() for marker in [
+            "instructions:", "analyze this image", "specifically mention", "format your output",
+            "hiking with the pup", "mountain view", "delicious spread"
+        ]):
+            prompt_clean = ""
+
+        text = f"{filename} {prompt_clean}".lower()
         cleaned = re.sub(r"[_\-\.\d]", " ", text)
         words = set(cleaned.split())
 
@@ -173,6 +181,8 @@ class LocalVisionModel:
             "workspace": {"laptop", "desk", "office", "code", "coding", "setup", "workspace", "computer", "macbook", "study", "work"},
             "fitness": {"gym", "workout", "fitness", "run", "running", "sport", "football", "cricket", "match", "exercise", "training"},
             "vehicle": {"car", "bike", "motorcycle", "ride", "drive", "roadtrip", "vehicle", "automobile"},
+            "art": {"art", "drawing", "illustration", "design", "graphic", "logo", "poster", "colorful", "rainbow", "abstract", "painting", "sketch", "digital", "artwork", "canvas", "pattern"},
+            "architecture": {"building", "house", "city", "street", "architecture", "tower", "bridge", "urban", "monument", "castle", "room", "indoor", "interior", "decor"},
         }
 
         detected = []
@@ -252,6 +262,10 @@ class LocalVisionModel:
             return f"A heartwarming {orientation} photograph capturing a sweet moment with a loyal pet companion."
 
         # Single semantic tags
+        if "art" in tags:
+            return f"A vibrant and creative {orientation} visual artwork featuring expressive colors, imaginative design, and striking visual elements."
+        if "architecture" in tags:
+            return f"An impressive {orientation} architectural photograph highlighting structured design, geometry, and urban aesthetic."
         if "sunset" in tags:
             return f"A stunning {orientation} photograph capturing golden-hour sunset warmth with radiant skies."
         if "nature" in tags:
@@ -397,6 +411,14 @@ class LocalVisionModel:
         has_vehicle = any(w in d_low for w in [
             "car", "cars", "bike", "motorcycle", "vehicle", "automobile", "drive", "driving", "roadtrip", "ride", "গাড়ি", "গাড়ি", "বাইক"
         ])
+        has_art = any(w in d_low for w in [
+            "art", "artwork", "drawing", "illustration", "design", "graphic", "painting", "sketch",
+            "canvas", "abstract", "rainbow", "creative", "pattern", "আর্ট", "চিত্রকর্ম", "ডিজাইন", "শিল্প"
+        ])
+        has_architecture = any(w in d_low for w in [
+            "building", "buildings", "architecture", "architectural", "tower", "bridge", "city",
+            "urban", "structure", "interior", "downtown", "ভবন", "শহর", "স্থাপত্য"
+        ])
 
         # ── BANGLA / BENGALI SPECIFIC RESPONSES ──
         if is_bangla:
@@ -424,6 +446,10 @@ class LocalVisionModel:
                 return "বিশেষ এই অর্জনে অনেক অনেক শুভকামনা ও অভিনন্দন! সুন্দর মুহূর্তগুলো চিরস্মরণীয় হয়ে থাকুক। 🎉✨"
             if has_nature:
                 return "প্রকৃতির স্নিগ্ধ রূপ অসাধারণভাবে ফুটে উঠেছে! রঙ আর সজীবতা সত্যি চমৎকার। 🌸🌿"
+            if has_art:
+                return "অসাধারণ সৃজনশীলতা ও চমৎকার রঙের কাজ! চিত্রকর্মটি সত্যিই চোখ জুড়িয়ে যায়। 🎨✨"
+            if has_architecture:
+                return "স্থাপত্যের কী চমৎকার নিদর্শন! ভবনের নকশা ও সামগ্রিক দৃশ্যটি অত্যন্ত দৃষ্টিনন্দন। 🏛️✨"
             if has_person:
                 return "অনেক সুন্দর একটি মুহূর্ত! সবার হাসিমুখ দেখে দারুণ লাগল, শুভকামনা রইল সবসময়। 😊✨"
             return "খুবই সুন্দর এবং চমৎকার একটি ছবি! অসাধারণ ফ্রেম ও আলোছায়ার সমন্বয়। ✨"
@@ -759,11 +785,49 @@ class LocalVisionModel:
                 ]
             return random.choice(options)
 
-        # 19. Dynamic archetype fallback via NLP comment generator
+        # 19. Art / Creative / Illustration (standalone)
+        if has_art:
+            if tone == "enthusiastic":
+                options = [
+                    "Incredible creativity and vibrant palette! This piece pops right off the screen! 🎨✨🔥",
+                    "Pure artistic brilliance! Love the details, color harmony, and unique imagination here! 🖌️💫",
+                ]
+            elif tone == "professional":
+                options = [
+                    "Exceptional artistic craftsmanship with harmonious color balance, composition, and visual depth.",
+                    "A striking creative piece showcasing distinguished technique and artistic vision.",
+                ]
+            else:  # friendly
+                options = [
+                    "Such a wonderful and creative piece! The colors and expression really brighten up the feed. 🎨✨",
+                    "Love the style and creativity here! Really beautiful artistic work. 🖌️💛",
+                ]
+            return random.choice(options)
+
+        # 20. Architecture / Urban (standalone)
+        if has_architecture:
+            if tone == "enthusiastic":
+                options = [
+                    "Architectural perfection! Look at those clean lines and striking perspective! 🏙️✨🔥",
+                    "Phenomenal urban shot! The structure and geometry look completely incredible! 🏛️🚀",
+                ]
+            elif tone == "professional":
+                options = [
+                    "Superb architectural framing with crisp linear perspective, structural balance, and ambient depth.",
+                    "A distinguished structural composition highlighting fine geometry and urban aesthetic.",
+                ]
+            else:  # friendly
+                options = [
+                    "Stunning architectural perspective! The symmetry and urban design are beautifully captured. 🏙️✨",
+                    "Really love the angles and structural elegance in this photo. Great eye for composition! 🏛️👌",
+                ]
+            return random.choice(options)
+
+        # 21. Dynamic archetype fallback via NLP comment generator
         try:
             from .comment_generator_model import BertCommentGeneratorModel
             generator = BertCommentGeneratorModel()
-            res = generator.predict(description, style=tone, platform=platform)
+            res = generator.predict(description, sentiment="positive", style=tone, platform=platform)
             comm = res.get("comment", "").strip()
             if comm:
                 return comm

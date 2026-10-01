@@ -248,10 +248,12 @@ class BertCommentGeneratorModel:
             "flight", "luggage", "airport", "delayed", "delay", "commute", "train", "traffic", "stuck in",
             "ফ্লাইট", "দেরি", "ট্রেন", "যানজট", "জ্যাম"
         ])
-        is_struggle = is_travel_or_delay or any(w in lower for w in [
-            "sadly", "tough", "loss", "struggling", "frustrated", "broken", "rain", "missed", "bad", "worst",
-            "nightmare", "ruined", "exhausted", "painful", "horrible", "খারাপ", "কষ্ট", "হতাশ", "সমস্যা", "বৃষ্টি", "নষ্ট"
-        ])
+        is_struggle = is_travel_or_delay or bool(
+            re.search(
+                r"\b(?:sadly|tough|loss|struggling|frustrated|broken|missed|bad|worst|nightmare|ruined|exhausted|painful|horrible)\b",
+                lower,
+            )
+        ) or any(w in lower for w in ["খারাপ", "কষ্ট", "হতাশ", "সমস্যা", "নষ্ট"])
         is_tech = any(w in lower for w in [
             "launch", "launched", "product", "release", "app", "feature", "code", "ai", "platform", "version",
             "update", "github", "software", "dashboard", "developer", "programming", "python", "javascript",
@@ -410,7 +412,7 @@ class BertCommentGeneratorModel:
             return self._multilingual_comment(language, subject, category, sentiment, archetype_idx)
 
         # Handle negative sentiment posts (e.g. empathy, bounce back, support)
-        if sentiment == "negative" or category == "struggle":
+        if sentiment == "negative" or (category == "struggle" and sentiment != "positive"):
             return self._generate_negative_support(subject, detail, selected_archetype)
 
         # ── 1. QUESTION & ADVICE INQUIRIES ─────────────────────────

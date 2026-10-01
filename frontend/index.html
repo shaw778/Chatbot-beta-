@@ -1470,7 +1470,7 @@ body:not(.day-mode) .g-disclaimer {
     <button class="nav-btn" onclick="showFbCommenter()" id="nb-fbcomment" aria-label="Facebook commenter" title="Facebook commenter"><span class="ni">f</span><span class="nav-label">FB Commenter</span></button>
     <button class="nav-btn" onclick="showConnectPanel()" id="nb-connect" aria-label="Connect accounts" title="Connect accounts"><span class="ni">↗</span><span class="nav-label">Connect Accounts</span></button>
   <button class="nav-btn" onclick="setTab('chat','sentiment')" id="nb-sentiment" aria-label="Sentiment analysis" title="Sentiment analysis"><span class="ni">◉</span><span class="nav-label">Sentiment</span></button>
-  <button class="nav-btn" onclick="setTab('chat','toxicity')" id="nb-toxicity" aria-label="Safety analysis" title="Safety analysis"><span class="ni">⬡</span><span class="nav-label">Toxicity</span></button>
+  <button class="nav-btn" onclick="setTab('chat','toxicity')" id="nb-toxicity" aria-label="Toxicity analysis" title="Toxicity analysis"><span class="ni">⬡</span><span class="nav-label">Toxicity</span></button>
   <button class="nav-btn" onclick="openScheduler()" id="nb-schedule" aria-label="Scheduler" title="Scheduler"><span class="ni">▦</span><span class="nav-label">Scheduler</span></button>
   <button class="nav-btn" onclick="setTab('chat','qa')" id="nb-qa" aria-label="Ask the assistant" title="Ask the assistant"><span class="ni">?</span><span class="nav-label">Q&amp;A</span></button>
   <div class="sb-div"></div>
@@ -2697,8 +2697,21 @@ async function aiQA(question){
   qaHistory.push({role:'user',content:question});
   if(qaHistory.length>20)qaHistory=qaHistory.slice(-20);
   var raw=await callCloudAI({system,messages:qaHistory},1);
+  if(!raw){
+    try{
+      var localRes=await fetch(API_BASE+'/api/ai',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({system:system,messages:qaHistory,provider:'local',mode:'qa'})
+      });
+      if(localRes.ok){
+        var localData=await localRes.json();
+        raw=localData.text;
+      }
+    }catch(_){}
+  }
   if(raw)qaHistory.push({role:'assistant',content:raw});
-  return raw||'Unable to reach cloud AI. Check API key in browser console.';
+  return raw||'Hello! How can I assist you with comment generation, sentiment analysis, toxicity filtering, or scheduling?';
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3037,7 +3050,13 @@ async function handleSchedule(text){
 async function handleQA(text){
   addLog('INFO','Q&A: "'+text.substring(0,60)+'"');
   var ans=await aiQA(text);
-  return'<span style="font-size:11px;color:var(--primary);font-weight:600">🤖 Project Q&A — AI Provider</span><br><br>'+ans+'<div style="margin-top:10px;font-size:11px;color:var(--faint)">Multi-turn conversation active · '+qaHistory.length/2+' turns</div>';
+  var formattedAns=escapeHtml(ans||'')
+    .replace(/\n/g,'<br>')
+    .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>');
+  var turnsCount=Math.floor(qaHistory.length/2);
+  return '<span style="font-size:11px;color:var(--primary);font-weight:600">🤖 Assistant</span><br><br>'
+    + formattedAns
+    + '<div style="margin-top:10px;font-size:11px;color:var(--faint)">Multi-turn conversation active · '+turnsCount+' turn'+(turnsCount===1?'':'s')+'</div>';
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3516,7 +3535,7 @@ function setMode(m){
   document.getElementById('inp').placeholder={
     comment:'Paste a social media post or Facebook post link to generate ranked comments...',
     sentiment:'Enter text to analyze with VADER + BERT + Claude (sarcasm detection included)...',
-    toxicity:'Enter text to check safety — BERT + keyword filter + AI explanation...',
+    toxicity:'Enter text to check toxicity — BERT + keyword filter + AI explanation...',
     schedule:'Paste a post to predict engagement (XGBoost) and best posting time (RF + Claude)...',
     qa:'Ask anything about the thesis: BERT, XGBoost, datasets, model accuracy, features...'
   }[m];
@@ -3529,13 +3548,13 @@ function setMode(m){
     var slist=samples[m]||[];
     rc.innerHTML=slist.map(function(s){return'<div class="samp" onclick="useSamp(this)">'+s+'</div>';}).join('');
   }
-  document.getElementById('view-title').textContent={comment:'Comment generation',sentiment:'Sentiment analysis',toxicity:'Safety analysis',schedule:'Scheduling',qa:'Ask the assistant'}[m]||'Comment generation';
+  document.getElementById('view-title').textContent={comment:'Comment generation',sentiment:'Sentiment analysis',toxicity:'Toxicity analysis',schedule:'Scheduling',qa:'Ask the assistant'}[m]||'Comment generation';
   showPanel('chat');
 }
 
 function showPanel(p){
   currentPanel=p;
-  var viewTitles={chat:{comment:'Comment generation',sentiment:'Sentiment analysis',toxicity:'Safety analysis',schedule:'Scheduling',qa:'Ask the assistant'},image:'Image comments',fbcomment:'Facebook commenter',connect:'Connected accounts',pricing:'Bot Packages & Billing',dashboard:'Analytics',queue:'Approval queue',drafts:'Saved drafts',scheduler:'Scheduler',logs:'Activity log',models:'Models'};
+  var viewTitles={chat:{comment:'Comment generation',sentiment:'Sentiment analysis',toxicity:'Toxicity analysis',schedule:'Scheduling',qa:'Ask the assistant'},image:'Image comments',fbcomment:'Facebook commenter',connect:'Connected accounts',pricing:'Bot Packages & Billing',dashboard:'Analytics',queue:'Approval queue',drafts:'Saved drafts',scheduler:'Scheduler',logs:'Activity log',models:'Models'};
   var titleEl=document.getElementById('view-title');
   if(titleEl) titleEl.textContent=p==='chat'?(viewTitles.chat[mode]||'Comment generation'):(viewTitles[p]||'Workspace');
   var workspacePane=document.getElementById('rpanel');

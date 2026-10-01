@@ -1336,17 +1336,18 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
                 provider = "anthropic"
             else:
                 provider = "gemini"
+            user_context = f" Additional user note: {prompt.strip()}" if prompt.strip() else ""
             vision_prompt = (
-                f"Analyze this image and write a {tone} social-media comment for {platform}.\n\n"
+                f"Analyze this image and write a {tone} social-media comment for {platform}.{user_context}\n\n"
                 "Instructions:\n"
-                "1. Description: In 1-2 clear, complete sentences, describe specifically what is happening in the image (identify primary subjects, actions, and landscape/background details). Do not truncate.\n"
-                f"2. Comment: In 1-2 engaging sentences, write a natural, authentic {tone} comment for {platform} reacting to the exact subjects and activity in the photo. Avoid generic praise like 'great photo' or 'nice shot'—specifically mention the subjects (e.g. hiking with the pup, the mountain view, the delicious spread).\n\n"
+                "1. Description: In 1-2 clear, complete sentences, describe specifically what is visible in the image (identify primary subjects, actions, colors, setting, and background details). Do not truncate.\n"
+                f"2. Comment: In 1-2 engaging sentences, write a natural, authentic {tone} comment for {platform} reacting directly to the exact subjects and activity in the photo. Avoid generic praise like 'great photo' or 'nice shot'—specifically mention the visible subjects and details.\n\n"
                 "Format your output exactly as:\n"
                 "Description: <What is happening in the image>\n"
                 "Comment: <Specific social media comment>"
             )
             try:
-                result = call_vision(image["data"], image["content_type"], vision_prompt, provider=provider, filename=image.get("filename", ""))
+                result = call_vision(image["data"], image["content_type"], vision_prompt, provider=provider, filename=image.get("filename", ""), user_prompt=prompt, tone=tone, platform=platform)
             except Exception as exc:
                 logger.warning("Image vision provider unavailable: %s", exc)
                 from .models.vision_model import local_vision_model
@@ -1368,9 +1369,15 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
                 description = local_vision_model.describe_image(image["data"], filename=image.get("filename", ""), user_prompt=prompt)
 
             # Ensure comment is never generic, half-generated, or missing
+            has_apology = any(p in comment.lower() for p in [
+                "truly sorry to hear", "acknowledge your frustration", "deeply apologize",
+                "inconvenience this has caused", "resolve this for you", "reach out to our support",
+                "team to make things right", "apologize for the inconvenience"
+            ])
             is_generic_or_incomplete = (
                 not comment
                 or len(comment) < 8
+                or has_apology
                 or any(comment.strip().lower() == g for g in [
                     "nice picture!", "great photo!", "looks good!", "awesome!", "cool!", "nice shot!"
                 ])
