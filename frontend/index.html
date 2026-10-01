@@ -10,7 +10,7 @@
   --success:#168B83;--success-l:#E3F6F3;
   --danger:#E24B4A;--danger-l:#FCEBEB;
   --warn:#BA7517;--warn-l:#FAEEDA;
-  --bg:#F4F7FB;--surface:#fff;--border:#DFE5EE;
+  --bg:#F4F7FB;--surface:#fff;--border:#DFE5EE;--card:#ffffff;
   --text:#1a1a1a;--muted:#666;--faint:#999;
   --r:10px;--shadow:0 2px 14px rgba(0,0,0,.08);
 }
@@ -155,6 +155,34 @@ header{background:linear-gradient(115deg,#0B4EA2,var(--primary) 58%,#168B83);col
 .flag-box{padding:8px 10px;background:var(--danger-l);border-radius:8px;font-size:12px;color:#A32D2D;margin-top:6px}
 .empty{text-align:center;padding:40px 20px;color:var(--faint);font-size:13px}
 .comment-actions{display:flex;gap:6px;margin:6px 0 12px;flex-wrap:wrap}.comment-actions .qbtn{background:#fff}
+/* ── Suggested Comments Section ── */
+.suggested-comments-section{margin-top:14px;background:var(--card,#101e30);border:1px solid #253b52;border-radius:12px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:12px;clear:both}
+.scs-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:12px;border-bottom:1px solid #1f3349}
+.scs-title-group{display:flex;align-items:center;gap:10px}
+.scs-icon{width:34px;height:34px;border-radius:8px;background:rgba(84,168,255,.12);border:1px solid rgba(84,168,255,.25);color:var(--primary);display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.scs-title{font-size:13.5px;font-weight:700;color:#e8f1fa;line-height:1.2}
+.scs-subtitle{font-size:11px;color:#859bb2;margin-top:2px}
+.scs-badge-count{font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(84,168,255,.15);color:#7ec0ff;border:1px solid rgba(126,192,255,.3);white-space:nowrap}
+.scs-list{display:flex;flex-direction:column;gap:10px}
+.suggested-comment-card{background:rgba(255,255,255,.03);border:1px solid #21354b;border-radius:9px;padding:13px 15px;transition:all .18s ease;position:relative}
+.suggested-comment-card:hover{border-color:rgba(84,168,255,.45);background:rgba(84,168,255,.05);transform:translateY(-1px)}
+.suggested-comment-card.scc-featured{border-color:rgba(84,168,255,.55);background:rgba(84,168,255,.07);box-shadow:0 4px 16px rgba(18,48,84,.25)}
+.scc-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.scc-badge{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:5px;display:inline-flex;align-items:center;gap:4px}
+.scc-badge-best{background:#17436b;color:#7ec0ff;border:1px solid rgba(126,192,255,.4)}
+.scc-badge-alt{background:#162436;color:#94a6bc;border:1px solid #253a50}
+.scc-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.scc-score{font-size:11px;font-weight:600;color:#54a8ff}
+.scc-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:#13253b;color:#91a5bd;border:1px solid #20354c}
+.scc-safe-tag{background:#12352f;color:#57d4b1;border-color:#205247}
+.scc-body{font-size:13px;line-height:1.6;color:#e1ebf6;padding:4px 0 10px;cursor:pointer;word-break:break-word}
+.scc-body:hover{color:#ffffff}
+.scc-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:9px;border-top:1px solid rgba(255,255,255,.06)}
+.scc-actions .qbtn{font-size:11.5px;padding:6px 13px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:5px;cursor:pointer;transition:all .15s ease}
+.qbtn-copy{border-color:#2b425a;color:#9cb1c7;background:#112033}
+.qbtn-copy:hover{background:#172b43;color:#e8f1fa;border-color:#416386}
+.scs-footer{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#71879e;padding-top:4px;line-height:1.4}
+
 .scheduler-panel{flex:1;overflow-y:auto;padding:18px;max-width:760px;width:100%;box-sizing:border-box}.scheduler-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}.scheduler-card h2{font-size:17px;margin:0 0 6px}.scheduler-card p{margin:0 0 14px;color:var(--muted);font-size:12px}.selected-comment{padding:11px 12px;border-radius:8px;background:var(--primary-l);line-height:1.5;margin-bottom:14px}.schedule-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}.schedule-fields label{font-size:12px;font-weight:600;display:grid;gap:5px}.schedule-fields input{border:1px solid var(--border);border-radius:7px;padding:9px;font:inherit}.platform-picker{display:flex;gap:9px;flex-wrap:wrap;margin:8px 0 16px}.platform-btn{border:1px solid var(--border);background:#fff;border-radius:9px;padding:9px 12px;cursor:pointer;font:inherit;font-size:13px}.platform-btn[aria-pressed="true"]{border-color:var(--primary);background:var(--primary-l);color:var(--primary);font-weight:600}.platform-icon{font-weight:700;margin-right:5px}.schedule-submit{border:0;border-radius:8px;background:var(--primary);color:white;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer}.schedule-submit:disabled{background:#aaa;cursor:default}.scheduled-list{display:grid;gap:8px}.scheduled-item{border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px}.scheduled-meta{font-size:11px;color:var(--muted);margin-top:5px}
  .image-panel{flex:1;overflow-y:auto;padding:28px;max-width:860px}.image-card{background:var(--surface);border:1px solid #dfe3eb;border-radius:12px;padding:26px;box-shadow:0 8px 24px rgba(38,50,72,.08)}.image-card h2{font-size:21px;letter-spacing:0;margin-bottom:7px}.image-card p{font-size:13px;color:var(--muted);margin-bottom:22px}.image-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px}.image-fields label{font-size:12px;font-weight:600;color:#4b5563;display:grid;gap:6px}.image-fields select{border:1px solid #cfd5df;border-radius:7px;padding:10px;background:#fff;font:inherit;color:var(--text)}.drive-dropzone{border:1.5px dashed #aeb8c8;border-radius:10px;min-height:230px;background:#f8fafd;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s}.drive-dropzone:hover,.drive-dropzone.is-dragging{border-color:#4285f4;background:#f1f6ff;box-shadow:0 0 0 4px rgba(66,133,244,.1)}.drive-upload-icon{width:52px;height:52px;border-radius:50%;background:#e8f0fe;color:#1a73e8;display:grid;place-items:center;font-size:25px;margin:0 auto 12px}.drive-dropzone strong{display:block;color:#202124;font-size:15px;margin-bottom:6px}.drive-dropzone span{display:block;color:#6b7280;font-size:12px}.drive-browse{display:inline-block;margin-top:14px;border:1px solid #c8d0dd;border-radius:6px;padding:8px 14px;background:#fff;color:#1a73e8;font-size:12px;font-weight:600}.drive-file-row{display:none;align-items:center;gap:12px;padding:11px 13px;margin-top:14px;border:1px solid #dfe3eb;border-radius:8px;background:#fff}.drive-file-row.is-visible{display:flex}.drive-file-icon{font-size:22px;color:#1a73e8}.drive-file-info{min-width:0;flex:1;text-align:left}.drive-file-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.drive-file-size{font-size:11px;color:var(--muted);margin-top:3px}.drive-remove{border:0;background:transparent;color:#6b7280;cursor:pointer;font-size:18px;padding:3px 7px}.drive-remove:hover{color:var(--danger)}.image-preview{display:none;max-width:100%;max-height:260px;margin:14px auto 0;border-radius:8px}.image-submit{border:0;border-radius:7px;background:#1a73e8;color:#fff;padding:11px 18px;margin-top:18px;font:inherit;font-weight:600;cursor:pointer}.image-submit:hover:not(:disabled){background:#1765c1}.image-submit:disabled{background:#aeb8c8;cursor:not-allowed}.image-result{margin-top:16px;padding:13px;border-radius:8px;display:none;line-height:1.5}.image-ok{background:var(--success-l);color:#0F6E56}.image-error{background:var(--danger-l);color:#A32D2D}
  .connect-panel{flex:1;overflow-y:auto;padding:28px;max-width:900px}.connect-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:26px;box-shadow:0 8px 24px rgba(38,50,72,.08)}.connect-card h2{font-size:21px;margin-bottom:7px}.connect-card>p{font-size:13px;color:var(--muted);margin-bottom:20px}.social-grid{display:grid;grid-template-columns:repeat(4,minmax(110px,1fr));gap:14px}.social-tile{min-height:126px;border:1px solid var(--border);border-radius:10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;font:inherit;color:var(--text);transition:transform .18s,box-shadow .18s,border-color .18s}.social-tile:hover{transform:translateY(-3px);border-color:#9dbbea;box-shadow:0 8px 18px rgba(31,75,130,.12)}.social-logo{width:48px;height:48px;border-radius:10px;display:grid;place-items:center;color:#fff;font-size:24px;font-weight:800}.social-facebook{background:#1877F2}.social-instagram{background:linear-gradient(135deg,#F58529,#DD2A7B 55%,#8134AF)}.social-x{background:#111}.social-linkedin{background:#0A66C2}.social-name{font-size:12px;font-weight:700}.security-note{margin-top:20px;padding:13px 15px;border-radius:8px;background:#F5F8FC;color:#536174;font-size:12px;line-height:1.6}.connect-state{margin-top:14px;font-size:12px;color:var(--muted)}
@@ -213,7 +241,7 @@ header:after{content:"";position:absolute;width:220px;height:220px;right:8%;top:
   --success:#57d4b1;--success-l:#12352f;
   --danger:#ff7780;--danger-l:#3d202a;
   --warn:#f4be62;--warn-l:#392f20;
-  --bg:#091321;--surface:#101e30;--border:#25374c;
+  --bg:#091321;--surface:#101e30;--border:#25374c;--card:#101e30;
   --text:#eaf1fa;--muted:#9aacc1;--faint:#71849b;
   --accent:#2588d8;--r:8px;--shadow:0 16px 42px rgba(0,0,0,.2);
   letter-spacing:0;
@@ -516,6 +544,27 @@ body.day-mode .log-time{color:#8492a0}body.day-mode .log-msg{color:#344a5f}
 body.day-mode .empty{color:#7a8997}
 body.day-mode .theme-toggle{background:#fff;border-color:#cfdbe5;color:#324b61}
 body.day-mode .theme-toggle:hover{background:#edf4f8;border-color:#b1c6d7}
+body.day-mode{--card:#ffffff}
+body.day-mode .suggested-comments-section{background:#fff;border-color:#dce4ec;box-shadow:0 4px 20px rgba(22,44,68,.06)}
+body.day-mode .scs-header{border-bottom-color:#eef3f8}
+body.day-mode .scs-icon{background:#e8f2fc;border-color:#bcd7f0;color:#1769b0}
+body.day-mode .scs-title{color:#1a2b3c}
+body.day-mode .scs-subtitle{color:#64778a}
+body.day-mode .scs-badge-count{background:#e8f2fc;color:#1868a8;border-color:#b9d6f0}
+body.day-mode .suggested-comment-card{background:#f9fbfe;border-color:#dde5ee}
+body.day-mode .suggested-comment-card:hover{background:#f2f7fc;border-color:#a8cbee}
+body.day-mode .suggested-comment-card.scc-featured{background:#f3f8fd;border-color:#8ec0ea;box-shadow:0 2px 10px rgba(23,105,176,.08)}
+body.day-mode .scc-badge-best{background:#e5f1fb;color:#125b96;border-color:#99c6ed}
+body.day-mode .scc-badge-alt{background:#f0f3f7;color:#596d80;border-color:#d5dee8}
+body.day-mode .scc-score{color:#1769b0}
+body.day-mode .scc-tag{background:#edf2f7;color:#53677a;border-color:#dbe3ec}
+body.day-mode .scc-safe-tag{background:#e3f6f3;color:#0f6e56;border-color:#b8e4db}
+body.day-mode .scc-body{color:#223344}
+body.day-mode .scc-body:hover{color:#125b96}
+body.day-mode .scc-actions{border-top-color:#e8f0f6}
+body.day-mode .qbtn-copy{border-color:#cfdbe5;color:#496176;background:#fff}
+body.day-mode .qbtn-copy:hover{background:#f0f4f8;color:#203446;border-color:#b0c4d5}
+body.day-mode .scs-footer{color:#76889a}
 @media (max-width:430px){body.day-mode .ibar textarea{background:#fff!important;color:#233749!important}}
 .nav-btn-model{margin-top:auto;display:grid;grid-template-rows:20px 12px;justify-items:center;align-content:center;gap:2px;height:54px;min-height:54px;border-top:1px solid #294057;border-radius:0 0 7px 7px}
 .nav-btn-model .nav-label{display:block;font-size:8px;white-space:nowrap}
@@ -2770,13 +2819,50 @@ async function handleComment(text,targetPost){
 
   generatedComments=topComments.map(function(c){return {text:c.text,sentiment:sentiment,targetPostId:targetPost?targetPost.id:''};});
   var targetCard=targetPost?'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">Facebook post</div><div style="font-size:12px;line-height:1.6">'+escapeHtml(targetPost.text)+'</div></div>':'';
-  var chips=topComments.map(function(c,i){
-    return'<div class="chip'+(i===0?' r1':'')+'" onclick="copyChip(this)" title="Relevance: '+Math.round(c.score*100)+'%'+(c.penalized?' · Repeat penalty applied':'')+(c.truncated?' · Truncated for Twitter':'')+'">'
-      +'<span style="font-size:10px;color:var(--faint)">#'+(i+1)+'</span> '+escapeHtml(c.text)+'</div>'
-      +'<div class="comment-actions"><span style="width:100%;font-size:11px;color:var(--muted)">Do you want to post it or schedule it?</span>'
-      +'<button class="qbtn qbtn-post" onclick="postGeneratedComment('+i+')">'+(targetPost?'💬 Comment on this post':'Post it')+'</button>'
-      +'<button class="qbtn qbtn-app" onclick="scheduleGeneratedComment('+i+')">Schedule it</button></div>';
+
+  var cardsHtml=topComments.map(function(c,i){
+    var isTop=(i===0);
+    var rankLabel=isTop?'★ #1 Best Match':'Option #'+(i+1);
+    var scorePct=Math.round(c.score*100);
+    var postBtnText=targetPost?'💬 Comment on post':'🚀 Post now';
+    return'<div class="suggested-comment-card'+(isTop?' scc-featured':'')+'">'
+      +'<div class="scc-header">'
+      +  '<div class="scc-badge '+(isTop?'scc-badge-best':'scc-badge-alt')+'">'+rankLabel+'</div>'
+      +  '<div class="scc-meta">'
+      +    '<span class="scc-score" title="Relevance match score">⚡ '+scorePct+'% match</span>'
+      +    (c.truncated?'<span class="scc-tag" title="Length optimized for social platforms">✂️ Social limit</span>':'')
+      +    (c.penalized?'<span class="scc-tag" title="Variety boost applied">🔄 Unique</span>':'')
+      +    '<span class="scc-tag scc-safe-tag">🛡️ Safe</span>'
+      +  '</div>'
+      +'</div>'
+      +'<div class="scc-body" onclick="copyCommentByIndex('+i+', this)" title="Click to copy comment text">'
+      +  escapeHtml(c.text)
+      +'</div>'
+      +'<div class="scc-actions">'
+      +  '<button type="button" class="qbtn qbtn-post" onclick="postGeneratedComment('+i+')">'+postBtnText+'</button>'
+      +  '<button type="button" class="qbtn qbtn-app" onclick="scheduleGeneratedComment('+i+')">📅 Schedule</button>'
+      +  '<button type="button" class="qbtn qbtn-copy" onclick="copyCommentByIndex('+i+', this)">📋 Copy text</button>'
+      +'</div>'
+      +'</div>';
   }).join('');
+
+  var suggestedCommentsSection='<div class="suggested-comments-section" role="region" aria-label="Suggested Comments">'
+    +'<div class="scs-header">'
+    +  '<div class="scs-title-group">'
+    +    '<div class="scs-icon">💬</div>'
+    +    '<div>'
+    +      '<div class="scs-title">Suggested Comments</div>'
+    +      '<div class="scs-subtitle">AI-ranked &amp; sentiment-tailored candidates ready to publish</div>'
+    +    '</div>'
+    +  '</div>'
+    +  '<div class="scs-badge-count">'+topComments.length+' Generated</div>'
+    +'</div>'
+    +'<div class="scs-list">'+cardsHtml+'</div>'
+    +(lowConf.length?'<div class="warn-box" style="margin-top:10px">⚠️ '+lowConf.length+' low-confidence comment(s) sent to <b>Approval Queue</b> for manual review (Feature 26)</div>':'')
+    +'<div class="scs-footer">'
+    +  '<span>💡 Click any comment or "Copy" to copy text · Boundary optimized · Repeat penalty applied</span>'
+    +'</div>'
+    +'</div>';
 
   var aiCard=aiAnalysis?'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">🤖 AI Analysis (Features 9,13,14)</div>'
     +'<div class="crow"><span class="clabel">Tone</span><span style="font-size:11px;font-weight:500">'+aiAnalysis.tone+'</span></div>'
@@ -2793,10 +2879,7 @@ async function handleComment(text,targetPost){
     +'</div>'
     +aiCard
     +generationMetrics
-    +'<div style="margin-top:8px"><b>🏆 Ranked Comments</b> (F18) — '+topComments.length+' safe / '+blocked+' blocked (F22) / '+lowConf.length+' in queue (F26)</div>'
-    +'<div class="chips">'+chips+'</div>'
-    +(lowConf.length?'<div class="warn-box">⚠️ '+lowConf.length+' low-confidence comment(s) sent to <b>Approval Queue</b> for manual review (Feature 26)</div>':'')
-    +'<div style="margin-top:6px;font-size:11px;color:var(--faint)">Click comment to copy · Boundary optimized for Twitter (F20) · Repeat penalty applied (F19)</div>';
+    +suggestedCommentsSection;
 }
 
 async function handleSentiment(text){
@@ -3313,6 +3396,28 @@ function copyChip(el){
   setTimeout(function(){el.innerHTML=orig;},1200);
 }
 
+function copyCommentByIndex(index, el){
+  var item = (typeof generatedComments !== 'undefined' && generatedComments[index]) ? generatedComments[index] : null;
+  var text = (item && item.text) ? item.text : '';
+  if(!text && el){
+    var card = el.closest ? el.closest('.suggested-comment-card') : null;
+    if(card){
+      var body = card.querySelector('.scc-body');
+      if(body) text = body.textContent.trim();
+    }
+    if(!text) text = el.textContent.trim();
+  }
+  if(text){
+    navigator.clipboard.writeText(text).catch(function(){});
+    if(el){
+      var orig = el.innerHTML;
+      el.innerHTML = '✅ Copied!';
+      setTimeout(function(){ el.innerHTML = orig; }, 1500);
+    }
+    addLog('OK', 'Copied suggested comment #' + (index + 1) + ' to clipboard');
+  }
+}
+
 async function send(){
   var inp=document.getElementById('inp');
   var text=inp.value.trim();
@@ -3819,28 +3924,58 @@ async function fbGenCommentOnPost(postId, postText, btn, targetArea){
     container.replaceChildren();
 
     var wrap = document.createElement('div');
-    wrap.style.cssText = 'margin-top:12px;border-top:1px solid var(--border);padding-top:12px';
+    wrap.className = 'suggested-comments-section';
+    wrap.style.marginTop = '14px';
 
     var header = document.createElement('div');
-    header.style.cssText = 'font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px';
-    header.textContent = '💬 CHOOSE A COMMENT TO POST OR SCHEDULE:';
+    header.className = 'scs-header';
+    header.innerHTML = '<div class="scs-title-group">'
+      + '<div class="scs-icon">💬</div>'
+      + '<div>'
+      +   '<div class="scs-title">Suggested Comments &amp; Replies</div>'
+      +   '<div class="scs-subtitle">AI-generated options tailored for Facebook engagement</div>'
+      + '</div>'
+      + '</div>'
+      + '<div class="scs-badge-count">' + comments.length + ' Options</div>';
     wrap.appendChild(header);
+
+    var list = document.createElement('div');
+    list.className = 'scs-list';
+    wrap.appendChild(list);
 
     var isExternal = Boolean(window.fbCurrentFetchedPost && window.fbCurrentFetchedPost.is_external);
     var postUrl = (window.fbCurrentFetchedPost && window.fbCurrentFetchedPost.permalink_url) || (window.fbCurrentFetchedUrl || '');
 
     comments.forEach(function(c, i){
       var commentStr = typeof c === 'string' ? c : (c.text || String(c));
+      var isTop = (i === 0);
 
       var card = document.createElement('div');
-      card.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px';
+      card.className = 'suggested-comment-card' + (isTop ? ' scc-featured' : '');
+
+      var cardHeader = document.createElement('div');
+      cardHeader.className = 'scc-header';
+      cardHeader.innerHTML = '<div class="scc-badge ' + (isTop ? 'scc-badge-best' : 'scc-badge-alt') + '">'
+        + (isTop ? '★ #1 Best Match' : 'Option #' + (i + 1))
+        + '</div>'
+        + '<div class="scc-meta">'
+        +   '<span class="scc-score">⚡ Option #' + (i + 1) + '</span>'
+        +   '<span class="scc-tag scc-safe-tag">🛡️ Safe</span>'
+        + '</div>';
 
       var textDiv = document.createElement('div');
-      textDiv.style.cssText = 'font-size:13px;line-height:1.5;margin-bottom:10px';
+      textDiv.className = 'scc-body';
       textDiv.textContent = commentStr;
+      textDiv.title = 'Click to copy comment text';
+      textDiv.addEventListener('click', function(){
+        navigator.clipboard.writeText(commentStr).catch(function(){});
+        var orig = textDiv.textContent;
+        textDiv.textContent = '✅ Copied to clipboard!';
+        setTimeout(function(){ textDiv.textContent = orig; }, 1200);
+      });
 
       var btnRow = document.createElement('div');
-      btnRow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center';
+      btnRow.className = 'scc-actions';
 
       if(isExternal){
         // Primary action for external public post: Copy comment and open post in FB
@@ -3868,7 +4003,7 @@ async function fbGenCommentOnPost(postId, postText, btn, targetArea){
         var pagePostBtn = document.createElement('button');
         pagePostBtn.className = 'qbtn qbtn-app';
         pagePostBtn.type = 'button';
-        pagePostBtn.textContent = '📢 Post to My Page Feed';
+        pagePostBtn.textContent = '📢 Post to Page Feed';
         pagePostBtn.title = 'Publish this comment/response to your own connected Facebook Page feed';
         pagePostBtn.addEventListener('click', function(){
           fbPostAsPageFeed(commentStr, pagePostBtn);
@@ -3919,7 +4054,7 @@ async function fbGenCommentOnPost(postId, postText, btn, targetArea){
         });
 
         var copyBtn = document.createElement('button');
-        copyBtn.className = 'qbtn';
+        copyBtn.className = 'qbtn qbtn-copy';
         copyBtn.type = 'button';
         copyBtn.textContent = '📋 Copy';
         copyBtn.addEventListener('click', function(){
@@ -3931,9 +4066,14 @@ async function fbGenCommentOnPost(postId, postText, btn, targetArea){
         btnRow.append(postBtn, pagePostBtn, schedBtn, copyBtn);
       }
 
-      card.append(textDiv, btnRow);
-      wrap.appendChild(card);
+      card.append(cardHeader, textDiv, btnRow);
+      list.appendChild(card);
     });
+
+    var footer = document.createElement('div');
+    footer.className = 'scs-footer';
+    footer.innerHTML = '<span>💡 Click any comment or "Copy" to copy text · Ready to publish</span>';
+    wrap.appendChild(footer);
 
     container.appendChild(wrap);
     addLog('OK','Generated 3 comment options for post ' + postId);
