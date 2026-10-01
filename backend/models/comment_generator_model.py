@@ -132,9 +132,17 @@ class BertCommentGeneratorModel:
             is_bangla = (language == "bn") or (detect_language(comment_text) == "bn") or any("\u0980" <= c <= "\u09FF" for c in comment_text)
 
             if is_bangla:
-                # 0. Negative sentiment / complaints / issues
-                is_neg_bn = (str(sentiment).lower() == "negative") or any(w in c_low for w in ["খারাপ", "বাজে", "সমস্যা", "ধোঁকা", "প্রতারণা", "নষ্ট", "দেরি", "হতাশ", "ক্ষতি", "ভুল", "অভিযোগ", "কাজ করে না", "ফালতু", "অসন্তুষ্ট"])
-                if is_neg_bn:
+                # 0. Negative sentiment: personal sadness vs complaints
+                is_sad_bn = any(w in c_low for w in ["কষ্ট", "মারা", "ইন্তেকাল", "কান্না", "মন খারাপ", "অসুস্থ", "দুঃখ", "চোখের পানি", "একাকী", "বেদনা", "দুর্ঘটনা"])
+                is_complaint_bn = (str(sentiment).lower() == "negative") or any(w in c_low for w in ["খারাপ", "বাজে", "সমস্যা", "ধোঁকা", "প্রতারণা", "নষ্ট", "দেরি", "হতাশ", "ক্ষতি", "ভুল", "অভিযোগ", "কাজ করে না", "ফালতু", "অসন্তুষ্ট"])
+                if is_sad_bn:
+                    replies = [
+                        "আপনার এই কষ্টের কথা শুনে সত্যিই খুব খারাপ লাগলো। আল্লাহ আপনাকে এই কঠিন সময়ে ধৈর্য ও শক্তি দান করুন। নিজের যত্ন নেবেন সবসময়। ❤️",
+                        "আপনার প্রতি রইল আন্তরিক সমবেদনা ও ভালোবাসা। কঠিন এই সময়টুকু দ্রুত কেটে যাক, এই দোয়াই করি। আমরা আপনার পাশে আছি। 🤍",
+                        "খুবই দুঃখজনক ও বেদনাদায়ক ঘটনা। মন শক্ত রাখুন, আপনার জন্য অনেক অনেক শুভকামনা ও দোয়া রইল। 🤲✨",
+                    ]
+                    return random.choice(replies)
+                if is_complaint_bn:
                     replies = [
                         "আপনার এই অনাকাঙ্ক্ষিত ও হতাশাজনক অভিজ্ঞতার জন্য আমরা আন্তরিকভাবে দুঃখিত। বিষয়টি দ্রুত খতিয়ে দেখে সমাধানের জন্য অনুগ্রহ করে বিস্তারিত তথ্য দিয়ে আমাদের পেজে ইনবক্স করুন।",
                         "আমরা আপনার ভোগান্তির জন্য আন্তরিকভাবে ক্ষমাপ্রার্থী। আমরা আপনার ক্ষোভ বুঝতে পারছি এবং দ্রুত সমাধান দিতে প্রস্তুত। দয়া করে ইনবক্সে আমাদের সাথে যোগাযোগ করুন।",
@@ -172,12 +180,20 @@ class BertCommentGeneratorModel:
                 return random.choice(replies)
 
             # English replies
-            # 0. Negative sentiment / complaints / issues
-            is_neg_en = (str(sentiment).lower() == "negative") or any(w in c_low for w in [
+            # 0. Negative sentiment: separate personal sadness from complaints
+            is_sad_en = bool(re.search(r"\b(?:sad|passed away|rip|loss|mourning|grief|crying|tears|heartbroken|depressed|down|hurts|pain|accident|hospital|injured|surgery|sick|illness|died|funeral|miss you|lost my)\b", c_low))
+            is_complaint_en = (str(sentiment).lower() == "negative") or any(w in c_low for w in [
                 "bad", "worst", "terrible", "horrible", "broken", "issue", "problem", "disappointed",
                 "disappointing", "poor", "scam", "waste", "failed", "crash", "bug", "hate", "sucks", "cheat", "fake", "delayed"
             ])
-            if is_neg_en:
+            if is_sad_en:
+                replies = [
+                    "I'm so sorry you're going through this. Sending you so much love, comfort, and strength. Please take gentle care of yourself today. ❤️",
+                    "My heart truly goes out to you. Sending you the warmest hugs and deepest thoughts during this difficult time. You are not alone. 🤍",
+                    "So sorry to hear this. Please be gentle with yourself and take all the time you need. Brighter days will come. Sending you strength! 💫",
+                ]
+                return random.choice(replies)
+            if is_complaint_en:
                 replies = [
                     "We sincerely apologize for this frustrating experience. This is certainly not our standard, and we want to make things right. Please send us a direct message so we can resolve this immediately.",
                     "We are truly sorry to hear about your experience. We understand your frustration and would like to look into this right away. Please reach out to our support team directly.",
@@ -212,170 +228,215 @@ class BertCommentGeneratorModel:
             return random.choice(replies)
         return None
 
-    def _extract_subject_and_detail(self, text):
+    def _extract_subject_and_detail(self, text, sentiment="neutral"):
         """Extract focal entity, key action, and specific detail from the text."""
         lower = text.lower()
         topics = extract_dynamic_topics(text)
-        main_topic = topics[0] if topics else "this update"
+        sentiment = str(sentiment or "neutral").lower()
 
-        # Multi-Category Intent Classification
+        # Multi-Category Intent Classification with Word Boundaries
         is_question = is_question_intent(text)
-        is_food = any(w in lower for w in [
-            "recipe", "cooked", "cooking", "baked", "baking", "food", "dinner", "lunch", "breakfast",
-            "delicious", "biryani", "pizza", "burger", "pasta", "ramen", "coffee", "dessert", "cake",
-            "meal", "snack", "dish", "homemade", "taste", "tasty", "রান্না", "খাবার", "বিরিয়ানি", "চা", "কফি", "রেসিপি", "নাস্তা"
-        ])
-        is_pet = any(w in lower for w in [
-            "dog", "dogs", "puppy", "puppies", "cat", "cats", "kitten", "kittens", "pet", "pets",
-            "rescue", "adopted", "paws", "furry", "barking", "meow", "fluffy", "shedding", "কুকুর", "বিড়াল", "বিড়ালছানা", "বিড়াল", "পোষা প্রাণী"
-        ])
-        is_opinion = any(w in lower for w in [
-            "unpopular opinion", "hot take", "i think", "i believe", "in my opinion", "honestly",
-            "debate", "agree or disagree", "prefer", "better than", "is overrated", "is underrated",
-            "আমার মতে", "মনে হয়", "বিতর্ক", "ব্যক্তিগতভাবে"
-        ])
-        is_sports = any(w in lower for w in [
-            "victory", "win", "final over", "ilt20", "championship", "cup", "trophy", "match", "game",
-            "tournament", "vipers", "scored", "wickets", "runs", "goal", "জয়", "বিজয়", "ম্যাচ", "খেলা",
-            "টুর্নামেন্ট", "ট্রফি", "উইকেট", "রান", "গোল"
-        ])
-        is_milestone = any(w in lower for w in [
-            "marathon", "graduated", "promoted", "degree", "anniversary", "birthday", "celebrating", "years",
-            "achievement", "journey", "completed", "training", "passed", "milestone", "মাইলফলক", "গ্র্যাজুয়েশন", "প্রমোশন", "জন্মদিন",
-            "বার্ষিকী", "সাফল্য", "অর্জিত", "অর্জন", "পরিশ্রম"
-        ])
-        is_travel_or_delay = any(w in lower for w in [
-            "flight", "luggage", "airport", "delayed", "delay", "commute", "train", "traffic", "stuck in",
-            "ফ্লাইট", "দেরি", "ট্রেন", "যানজট", "জ্যাম"
-        ])
-        is_struggle = is_travel_or_delay or bool(
+
+        # 1. Personal Sadness / Grief / Tough Times (Empathy Needed)
+        is_personal_sadness = bool(
             re.search(
-                r"\b(?:sadly|tough|loss|struggling|frustrated|broken|missed|bad|worst|nightmare|ruined|exhausted|painful|horrible)\b",
+                r"\b(?:sad|sadness|grief|grieving|passed away|rip|loss|mourning|crying|tears|heartbroken|heartbreak|depressed|depression|depressing|feeling down|hurts|hurting|painful|bad day|terrible day|rough day|awful day|worst day|accident|hospital|injured|broken leg|broken arm|surgery|sick|illness|died|funeral|miss you|lost my|devastated|lonely|alone|hopeless|crying right now)\b",
                 lower,
             )
-        ) or any(w in lower for w in ["খারাপ", "কষ্ট", "হতাশ", "সমস্যা", "নষ্ট"])
-        is_tech = any(w in lower for w in [
-            "launch", "launched", "product", "release", "app", "feature", "code", "ai", "platform", "version",
-            "update", "github", "software", "dashboard", "developer", "programming", "python", "javascript",
-            "frontend", "backend", "deploy", "database", "api", "bug", "debugging", "css", "লঞ্চ", "প্রজেক্ট", "পণ্য", "প্রোডাক্ট", "অ্যাপ", "ওয়েবসাইট",
-            "কোড", "এআই", "আপডেট", "ভার্সন", "উদ্বোধন", "সফটওয়্যার"
-        ])
-        is_creative = any(w in lower for w in [
-            "photo", "picture", "art", "sunset", "travel", "shot", "view", "aesthetic", "music", "design",
-            "scenery", "landscape", "sketch", "painting", "ছবি", "আর্ট", "শিল্প", "দৃশ্য", "ভিডিও", "গান", "ডিজাইন", "ফটোগ্রাফি"
-        ])
+        ) or any(w in lower for w in ["কষ্ট", "হতাশ", "মারা গেছেন", "ইন্তেকাল", "কান্না", "মন খারাপ", "অসুস্থ", "দুঃখ", "চোখের পানি", "একাকী", "বেদনা", "দুর্ঘটনা"])
+
+        # 2. Customer Service / Business Complaint (Apology Needed)
+        is_service_complaint = (bool(
+            re.search(
+                r"\b(?:customer service|refund|delivery|shipping|order|ordered|package|charged|scam|defective|support team|subscription|billing|store|agent|courier)\b",
+                lower,
+            )
+        ) or (
+            bool(re.search(r"\b(?:service|product|staff|food|item|purchase|experience|app)\b", lower))
+            and bool(re.search(r"\b(?:unacceptable|rude|poor|terrible|horrible|bad|worst|broken|complaint|disappointed|disappointing|frustrated|scam|waste of money|never buying)\b", lower))
+        )) or any(w in lower for w in ["সার্ভিস", "ডেলিভারি", "অর্ডার", "টাকা ফেরত", "রিফান্ড", "প্রতারণা", "নষ্ট পণ্য", "দেরি", "কাস্টমার কেয়ার"])
+
+        # 3. Happy / Celebration / Good News / High-Energy Positive
+        is_happy_celebration = (sentiment == "positive") or bool(
+            re.search(
+                r"\b(?:happy|happiness|joy|joyful|blessed|grateful|celebrating|celebrate|congratulations|congrats|married|wedding|marriage|engaged|baby|born|promoted|promotion|dream job|new job|hired|graduated|graduation|degree|passed|bought|new home|new house|new car|best day|wonderful day|amazing day|won|win|proud|excited|exciting|thrilled|super happy|so happy|love life|cheers|victory|championship|trophy|achievement)\b",
+                lower,
+            )
+        ) or any(w in lower for w in ["অভিনন্দন", "শুভকামনা", "বিয়ে", "বিয়ে", "চাকরি", "চাকরী", "সাফল্য", "আনন্দ", "খুশি", "ধন্যবাদ", "মাশাল্লাহ", "সেরা দিন", "পাস", "জয়", "বিজয়"])
+
+        # 4. Travel / Transit Delay
+        is_travel_or_delay = bool(
+            re.search(r"\b(?:flight|luggage|airport|delayed|commute|train delay|traffic jam|stuck in traffic)\b", lower)
+        ) or any(w in lower for w in ["ফ্লাইট", "দেরি", "যানজট", "জ্যাম"])
+
+        # 5. Food
+        is_food = bool(
+            re.search(
+                r"\b(?:recipe|cooked|cooking|baked|baking|food|dinner|lunch|breakfast|delicious|biryani|pizza|burger|pasta|ramen|coffee|dessert|cake|meal|snack|dish|homemade|taste|tasty|feasting)\b",
+                lower,
+            )
+        ) or any(w in lower for w in ["রান্না", "খাবার", "বিরিয়ানি", "চা", "কফি", "রেসিপি", "নাস্তা"])
+
+        # 6. Pet
+        is_pet = bool(
+            re.search(
+                r"\b(?:dog|dogs|puppy|puppies|cat|cats|kitten|kittens|pet|pets|rescue|adopted|paws|furry|barking|meow|fluffy|shedding)\b",
+                lower,
+            )
+        ) or any(w in lower for w in ["কুকুর", "বিড়াল", "বিড়ালছানা", "বিড়াল", "পোষা প্রাণী"])
+
+        # 7. Opinion
+        is_opinion = bool(
+            re.search(
+                r"\b(?:unpopular opinion|hot take|in my opinion|agree or disagree|prefer|better than|is overrated|is underrated)\b",
+                lower,
+            )
+        ) or any(w in lower for w in ["আমার মতে", "মনে হয়", "বিতর্ক", "ব্যক্তিগতভাবে"])
+
+        # 8. Sports
+        is_sports = bool(
+            re.search(
+                r"\b(?:match|game|tournament|cup|trophy|wickets|runs|goal|cricket|football|soccer|final over|vipers|ilt20)\b",
+                lower,
+            )
+        ) or any(w in lower for w in ["ম্যাচ", "খেলা", "টুর্নামেন্ট", "ট্রফি", "উইকেট", "রান", "গোল"])
+
+        # 9. Tech (Strictly Genuine Code/Software - NEVER match 'happy' or casual words!)
+        is_tech = bool(
+            re.search(
+                r"\b(?:github|repository|frontend|backend|fullstack|devops|docker|kubernetes|python|javascript|typescript|database|postgresql|mongodb|react|vue|node|css|html|api endpoint|debugging|compiler|algorithm|software release|new app version|built an app|launched our app)\b",
+                lower,
+            )
+        ) or any(w in lower for w in ["সফটওয়্যার", "কোডিং", "প্রোগ্রামিং", "ডেভেলপার", "ডাটাবেস"])
+
+        # 10. Creative / Art
+        is_creative = bool(
+            re.search(
+                r"\b(?:photo|photograph|art|artwork|sunset|sunrise|shot|view|aesthetic|music|design|scenery|landscape|sketch|painting|drawing)\b",
+                lower,
+            )
+        ) or any(w in lower for w in ["ছবি", "আর্ট", "শিল্প", "দৃশ্য", "ভিডিও", "গান", "ডিজাইন", "ফটোগ্রাফি"])
 
         # Priority order
-        if is_struggle:
-            category = "struggle"
+        if is_service_complaint:
+            category = "service_complaint"
+        elif is_personal_sadness or (sentiment == "negative" and not is_food and not is_pet):
+            category = "grief_sadness"
+        elif is_travel_or_delay:
+            category = "travel_delay"
+        elif is_happy_celebration or (sentiment == "positive" and not is_food and not is_pet and not is_sports and not is_tech and not is_creative):
+            category = "happy_celebration"
         elif is_question:
             category = "question_advice"
         elif is_food:
             category = "food"
         elif is_pet:
             category = "pet"
-        elif is_opinion:
-            category = "opinion"
         elif is_sports:
             category = "sports"
-        elif is_milestone:
-            category = "milestone"
         elif is_tech:
             category = "tech"
         elif is_creative:
             category = "creative"
+        elif is_opinion:
+            category = "opinion"
         else:
             category = "casual"
 
         # Context-aware natural subject phrasing
         is_bangla_text = detect_language(text) == "bn"
         if is_bangla_text:
-            if category == "question_advice":
+            if category == "grief_sadness":
+                subject = "এই কঠিন পরিস্থিতি"
+            elif category == "service_complaint":
+                subject = "আপনার এই সমস্যা"
+            elif category == "happy_celebration":
+                subject = "এই চমৎকার অর্জন"
+            elif category == "question_advice":
                 subject = "এই বিষয়ে সিদ্ধান্ত"
             elif category == "food":
                 subject = "রান্না করা খাবার" if "রান্না" in lower else "এই সুস্বাদু খাবার"
             elif category == "pet":
-                subject = "এই আদুরে বিড়ালছানা" if "বিড়াল" in lower or "বিড়াল" in lower else "এই আদুরে পোষা প্রাণী"
+                subject = "এই আদুরে বিড়ালছানা" if ("বিড়াল" in lower or "বিড়াল" in lower) else "এই আদুরে পোষা প্রাণী"
             elif category == "opinion":
                 subject = "আপনার এই মতামত"
             elif category == "sports":
                 subject = topics[0] if (topics and topics[0] not in {"general", "social update"}) else "ম্যাচ জয়"
             elif category == "tech":
-                subject = topics[0] if (topics and topics[0] not in {"general", "social update"}) else "এই চমৎকার প্রজেক্ট"
-            elif category == "milestone":
-                subject = topics[0] if (topics and topics[0] not in {"general", "social update"}) else "এই স্মরণীয় মাইলফলক"
-            elif category == "struggle":
-                subject = "এই অপ্রত্যাশিত পরিস্থিতি"
+                subject = "এই চমৎকার প্রজেক্ট"
             elif category == "creative":
                 subject = "এই চমৎকার দৃশ্য"
             else:
                 subject = "এই সুন্দর মুহূর্ত"
-        elif is_sports and any(v in lower for v in ["vipers", "desert vipers"]):
-            subject = "Desert Vipers"
-        elif category == "question_advice":
-            if "python" in lower and "javascript" in lower:
-                subject = "choosing between Python and JavaScript"
-            elif "interview" in lower:
-                subject = "interview preparation"
-            elif "remote" in lower or "wfh" in lower:
-                subject = "remote work productivity"
-            elif "start" in lower or "learn" in lower:
-                subject = "getting started on this path"
-            elif topics and topics[0] != "social update":
-                subject = topics[0]
-            else:
-                subject = "this question"
-        elif category == "food":
-            if "biryani" in lower:
-                subject = "this homemade biryani"
-            elif "ramen" in lower:
-                subject = "this delicious ramen"
-            elif "pizza" in lower:
-                subject = "this pizza"
-            elif "baking" in lower or "bread" in lower or "cookies" in lower:
-                subject = "freshly baked treats"
-            elif topics and topics[0] != "social update":
-                subject = f"{topics[0]} dish"
-            else:
-                subject = "this delicious meal"
-        elif category == "pet":
-            if "puppy" in lower or "dog" in lower:
-                subject = "your adorable pup"
-            elif "kitten" in lower or "cat" in lower:
-                subject = "your cute cat"
-            else:
-                subject = "your furry friend"
-        elif category == "opinion":
-            if "remote" in lower:
-                subject = "remote vs in-office work"
-            elif topics and topics[0] != "social update":
-                subject = f"your perspective on {topics[0]}"
-            else:
-                subject = "your perspective"
-        elif is_milestone and "marathon" in lower:
-            subject = "completing the marathon"
-        elif is_milestone and "graduated" in lower:
-            subject = "graduating"
-        elif is_milestone and "promoted" in lower:
-            subject = "the promotion"
-        elif is_tech and "dashboard" in lower:
-            subject = "the new AI dashboard"
-        elif is_tech and "app" in lower:
-            subject = "the new app"
-        elif is_travel_or_delay and "flight" in lower:
-            subject = "the flight delay"
-        elif is_travel_or_delay and "luggage" in lower:
-            subject = "the lost luggage"
-        elif is_travel_or_delay and "traffic" in lower:
-            subject = "the brutal traffic delay"
-        elif topics and len(topics[0].split()) > 1:
-            subject = topics[0]
-        elif len(topics) >= 2 and len(topics[0]) <= 4:
-            subject = f"{topics[0]} {topics[1]}"
-        elif topics and topics[0] != "social update":
-            subject = topics[0]
         else:
-            subject = "this issue" if (category == "struggle" or is_struggle) else "this moment"
+            if category == "grief_sadness":
+                if "loss" in lower or "passed away" in lower or "rip" in lower or "died" in lower:
+                    subject = "your loss"
+                elif "accident" in lower or "injured" in lower or "hospital" in lower or "broken" in lower:
+                    subject = "the accident"
+                else:
+                    subject = "what you are going through"
+            elif category == "service_complaint":
+                if "delivery" in lower or "shipping" in lower:
+                    subject = "the delivery delay"
+                elif "order" in lower or "package" in lower:
+                    subject = "your order"
+                elif "refund" in lower or "charged" in lower:
+                    subject = "the billing issue"
+                else:
+                    subject = "the service issue"
+            elif category == "happy_celebration":
+                if "wedding" in lower or "married" in lower or "marriage" in lower:
+                    subject = "the wedding and your marriage"
+                elif "dream job" in lower or "new job" in lower or "hired" in lower:
+                    subject = "the new job"
+                elif "promoted" in lower or "promotion" in lower:
+                    subject = "the promotion"
+                elif "graduated" in lower or "degree" in lower or "graduation" in lower:
+                    subject = "graduating"
+                elif "house" in lower or "home" in lower:
+                    subject = "your new home"
+                elif "birthday" in lower:
+                    subject = "your birthday"
+                elif "anniversary" in lower:
+                    subject = "your anniversary"
+                elif "won" in lower or "win" in lower or "victory" in lower:
+                    subject = "this big win"
+                else:
+                    subject = "this wonderful milestone"
+            elif category == "question_advice":
+                if "python" in lower and "javascript" in lower:
+                    subject = "choosing between Python and JavaScript"
+                elif "interview" in lower:
+                    subject = "interview preparation"
+                elif "remote" in lower or "wfh" in lower:
+                    subject = "remote work productivity"
+                else:
+                    subject = "this question"
+            elif category == "food":
+                if "biryani" in lower:
+                    subject = "this homemade biryani"
+                elif "ramen" in lower:
+                    subject = "this delicious ramen"
+                elif "pizza" in lower:
+                    subject = "this pizza"
+                else:
+                    subject = "this delicious meal"
+            elif category == "pet":
+                if "puppy" in lower or "dog" in lower:
+                    subject = "your adorable pup"
+                elif "kitten" in lower or "cat" in lower:
+                    subject = "your cute cat"
+                else:
+                    subject = "your furry friend"
+            elif category == "sports":
+                subject = topics[0] if (topics and topics[0] not in {"general", "social update"}) else "the match"
+            elif category == "tech":
+                subject = "the new software release"
+            elif category == "creative":
+                subject = "this creative piece"
+            else:
+                subject = "this moment"
 
         # Extract concrete detail
         specific_detail = None
@@ -403,7 +464,7 @@ class BertCommentGeneratorModel:
         if toxicity:
             return "I appreciate you bringing this topic forward, and hope we can keep the discussion respectful and constructive for everyone."
 
-        subject, detail, category = self._extract_subject_and_detail(text)
+        subject, detail, category = self._extract_subject_and_detail(text, sentiment=sentiment)
         archetypes = ["celebratory", "discussion_question", "detail_reactor", "punchy_social", "observant_pro", "warm_community"]
         selected_archetype = archetypes[archetype_idx % len(archetypes)]
 
@@ -411,9 +472,21 @@ class BertCommentGeneratorModel:
         if language != "en" and language in ["bn", "es", "fr", "de", "pt", "it", "hi", "ar", "zh", "ja"]:
             return self._multilingual_comment(language, subject, category, sentiment, archetype_idx)
 
-        # Handle negative sentiment posts (e.g. empathy, bounce back, support)
-        if sentiment == "negative" or (category == "struggle" and sentiment != "positive"):
-            return self._generate_negative_support(subject, detail, selected_archetype)
+        # 1. Personal sadness, grief, loss, tough situations
+        if category == "grief_sadness" or (sentiment == "negative" and category not in ["service_complaint", "travel_delay"]):
+            return self._generate_empathetic_support(subject, detail, selected_archetype)
+
+        # 2. Business / Service / Product complaints
+        if category == "service_complaint":
+            return self._generate_service_complaint_support(subject, detail, selected_archetype)
+
+        # 3. Travel / Transit delay
+        if category == "travel_delay":
+            return self._generate_travel_delay_support(subject, detail, selected_archetype)
+
+        # 4. Happy / Celebratory / Joyful posts
+        if category == "happy_celebration" or (sentiment == "positive" and category in ["casual", "milestone"]):
+            return self._generate_happy_celebration(subject, detail, selected_archetype)
 
         # ── 1. QUESTION & ADVICE INQUIRIES ─────────────────────────
         if category == "question_advice":
@@ -611,40 +684,81 @@ class BertCommentGeneratorModel:
 
         # ── 9. CASUAL & LIFESTYLE ──────────────────────────────────
         else:
-            templates = [
-                f"Such a peaceful, uplifting update. Hope you get to relax and enjoy every bit of this moment! ☕✨",
-                f"Love the calm energy here. It’s the simple moments like {subject} that make the week so worthwhile.",
-                f"Wishing you a wonderful, refreshing time ahead! Thanks for sharing this slice of positivity.",
-                f"This brought a genuine smile to my feed today. Thanks so much for sharing {subject}!",
-                f"Appreciate this warm update! Hope the rest of your week is just as pleasant.",
-            ]
+            if sentiment == "positive":
+                templates = [
+                    f"Love seeing this positive energy! Wishing you continued happiness, joy, and wonderful moments ahead! ✨💖",
+                    f"This brought such a genuine smile to my feed today. Wishing you the absolute best always! 🌟",
+                    f"Such a wonderful, uplifting update. Hope you get to enjoy every single moment of this! 🥳✨",
+                    f"So happy to see this! Sending you warmest positive vibes, laughter, and blessings. ❤️🎉",
+                ]
+            elif sentiment == "negative":
+                templates = [
+                    "I'm so sorry you're having to deal with this rough moment. Please take gentle care of yourself today. ❤️",
+                    "Sending you lots of love, comfort, and positive strength. You are not alone in this. 🤍",
+                    "Thinking of you and wishing you better, brighter days ahead. Stay strong! 💫",
+                ]
+            else:
+                templates = [
+                    f"Such a peaceful, uplifting update. Hope you get to relax and enjoy every bit of this moment! ☕✨",
+                    f"Love the calm energy here. It’s the simple moments like {subject} that make the week so worthwhile.",
+                    f"Wishing you a wonderful, refreshing time ahead! Thanks for sharing this slice of positivity.",
+                    f"This brought a genuine smile to my feed today. Thanks so much for sharing {subject}!",
+                    f"Appreciate this warm update! Hope the rest of your week is just as pleasant.",
+                ]
 
         # Select template using stable modulo + variation
         seed_offset = (archetype_idx * 7 + len(text)) % len(templates)
         comment = templates[seed_offset]
         return self._format_for_platform(comment, platform)
 
-    def _generate_negative_support(self, subject, detail, archetype):
-        """Generate professional, apologetic, and empathetic customer-service crisis management replies for negative situations."""
-        clean_subj = subject.strip() if subject else "this matter"
-        if archetype in ["celebratory", "punchy_social"]:
-            templates = [
-                f"We sincerely apologize for your frustrating experience with {clean_subj}. This is certainly not the standard we aim for. Please send us a direct message so our team can investigate and resolve this for you immediately.",
-                f"I am truly sorry to hear about the trouble you've experienced with {clean_subj}. We acknowledge your frustration and want to make this right. Please reach out to our support team directly.",
-                f"We deeply apologize for the inconvenience and frustration caused by {clean_subj}. Your satisfaction is very important to us, and we are committed to resolving this issue promptly. Please contact us directly.",
-            ]
-        elif archetype == "discussion_question":
-            templates = [
-                f"We are very sorry for the frustration caused by {clean_subj}. Could you please send us a direct message with your details so we can investigate and resolve this for you right away?",
-                f"We sincerely apologize for this disappointing experience with {clean_subj}. Please let us know how our team can best assist you in resolving this matter immediately.",
-            ]
-        else:
-            templates = [
-                f"We sincerely apologize for the frustration regarding {clean_subj}. We understand how difficult this is, and our team is ready to step in and resolve the issue for you immediately.",
-                f"I am so sorry for your negative experience with {clean_subj}. We take your feedback seriously and would appreciate the opportunity to make things right. Please send us a direct message.",
-                f"We apologize for falling short of your expectations with {clean_subj}. We acknowledge your frustration and want to assist in resolving this. Please connect with our support team so we can help.",
-            ]
+    def _generate_happy_celebration(self, subject, detail, archetype):
+        """Generate genuinely happy, celebratory, and cheerful replies for positive posts."""
+        templates = [
+            f"Huge congratulations! This is such wonderful news, so genuinely thrilled and happy for you! 🎉🥳✨",
+            f"Love seeing you this happy! Celebrate big today, you truly deserve every bit of this joy and success! 💖🥂",
+            f"That is absolutely fantastic news! Wishing you endless happiness, blessings, and success on this incredible chapter! 🌟✨",
+            f"Such a beautiful and heartwarming moment! Wishing you all the love, happiness, and wonderful memories ahead! ❤️🎊",
+            f"This just made my entire day! So proud of you and cheering you on always! 👏🎉🔥",
+            f"What an awesome achievement! Celebrating right along with you, here's to many more victories ahead! 🥂✨",
+            f"Pure joy! Your happiness is completely contagious—so thrilled to celebrate this with you! 🥳💖",
+        ]
         return random.choice(templates)
+
+    def _generate_empathetic_support(self, subject, detail, archetype):
+        """Generate deeply empathetic, caring, compassionate personal support for sad/tough situations."""
+        templates = [
+            "I'm so sorry you're going through this. Sending you so much love, comfort, and strength. Please take gentle care of yourself today. ❤️",
+            "My heart truly goes out to you. Sending you the warmest hugs and deepest thoughts during this difficult time. You are not alone. 🤍",
+            "So sorry to hear this. Please be gentle with yourself and take all the time you need to heal. Brighter days will come. Sending you strength! 💫",
+            "Thinking of you and sending so much love your way. Wishing you peace, healing, and comfort through this tough moment. 🕊️",
+            "I'm so deeply sorry for your loss and pain. Here for you, and holding you close in my thoughts. Stay strong. 🙏❤️",
+            "Sending you the biggest hug. It's okay to take things one breath at a time. We're all here rooting for you and sending love. 🤍✨",
+        ]
+        return random.choice(templates)
+
+    def _generate_service_complaint_support(self, subject, detail, archetype):
+        """Generate professional customer service apologies and resolution for business/service issues."""
+        templates = [
+            "We sincerely apologize for this frustrating experience. This is certainly not our standard, and we want to make things right. Please send us a direct message so we can resolve this immediately.",
+            "We are truly sorry for the trouble and inconvenience caused. Please reach out to our team directly via DM with your details so we can investigate and fix this right away.",
+            "Thank you for bringing this to our attention. We apologize for the inconvenience and are committed to resolving this promptly. Please send us a direct message.",
+        ]
+        return random.choice(templates)
+
+    def _generate_travel_delay_support(self, subject, detail, archetype):
+        """Generate friendly empathy for travel and transit delays."""
+        templates = [
+            "Travel delays are the absolute worst! Hope you get on your way smoothly soon and can finally relax. Hang in there! ✈️🤞",
+            "Ugh, transit headaches are so exhausting! Wishing you safe travels and a smooth, hassle-free rest of the journey. 💫",
+            "Sorry you're stuck dealing with that delay. Hopefully things clear up quickly—safe travels! 🚗🛣️",
+        ]
+        return random.choice(templates)
+
+    def _generate_negative_support(self, subject, detail, archetype):
+        """Fallback for negative situations: route appropriately to empathetic support or service resolution."""
+        if any(w in str(subject).lower() for w in ["service", "order", "delivery", "refund", "package", "billing", "store"]):
+            return self._generate_service_complaint_support(subject, detail, archetype)
+        return self._generate_empathetic_support(subject, detail, archetype)
 
     def _format_for_platform(self, comment, platform):
         """Fine-tune comment length and formatting for specific social platforms."""
@@ -659,14 +773,34 @@ class BertCommentGeneratorModel:
     def _multilingual_comment(self, lang, subject, category, sentiment, archetype_idx):
         """Generate culturally natural replies for non-English posts."""
         if lang == "bn":
-            if sentiment == "negative" or category == "struggle":
-                bn_neg = [
-                    f"{subject} নিয়ে আপনার এই অনাকাঙ্ক্ষিত ও হতাশাজনক অভিজ্ঞতার জন্য আমরা আন্তরিকভাবে দুঃখিত। বিষয়টি দ্রুত সমাধানের জন্য অনুগ্রহ করে আমাদের বিস্তারিত জানান।",
-                    f"আপনার এই সমস্যার জন্য আমরা আন্তরিকভাবে ক্ষমাপ্রার্থী। আমরা আপনার ক্ষোভ ও হতাশা বুঝতে পারছি। দয়া করে আপনার বিবরণ দিয়ে আমাদের সাথে যোগাযোগ করুন, আমরা এখনই সমাধানের ব্যবস্থা নিচ্ছি।",
-                    f"{subject} নিয়ে যে ভোগান্তি হয়েছে তার জন্য আমরা গভীরভাবে দুঃখ প্রকাশ করছি। এই সমস্যাটি অবিলম্বে সমাধান করতে আমাদের টিম প্রস্তুত, অনুগ্রহ করে আমাদের ইনবক্সে মেসেজ দিন।",
-                    f"পরিস্থিতিটা সত্যিই হতাশাজনক এবং এর জন্য আমরা দুঃখ প্রকাশ করছি। অনুগ্রহ করে আমাদের সাথে সরাসরি যোগাযোগ করুন যাতে দ্রুত এটি সমাধান করতে পারি।",
+            if category == "service_complaint":
+                bn_complaint = [
+                    "আপনার এই অনাকাঙ্ক্ষিত ও হতাশাজনক অভিজ্ঞতার জন্য আমরা আন্তরিকভাবে দুঃখিত। বিষয়টি দ্রুত খতিয়ে দেখে সমাধানের জন্য অনুগ্রহ করে বিস্তারিত তথ্য দিয়ে আমাদের পেজে ইনবক্স করুন।",
+                    "আমরা আপনার ভোগান্তির জন্য আন্তরিকভাবে ক্ষমাপ্রার্থী। আমরা আপনার ক্ষোভ বুঝতে পারছি এবং দ্রুত সমাধান দিতে প্রস্তুত। দয়া করে ইনবক্সে আমাদের সাথে যোগাযোগ করুন।",
+                    "যে অসুবিধার সম্মুখীন হয়েছেন তার জন্য আমরা গভীরভাবে দুঃখ প্রকাশ করছি। এই সমস্যা অবিলম্বে সমাধানে আমাদের টিম প্রস্তুত, অনুগ্রহ করে বিস্তারিত ইনবক্সে দিন।",
                 ]
-                return bn_neg[archetype_idx % len(bn_neg)]
+                return bn_complaint[archetype_idx % len(bn_complaint)]
+
+            if category == "grief_sadness" or (sentiment == "negative" and category != "travel_delay"):
+                bn_sad = [
+                    "আপনার এই কষ্টের কথা শুনে সত্যিই খুব খারাপ লাগলো। আল্লাহ আপনাকে এই কঠিন সময়ে ধৈর্য ও শক্তি দান করুন। নিজের যত্ন নেবেন সবসময়। ❤️",
+                    "আপনার প্রতি রইল আন্তরিক সমবেদনা ও ভালোবাসা। কঠিন এই সময়টুকু দ্রুত কেটে যাক, এই দোয়াই করি। আমরা আপনার পাশে আছি। 🤍",
+                    "খুবই দুঃখজনক ও বেদনাদায়ক। মন শক্ত রাখুন, আপনার ও আপনার পরিবারের জন্য শুভকামনা ও দোয়া রইল। 🤲✨",
+                    "এই কঠিন মুহূর্তে আপনার জন্য অনেক দোয়া ও ভালোবাসা রইল। আশা করি খুব শীঘ্রই সবকিছু ঠিক হয়ে যাবে। 🕊️",
+                ]
+                return bn_sad[archetype_idx % len(bn_sad)]
+
+            if category == "travel_delay":
+                return "দেরি হওয়া সত্যিই খুব বিরক্তিকর ও ক্লান্তিকর! আশা করি খুব দ্রুত আপনি গন্তব্যে পৌঁছাতে পারবেন। নিরাপদ ভ্রমণ হোক! ✈️"
+
+            if category == "happy_celebration" or (sentiment == "positive" and category not in ["food", "pet", "sports", "tech", "creative"]):
+                bn_happy = [
+                    "অনেক অনেক অভিনন্দন ও আন্তরিক শুভকামনা! এমন সুন্দর সংবাদে সত্যি খুব আনন্দ লাগছে। দিনটি দারুণভাবে উদযাপন করুন! 🎉🥳✨",
+                    "মাশাল্লাহ, কী চমৎকার ও আনন্দের মুহূর্ত! আপনার জীবনের প্রতিটি দিন এমন সুখ ও সাফল্যে ভরে উঠুক। 💖✨",
+                    "অসাধারণ খবর! আপনার এই অর্জনে আমরা অত্যন্ত আনন্দিত ও গর্বিত। এগিয়ে যান বহুদূর! 👏🌟",
+                    "ভালোবাসা ও শুভকামনা রইল! জীবনের নতুন এই অধ্যায় অনেক সুন্দর ও স্মৃতিময় হোক। ❤️🎊",
+                ]
+                return bn_happy[archetype_idx % len(bn_happy)]
 
             if category == "question_advice":
                 bn_qa = [

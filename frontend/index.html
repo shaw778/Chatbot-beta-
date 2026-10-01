@@ -2752,28 +2752,65 @@ async function handleComment(text,targetPost){
     // Fallback
     var langEl = document.getElementById('lang-select');
     var isBn = (langEl && langEl.value==='bn') || /[\u0980-\u09FF]/.test(text);
+    var textLower = text.toLowerCase();
+    var isSadness = /\b(sad|sadness|grief|passed away|rip|mourning|loss|crying|tears|heartbroken|depressed|depression|hurts|painful|bad day|terrible day|accident|hospital|injured|died|funeral|miss you|lost my|lonely|alone)\b/.test(textLower) ||
+                    (/[\u0980-\u09FF]/.test(text) && /(কষ্ট|মারা|ইন্তেকাল|কান্না|মন খারাপ|অসুস্থ|দুঃখ|চোখের পানি|একাকী|বেদনা|দুর্ঘটনা)/.test(text));
     if(sentiment==='negative'){
       if(isBn){
+        if(isSadness){
+          rawComments=[
+            'আপনার এই কষ্টের কথা শুনে সত্যিই খুব খারাপ লাগলো। আল্লাহ আপনাকে এই কঠিন সময়ে ধৈর্য ও শক্তি দান করুন। নিজের যত্ন নেবেন সবসময়। ❤️',
+            'আপনার প্রতি রইল আন্তরিক সমবেদনা ও ভালোবাসা। কঠিন এই সময়টুকু দ্রুত কেটে যাক, এই দোয়াই করি। আমরা আপনার পাশে আছি। 🤍',
+            'খুবই দুঃখজনক ও বেদনাদায়ক ঘটনা। মন শক্ত রাখুন, আপনার জন্য অনেক অনেক শুভকামনা ও দোয়া রইল। 🤲'
+          ];
+        } else {
+          rawComments=[
+            'আপনার এই অনাকাঙ্ক্ষিত ও হতাশাজনক অভিজ্ঞতার জন্য আমরা আন্তরিকভাবে দুঃখিত। বিষয়টি দ্রুত খতিয়ে দেখে সমাধানের জন্য অনুগ্রহ করে বিস্তারিত তথ্য দিয়ে আমাদের পেজে ইনবক্স করুন।',
+            'আমরা আপনার অসুবিধার জন্য আন্তরিকভাবে ক্ষমাপ্রার্থী। আমরা আপনার ক্ষোভ বুঝতে পারছি এবং দ্রুত সমাধান দিতে প্রস্তুত। দয়া করে ইনবক্সে যোগাযোগ করুন।',
+            'যে অসুবিধার সম্মুখীন হয়েছেন তার জন্য আমরা গভীরভাবে দুঃখ প্রকাশ করছি। এই সমস্যা অবিলম্বে সমাধানে আমাদের টিম প্রস্তুত।'
+          ];
+        }
+      } else {
+        if(isSadness){
+          rawComments=[
+            'I am so truly sorry for what you are going through. Sending you love, strength, and gentle comfort during this difficult time. ❤️',
+            'Holding you in my thoughts today. Please take gentle care of yourself — remember you do not have to carry everything alone. 🤍',
+            'Sending my heartfelt sympathies and warmest thoughts your way. Wishing you peace and strength to get through this.'
+          ];
+        } else {
+          rawComments=[
+            'We sincerely apologize for this frustrating experience. This is certainly not our standard, and we want to make things right. Please send us a direct message so we can resolve this immediately.',
+            'We are truly sorry to hear about your experience. We understand your frustration and would like to look into this right away. Please reach out to our support team directly.',
+            'Thank you for bringing this to our attention. We apologize for the inconvenience and frustration caused, and we are committed to resolving this issue promptly. Please send us a direct message.'
+          ];
+        }
+      }
+    } else if(sentiment==='positive'){
+      if(isBn){
         rawComments=[
-          'আপনার এই অনাকাঙ্ক্ষিত ও হতাশাজনক অভিজ্ঞতার জন্য আমরা আন্তরিকভাবে দুঃখিত। বিষয়টি দ্রুত খতিয়ে দেখে সমাধানের জন্য অনুগ্রহ করে বিস্তারিত তথ্য দিয়ে আমাদের পেজে ইনবক্স করুন।',
-          'আমরা আপনার অসুবিধার জন্য আন্তরিকভাবে ক্ষমাপ্রার্থী। আমরা আপনার ক্ষোভ বুঝতে পারছি এবং দ্রুত সমাধান দিতে প্রস্তুত। দয়া করে ইনবক্সে যোগাযোগ করুন।',
-          'যে অসুবিধার সম্মুখীন হয়েছেন তার জন্য আমরা গভীরভাবে দুঃখ প্রকাশ করছি। এই সমস্যা অবিলম্বে সমাধানে আমাদের টিম প্রস্তুত।'
+          'অনেক অনেক অভিনন্দন ও শুভকামনা! আপনার এই সুন্দর অর্জন দেখে সত্যিই মনটা ভালো হয়ে গেল। 🎉✨',
+          'দারুণ লাগলো দেখে! প্রতিটি দিন এমন আনন্দ আর ইতিবাচকতায় ভরে উঠুক। শুভকামনা সবসময়! ❤️🙌',
+          'আপনার এই সাফল্য সত্যিই প্রশংসনীয় ও অনুপ্রেরণাদায়ক। সামনের দিনগুলো আরও সুন্দর ও সফল হোক! 🌟'
         ];
       } else {
         rawComments=[
-          'We sincerely apologize for this frustrating experience. This is certainly not our standard, and we want to make things right. Please send us a direct message so we can resolve this immediately.',
-          'We are truly sorry to hear about your experience. We understand your frustration and would like to look into this right away. Please reach out to our support team directly.',
-          'Thank you for bringing this to our attention. We apologize for the inconvenience and frustration caused, and we are committed to resolving this issue promptly. Please send us a direct message.'
+          'Huge congratulations! So happy to see this — absolutely love this positive energy! 🎉✨',
+          'This is fantastic news! Truly celebrating this moment with you. Wishing you continued success and joy! 🙌❤️',
+          'So thrilled for you! What an amazing milestone, keep shining bright! 🌟😊'
         ];
       }
     } else if(isBn){
       rawComments=[
-        'আমাদের সাথে এই সুন্দর আপডেটটি শেয়ার করার জন্য আন্তরিক ধন্যবাদ! শুভকামনা রইল।',
-        'দারুণ লাগলো দেখে! প্রতিটি দিন এমন আনন্দ আর ইতিবাচকতায় ভরে উঠুক। ✨',
-        'আপনার এই পদক্ষেপ সত্যিই প্রশংসনীয় ও অনুপ্রেরণাদায়ক। পাশে আছি সবসময়! ❤️'
+        'আমাদের সাথে এই সুন্দর বিষয়টি শেয়ার করার জন্য আন্তরিক ধন্যবাদ! শুভকামনা রইল।',
+        'দারুণ লাগলো দেখে! প্রতিটি দিন ভালো কাটুক। ✨',
+        'আপনার এই পোস্টটি বেশ প্রশংসনীয় ও চিন্তাশীল। পাশে আছি সবসময়! 👍'
       ];
     } else {
-      rawComments=['This is really inspiring — keep it up!','What a great perspective to share!','Thanks for posting this — really resonates!','Love the energy here, wishing you the best!','This made me smile — thank you for sharing!'];
+      rawComments=[
+        'Thanks for sharing this perspective — really thoughtful and well put!',
+        'Appreciate you sharing this! Really interesting to hear your take.',
+        'Great point to reflect on — thanks for putting this out there!'
+      ];
     }
   }
   rawComments=uniqueGeneratedComments(rawComments);

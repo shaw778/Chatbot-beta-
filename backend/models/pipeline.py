@@ -166,19 +166,38 @@ def comment_generator(text, sentiment_label='neutral', toxicity=False, style='ca
 
 def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', provider='anthropic', platform='general', num_comments=1, system_extra='', language='en'):
     sentiment_str = str(sentiment_label or 'neutral').strip().lower()
-    negative_rule = ""
-    if sentiment_str == 'negative':
-        negative_rule = (
-            "System Rule: The user sentiment is NEGATIVE. Generate a professional, apologetic, and empathetic customer service reply. "
-            "Do not be cheerful. Do not use emojis like ✨ or 🔥. Acknowledge their frustration and offer to resolve the issue."
+    if sentiment_str == 'positive':
+        sentiment_rule = (
+            "SENTIMENT RULE (POSITIVE / HAPPY): The post conveys happiness, success, celebration, or positive energy. "
+            "Generate genuinely joyful, enthusiastic, warm, and congratulatory comments that celebrate their good news or joy. "
+            "Share in their excitement! NEVER assume or mention a software app, technical tool, or digital platform unless the post explicitly talks about one."
         )
+    elif sentiment_str == 'negative':
+        sentiment_rule = (
+            "SENTIMENT RULE (NEGATIVE): "
+            "1) If the post is about personal sadness, grief, tragedy, heartbreak, illness, injury, feeling down, depression, or a bad day: "
+            "Generate deeply compassionate, comforting, caring, and sincere human replies offering warmth, solidarity, or heartfelt condolences. "
+            "NEVER offer customer service, support tickets, helpdesk links, or DM requests for personal sadness or grief! Do not be cheerful. "
+            "2) If the post is an actual product, service, shipping, order, or business complaint: "
+            "Generate a professional, apologetic, and helpful customer service reply acknowledging the frustration and offering resolution."
+        )
+    else:
+        sentiment_rule = (
+            "SENTIMENT RULE (NEUTRAL): Keep the tone balanced, conversational, and directly relevant to the topic of the post. "
+            "NEVER assume or mention a software app, technical tool, or digital platform unless the post explicitly mentions one."
+        )
+
+    anti_app_bias_rule = (
+        "TOPIC ACCURACY RULE: ONLY talk about an 'app', 'software', or 'digital tool' if the post text EXPLICITLY mentions an app, software, or coding. "
+        "For general life posts (e.g. food, pets, family, travel, achievements, sadness, day-to-day moments), react purely to what they are experiencing."
+    )
 
     lang_rule = (
         "LANGUAGE RULE: If the input post or comment is in Bengali / Bangla (বাংলা) or Banglish, or if requested language is 'bn', "
         "you MUST generate the comment(s) strictly in natural, fluent, conversational Bengali (বাংলা script). "
         "If in English, generate in English. Always match the language and cultural tone of the post."
     )
-    rule_suffix = f"{negative_rule} {lang_rule} {system_extra}".strip()
+    rule_suffix = f"{sentiment_rule} {anti_app_bias_rule} {lang_rule} {system_extra}".strip()
 
     # Build system prompt expecting either single JSON object or JSON array depending on num_comments
     if num_comments and int(num_comments) > 1:
