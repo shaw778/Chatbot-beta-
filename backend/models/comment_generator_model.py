@@ -106,13 +106,13 @@ class BertCommentGeneratorModel:
                 comments.append(comm)
 
         # Ensure we meet the count with guaranteed uniqueness
-        while len(comments) < n:
-            extra = self._generate_archetype_comment(text, language, sentiment, toxicity, style, platform, len(comments) + random.randint(1, 99))
-            if extra not in used_texts:
+        attempts = 0
+        while len(comments) < n and attempts < 25:
+            attempts += 1
+            extra = self._generate_archetype_comment(text, language, sentiment, toxicity, style, platform, len(comments) + attempts)
+            if extra and extra not in used_texts:
                 used_texts.add(extra)
                 comments.append(extra)
-            else:
-                break
 
         return {
             "model": "nlp-comment-generator",
@@ -320,6 +320,8 @@ class BertCommentGeneratorModel:
         # Priority order
         if is_service_complaint:
             category = "service_complaint"
+        elif is_question:
+            category = "question_advice"
         elif is_personal_sadness or (sentiment == "negative" and not is_food and not is_pet):
             category = "grief_sadness"
         elif is_travel_or_delay:
@@ -338,8 +340,6 @@ class BertCommentGeneratorModel:
             category = "opinion"
         elif is_happy_celebration or sentiment == "positive":
             category = "happy_celebration"
-        elif is_question:
-            category = "question_advice"
         else:
             category = "casual"
 
@@ -733,10 +733,10 @@ class BertCommentGeneratorModel:
         templates = [
             "I'm so sorry you're going through this. Sending you so much love, comfort, and strength. Please take gentle care of yourself today. ❤️",
             "My heart truly goes out to you. Sending you the warmest hugs and deepest thoughts during this difficult time. You are not alone. 🤍",
-            "So sorry to hear this. Please be gentle with yourself and take all the time you need to heal. Brighter days will come. Sending you strength! 💫",
+            "So sorry to hear this. Please be gentle with yourself and take all the time you need to heal. Brighter days will come. Sending you strength! 🕊️",
             "Thinking of you and sending so much love your way. Wishing you peace, healing, and comfort through this tough moment. 🕊️",
             "I'm so deeply sorry for your loss and pain. Here for you, and holding you close in my thoughts. Stay strong. 🙏❤️",
-            "Sending you the biggest hug. It's okay to take things one breath at a time. We're all here rooting for you and sending love. 🤍✨",
+            "Sending you the biggest hug. It's okay to take things one breath at a time. We're all here rooting for you and sending love. 🤍",
         ]
         return random.choice(templates)
 
@@ -752,9 +752,11 @@ class BertCommentGeneratorModel:
     def _generate_travel_delay_support(self, subject, detail, archetype):
         """Generate friendly empathy for travel and transit delays."""
         templates = [
-            "Travel delays are the absolute worst! Hope you get on your way smoothly soon and can finally relax. Hang in there! ✈️🤞",
-            "Ugh, transit headaches are so exhausting! Wishing you safe travels and a smooth, hassle-free rest of the journey. 💫",
-            "Sorry you're stuck dealing with that delay. Hopefully things clear up quickly—safe travels! 🚗🛣️",
+            "Travel delays are the absolute worst! So sorry you're dealing with this frustrating disruption. Hope you get on your way smoothly soon and can finally relax. Hang in there! ✈️🤞",
+            "Ugh, transit headaches are so exhausting! We are so sorry for this frustrating delay. Wishing you safe travels and hope support resolves this quickly for you.",
+            "Sorry you're stuck dealing with that frustrating delay. Hopefully things clear up quickly—safe travels! 🚗🛣️",
+            "So frustrating having your travel plans disrupted like that. We apologize for how stressful that is, and hope the rest of your trip goes much smoother! 🤍",
+            "Transit delays drain all your energy. So sorry to hear about this frustrating experience. Hang tight, take a breather, and hope you arrive safely soon.",
         ]
         return random.choice(templates)
 
