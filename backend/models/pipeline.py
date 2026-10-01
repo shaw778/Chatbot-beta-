@@ -208,7 +208,8 @@ def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', pr
             'max_tokens': 400,
             'temperature': 0.7,
         })
-    except RuntimeError:
+    except Exception as exc:
+        logger.warning("Cloud comment generation call failed (%s). Using local fallback.", exc)
         response = {'provider': 'local-fallback', 'model': 'local', 'text': ''}
 
     # If cloud is unavailable, prefer our diverse local generator

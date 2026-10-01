@@ -875,6 +875,12 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
         )
         return False
 
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
     def do_GET(self):
         global active_meta_page_access_token, active_meta_page_id
         self._begin_request()
@@ -1405,7 +1411,11 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
         payload = read_json(self)
         text = payload.get("text", "")
         sentiment_label = payload.get("sentiment", "neutral")
-        provider = payload.get("provider", "anthropic")
+        raw_provider = str(payload.get("provider", "")).strip().lower()
+        if not raw_provider or raw_provider in {"ollama", "local", "offline"}:
+            provider = "anthropic" if ANTHROPIC_API_KEY else ("openai" if OPENAI_API_KEY else "gemini")
+        else:
+            provider = raw_provider
 
         if self.path == "/api/models/sentiment":
             result = pipeline.sentiment(text, provider=provider)

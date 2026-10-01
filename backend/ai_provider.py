@@ -303,7 +303,18 @@ def call_gemini(payload):
 
 
 def call_ai(payload):
-    provider = str(payload.get("provider", "gemini" if GEMINI_API_KEY else "anthropic")).lower()
+    provider = str(payload.get("provider", "")).lower().strip()
+    if not provider or provider in {"ollama", "local", "offline", "none"}:
+        if ANTHROPIC_API_KEY:
+            provider = "anthropic"
+        elif OPENAI_API_KEY:
+            provider = "openai"
+        elif GEMINI_API_KEY:
+            provider = "gemini"
+        else:
+            text = fallback_response(payload)
+            return {"text": text, "provider": "local-fallback", "model": "local"}
+
     try:
         if provider in {"gemini", "google"}:
             return call_gemini(payload)
@@ -311,16 +322,39 @@ def call_ai(payload):
             return call_anthropic(payload)
         if provider in {"openai", "chatgpt"}:
             return call_openai(payload)
-    except RuntimeError as exc:
+    except Exception as exc:
         logger.warning("Primary provider '%s' failed (%s). Checking failovers...", provider, exc)
-        if GEMINI_API_KEY and provider not in {"gemini", "google"}:
-            try:
-                return call_gemini(payload)
-            except Exception:
-                pass
+        for failover_name, failover_fn, key in [
+            ("anthropic", call_anthropic, ANTHROPIC_API_KEY),
+            ("openai", call_openai, OPENAI_API_KEY),
+            ("gemini", call_gemini, GEMINI_API_KEY),
+        ]:
+            if key and provider not in {failover_name}:
+                try:
+                    return failover_fn(payload)
+                except Exception:
+                    continue
         text = fallback_response(payload)
         return {"text": text, "provider": "local-fallback", "model": "local"}
-    raise ValueError(f"Unknown provider '{provider}'. Use 'gemini', 'anthropic', or 'openai'.")
+
+    # If unrecognized provider, try configured providers or fallback
+    if ANTHROPIC_API_KEY:
+        try:
+            return call_anthropic(payload)
+        except Exception:
+            pass
+    if OPENAI_API_KEY:
+        try:
+            return call_openai(payload)
+        except Exception:
+            pass
+    if GEMINI_API_KEY:
+        try:
+            return call_gemini(payload)
+        except Exception:
+            pass
+    text = fallback_response(payload)
+    return {"text": text, "provider": "local-fallback", "model": "local"}
 
 
 def call_vision(image_bytes, media_type, prompt, provider="openai", filename=""):

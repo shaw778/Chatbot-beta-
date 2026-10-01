@@ -2049,7 +2049,7 @@ var convId = null;
 var apiCallCount = 0;
 var apiCallLimit = 100;
 var API_BASE = window.location.origin;
-var aiProvider = 'ollama';
+var aiProvider = 'anthropic';
 
 var stats = {analyzed:0,generated:0,approved:0,blocked:0,timeSaved:0,
   generationSeconds:0,sentPos:0,sentNeg:0,sentNeu:0,flagged:0,schedPreds:[]};
@@ -2303,11 +2303,16 @@ async function syncBackendStatus(){
       else if(data.anthropic_key_configured) el.textContent='Python + Claude + SQLite';
       else el.textContent='Python + SQLite fallback';
     }
-    if(data.gemini_key_configured && aiProvider === 'ollama'){
-      setProvider('gemini');
-      var psel = document.getElementById('provider-select');
-      if(psel) psel.value = 'gemini';
-    }
+    var chosen = 'gemini';
+    if(data.anthropic_key_configured) chosen = 'anthropic';
+    else if(data.openai_key_configured) chosen = 'openai';
+    else if(data.gemini_key_configured) chosen = 'gemini';
+
+    setProvider(chosen);
+    var psel = document.getElementById('provider-select');
+    if(psel) psel.value = chosen;
+    var fbPsel = document.getElementById('fb-provider');
+    if(fbPsel) fbPsel.value = chosen;
     addLog('OK','Backend connected. Database: '+data.database);
     var cs=document.getElementById('connect-state');
     if(cs){
@@ -3637,12 +3642,17 @@ async function fbLoadFeed(){
       postBtn.className = 'qbtn qbtn-post';
       postBtn.type = 'button';
       postBtn.textContent = '💬 Generate & Post Comment';
+      
+      var candArea = document.createElement('div');
+      candArea.id = 'fb-candidates-' + post.id;
+      candArea.style.marginTop = '10px';
+
       postBtn.addEventListener('click', function(){
-        fbGenCommentOnPost(post.id, post.message || post.story || '', postBtn);
+        fbGenCommentOnPost(post.id, post.message || post.story || '', postBtn, candArea);
       });
       pActions.appendChild(postBtn);
 
-      row.append(pMeta, pBody, pActions);
+      row.append(pMeta, pBody, pActions, candArea);
 
       var comments = (post.comments && post.comments.data) || [];
       if(comments.length > 0){
@@ -4213,6 +4223,12 @@ function fbScheduleCommentDirect(postId, commentText){
 //  INIT
 // ══════════════════════════════════════════════════════════
 function showWelcome(){
+  generatedComments = [
+    { text: "Huge congratulations on the milestone launch! The hard work really shines through — excited to see where you take this next! 🚀", sentiment: "positive", targetPostId: "" },
+    { text: "Incredible effort and a well-deserved milestone! Wishing the entire team continued momentum and success. 🎉", sentiment: "positive", targetPostId: "" },
+    { text: "This is truly inspiring to see. Thank you for sharing the journey with all of us! Looking forward to more updates. ✨", sentiment: "positive", targetPostId: "" }
+  ];
+
   var msgs=document.getElementById('msgs');
   var d=document.createElement('div');
   d.className='msg welcome';
@@ -4227,9 +4243,88 @@ function showWelcome(){
     +'<button type="button" class="quick-action" data-mode="schedule"><span class="quick-icon amber">▦</span><span class="quick-copy"><b>Plan a post</b><small>Timing and engagement</small></span><span class="quick-arrow">→</span></button>'
     +'<button type="button" class="quick-action" data-panel="image"><span class="quick-icon coral">▧</span><span class="quick-copy"><b>Comment on an image</b><small>Generate from a photo</small></span><span class="quick-arrow">→</span></button>'
     +'</div>'
+    +'<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+    +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Live Example · Ready-to-Use Suggestions</div>'
+    +'<span class="tag">Interactive</span>'
+    +'</div>'
+    +'<div style="font-size:12.5px;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;line-height:1.5">'
+    +'📌 <em>"Just launched our new product line! Excited for what\'s next 🚀 #launch #startup"</em>'
+    +'</div>'
+    +'<div class="suggested-comments-section" role="region" aria-label="Suggested Comments" style="margin-top:0">'
+    +'<div class="scs-header">'
+    +'<div class="scs-title-group">'
+    +'<div class="scs-icon">💬</div>'
+    +'<div>'
+    +'<div class="scs-title">Suggested Comments</div>'
+    +'<div class="scs-subtitle">AI-ranked &amp; sentiment-tailored candidates ready to publish</div>'
+    +'</div>'
+    +'</div>'
+    +'<div class="scs-badge-count">3 Generated</div>'
+    +'</div>'
+    +'<div class="scs-list">'
+    +'<div class="suggested-comment-card scc-featured">'
+    +'<div class="scc-header">'
+    +'<div class="scc-badge scc-badge-best">★ #1 Best Match</div>'
+    +'<div class="scc-meta"><span class="scc-score" title="Relevance match score">⚡ 96% match</span><span class="scc-tag scc-safe-tag">🛡️ Safe</span></div>'
+    +'</div>'
+    +'<div class="scc-body" onclick="copyCommentByIndex(0, this)" title="Click to copy comment text">'
+    +'Huge congratulations on the milestone launch! The hard work really shines through — excited to see where you take this next! 🚀'
+    +'</div>'
+    +'<div class="scc-actions">'
+    +'<button type="button" class="qbtn qbtn-post" onclick="postGeneratedComment(0)">🚀 Post now</button>'
+    +'<button type="button" class="qbtn qbtn-app" onclick="scheduleGeneratedComment(0)">📅 Schedule</button>'
+    +'<button type="button" class="qbtn qbtn-copy" onclick="copyCommentByIndex(0, this)">📋 Copy text</button>'
+    +'</div>'
+    +'</div>'
+    +'<div class="suggested-comment-card">'
+    +'<div class="scc-header">'
+    +'<div class="scc-badge scc-badge-alt">Option #2</div>'
+    +'<div class="scc-meta"><span class="scc-score" title="Relevance match score">⚡ 91% match</span><span class="scc-tag scc-safe-tag">🛡️ Safe</span></div>'
+    +'</div>'
+    +'<div class="scc-body" onclick="copyCommentByIndex(1, this)" title="Click to copy comment text">'
+    +'Incredible effort and a well-deserved milestone! Wishing the entire team continued momentum and success. 🎉'
+    +'</div>'
+    +'<div class="scc-actions">'
+    +'<button type="button" class="qbtn qbtn-post" onclick="postGeneratedComment(1)">🚀 Post now</button>'
+    +'<button type="button" class="qbtn qbtn-app" onclick="scheduleGeneratedComment(1)">📅 Schedule</button>'
+    +'<button type="button" class="qbtn qbtn-copy" onclick="copyCommentByIndex(1, this)">📋 Copy text</button>'
+    +'</div>'
+    +'</div>'
+    +'<div class="suggested-comment-card">'
+    +'<div class="scc-header">'
+    +'<div class="scc-badge scc-badge-alt">Option #3</div>'
+    +'<div class="scc-meta"><span class="scc-score" title="Relevance match score">⚡ 86% match</span><span class="scc-tag scc-safe-tag">🛡️ Safe</span></div>'
+    +'</div>'
+    +'<div class="scc-body" onclick="copyCommentByIndex(2, this)" title="Click to copy comment text">'
+    +'This is truly inspiring to see. Thank you for sharing the journey with all of us! Looking forward to more updates. ✨'
+    +'</div>'
+    +'<div class="scc-actions">'
+    +'<button type="button" class="qbtn qbtn-post" onclick="postGeneratedComment(2)">🚀 Post now</button>'
+    +'<button type="button" class="qbtn qbtn-app" onclick="scheduleGeneratedComment(2)">📅 Schedule</button>'
+    +'<button type="button" class="qbtn qbtn-copy" onclick="copyCommentByIndex(2, this)">📋 Copy text</button>'
+    +'</div>'
+    +'</div>'
+    +'</div>'
+    +'<div class="scs-footer">'
+    +'<span>💡 Click any comment or "Copy" to copy text · Boundary optimized · Ready to publish</span>'
+    +'</div>'
+    +'</div>'
+    +'</div>'
     +'</div>';
   msgs.appendChild(d);
-  d.querySelectorAll('[data-mode]').forEach(function(button){button.addEventListener('click',function(){setMode(button.dataset.mode);document.getElementById('inp').focus();});});
+  d.querySelectorAll('[data-mode]').forEach(function(button){
+    button.addEventListener('click',function(){
+      var m = button.dataset.mode;
+      setMode(m);
+      if(m === 'comment') {
+        document.getElementById('inp').value = "Just launched our new product line! Excited for what's next 🚀 #launch";
+        send();
+      } else {
+        document.getElementById('inp').focus();
+      }
+    });
+  });
   d.querySelectorAll('[data-panel]').forEach(function(button){button.addEventListener('click',function(){showPanel(button.dataset.panel);});});
 }
 
