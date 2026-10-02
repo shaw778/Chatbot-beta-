@@ -57,7 +57,7 @@ from .config import (
     X_CLIENT_ID,
     X_REDIRECT_URI,
 )
-from .database import database
+from .database import database, now_ms
 from .models import pipeline
 from .payment_service import (
     BOT_PACKAGES,
@@ -585,6 +585,112 @@ def reply_to_facebook_comment(comment_id, message):
         raise RuntimeError(f"Facebook reply connection error: {exc.reason}") from exc
 
 
+def execute_scheduled_comment(item):
+    """Execute a single scheduled comment (Facebook, Twitter, Instagram)."""
+    item_id = item["id"]
+    comment_text = str(item.get("comment_text") or "").strip()
+    platform = str(item.get("platform") or "").lower()
+    post_id = str(item.get("post_id") or "").strip()
+
+    if not comment_text:
+        database.update_scheduled_comment_status(item_id, "failed", error_message="Empty comment text")
+        return {"success": False, "error": "Empty comment text"}
+
+    logger.info("Executing scheduled comment #%s on %s (post_id: %s)", item_id, platform, post_id or "none")
+
+    if platform == "facebook":
+        if not active_meta_page_access_token:
+            err = "Facebook Page access is not configured. Connect a Page or set META_PAGE_ACCESS_TOKEN."
+            database.update_scheduled_comment_status(item_id, "failed", error_message=err)
+            return {"success": False, "error": err}
+
+        if post_id:
+            try:
+                res = post_facebook_comment(post_id, comment_text)
+                database.update_scheduled_comment_status(item_id, "posted")
+                database.store_conversation("scheduled-facebook-comment", comment_text, json.dumps(res))
+                logger.info("Scheduled comment #%s posted successfully on FB post %s", item_id, post_id)
+                return {"success": True, "result": res}
+            except Exception as exc:
+                exc_str = str(exc)
+                logger.warning(
+                    "Scheduled comment #%s direct comment on post %s failed: %s. Attempting fallback to Page Feed.",
+                    item_id, post_id, exc_str
+                )
+                try:
+                    feed_res = publish_meta_page_post(comment_text)
+                    database.update_scheduled_comment_status(
+                        item_id,
+                        "posted (page feed)",
+                        error_message=f"Direct post comment restricted by Meta; published to Page Feed. Original: {exc_str[:120]}"
+                    )
+                    database.store_conversation("scheduled-facebook-page-post", comment_text, json.dumps(feed_res))
+                    logger.info("Scheduled comment #%s published to Facebook Page feed as fallback.", item_id)
+                    return {"success": True, "result": feed_res, "fallback": True}
+                except Exception as feed_exc:
+                    err = f"Direct comment failed: {exc_str[:120]} | Feed post failed: {str(feed_exc)[:120]}"
+                    database.update_scheduled_comment_status(item_id, "failed", error_message=err)
+                    return {"success": False, "error": err}
+        else:
+            try:
+                res = publish_meta_page_post(comment_text)
+                database.update_scheduled_comment_status(item_id, "posted")
+                database.store_conversation("scheduled-facebook-page-post", comment_text, json.dumps(res))
+                logger.info("Scheduled comment #%s published directly to Facebook Page feed.", item_id)
+                return {"success": True, "result": res}
+            except Exception as exc:
+                err = f"Failed to post to Facebook Page feed: {str(exc)[:200]}"
+                database.update_scheduled_comment_status(item_id, "failed", error_message=err)
+                return {"success": False, "error": err}
+
+    elif platform == "twitter":
+        err = "Twitter/X auto-posting requires Basic Developer API tier ($100/mo)."
+        database.update_scheduled_comment_status(item_id, "failed", error_message=err)
+        return {"success": False, "error": err}
+
+    elif platform == "instagram":
+        err = "Instagram auto-posting requires Creator Bot (Pro) with Meta Professional account."
+        database.update_scheduled_comment_status(item_id, "failed", error_message=err)
+        return {"success": False, "error": err}
+
+    else:
+        err = f"Unsupported platform: {platform}"
+        database.update_scheduled_comment_status(item_id, "failed", error_message=err)
+        return {"success": False, "error": err}
+
+
+_scheduler_worker_running = False
+_scheduler_worker_lock = threading.Lock()
+
+
+def _run_scheduler_worker():
+    """Background worker loop that checks and fires due scheduled comments every 15 seconds."""
+    logger.info("Background comment scheduler worker loop started.")
+    while True:
+        try:
+            now_val = now_ms()
+            due_items = database.get_due_scheduled_comments(now_val)
+            if due_items:
+                logger.info("Scheduler found %d due comment(s) to execute.", len(due_items))
+                for item in due_items:
+                    if database.claim_scheduled_comment(item["id"]):
+                        execute_scheduled_comment(item)
+        except Exception as exc:
+            logger.error("Error in background scheduler loop: %s", exc)
+        time.sleep(15)
+
+
+def ensure_scheduler_started():
+    """Start background scheduler thread once."""
+    global _scheduler_worker_running
+    with _scheduler_worker_lock:
+        if not _scheduler_worker_running:
+            _scheduler_worker_running = True
+            t = threading.Thread(target=_run_scheduler_worker, daemon=True, name="CommentSchedulerWorker")
+            t.start()
+            logger.info("Comment scheduler daemon thread launched.")
+
+
 def fetch_page_feed_posts(limit=10):
     """Fetch recent Page posts and comments safely without failing completely on permission boundaries."""
     if not active_meta_page_access_token or not active_meta_page_id:
@@ -1042,6 +1148,25 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
 
         return super().do_GET()
 
+    def do_DELETE(self):
+        self._begin_request()
+        parsed = urlsplit(self.path)
+        path = parsed.path
+        if path == "/api/schedules":
+            query = parse_qs(parsed.query)
+            comment_id = query.get("id", [None])[0]
+            if not comment_id:
+                try:
+                    payload = read_json(self)
+                    comment_id = payload.get("id")
+                except Exception:
+                    pass
+            if not comment_id:
+                return send_json(self, {"error": "Schedule ID is required."}, HTTPStatus.BAD_REQUEST)
+            deleted = database.delete_scheduled_comment(comment_id)
+            return send_json(self, {"success": deleted})
+        self.send_error(HTTPStatus.NOT_FOUND, "Not found")
+
     def do_POST(self):
         self._begin_request()
         path = urlsplit(self.path).path
@@ -1246,13 +1371,41 @@ class ChatbotHandler(SimpleHTTPRequestHandler):
                 comment = str(payload.get("comment", "")).strip()
                 platform = str(payload.get("platform", "")).strip().lower()
                 scheduled_at = payload.get("scheduled_at")
+                post_id = str(payload.get("post_id", "")).strip()
                 if not comment:
                     return send_json(self, {"error": "A comment is required."}, HTTPStatus.BAD_REQUEST)
                 if platform not in {"facebook", "instagram", "twitter"}:
                     return send_json(self, {"error": "Choose Facebook, Instagram, or Twitter/X."}, HTTPStatus.BAD_REQUEST)
                 if not isinstance(scheduled_at, int) or scheduled_at <= 0:
                     return send_json(self, {"error": "A valid schedule date and time is required."}, HTTPStatus.BAD_REQUEST)
-                return send_json(self, {"item": database.create_scheduled_comment(comment, platform, scheduled_at)}, HTTPStatus.CREATED)
+                created = database.create_scheduled_comment(comment, platform, scheduled_at, post_id=post_id)
+                if scheduled_at <= now_ms() + 5000:
+                    threading.Thread(
+                        target=lambda: (database.claim_scheduled_comment(created["id"]) and execute_scheduled_comment(created)),
+                        daemon=True,
+                    ).start()
+                return send_json(self, {"item": created}, HTTPStatus.CREATED)
+
+            if path == "/api/schedules/post-now":
+                payload = read_json(self)
+                comment_id = payload.get("id")
+                if not comment_id:
+                    return send_json(self, {"error": "Schedule ID is required."}, HTTPStatus.BAD_REQUEST)
+                item = database.get_scheduled_comment(comment_id)
+                if not item:
+                    return send_json(self, {"error": "Scheduled comment not found."}, HTTPStatus.NOT_FOUND)
+                database.update_scheduled_comment_status(comment_id, "processing")
+                result = execute_scheduled_comment(item)
+                updated = database.get_scheduled_comment(comment_id)
+                return send_json(self, {"success": result.get("success", False), "item": updated, "error": result.get("error")})
+
+            if path == "/api/schedules/delete":
+                payload = read_json(self)
+                comment_id = payload.get("id")
+                if not comment_id:
+                    return send_json(self, {"error": "Schedule ID is required."}, HTTPStatus.BAD_REQUEST)
+                deleted = database.delete_scheduled_comment(comment_id)
+                return send_json(self, {"success": deleted})
 
             if path.startswith("/api/models/"):
                 return self.handle_model_endpoint()
@@ -1514,12 +1667,15 @@ class WSGIHandler(ChatbotHandler):
 def application(environ, start_response):
     try:
         database.init()
+        ensure_scheduler_started()
         handler = WSGIHandler(environ, start_response)
         method = handler.command.upper()
         if method == "GET":
             handler.do_GET()
         elif method == "POST":
             handler.do_POST()
+        elif method == "DELETE":
+            handler.do_DELETE()
         elif method == "HEAD":
             handler.do_HEAD()
         else:
@@ -1544,6 +1700,7 @@ app = application
 
 def main():
     database.init()
+    ensure_scheduler_started()
     host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", 5000))
     server = ThreadingHTTPServer((host, port), ChatbotHandler)

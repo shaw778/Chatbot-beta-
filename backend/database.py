@@ -89,7 +89,10 @@ class Database:
                     platform TEXT NOT NULL,
                     scheduled_at INTEGER NOT NULL,
                     status TEXT NOT NULL DEFAULT 'scheduled',
-                    created_at INTEGER NOT NULL
+                    created_at INTEGER NOT NULL,
+                    post_id TEXT,
+                    error_message TEXT,
+                    executed_at INTEGER
                 );
 
                 CREATE TABLE IF NOT EXISTS payments (
@@ -124,6 +127,17 @@ class Database:
                 );
                 """
             )
+            # Safe schema migrations for SQLite
+            cur = conn.cursor()
+            cur.execute("PRAGMA table_info(scheduled_comments)")
+            cols = [row[1] for row in cur.fetchall()]
+            if "post_id" not in cols:
+                cur.execute("ALTER TABLE scheduled_comments ADD COLUMN post_id TEXT")
+            if "error_message" not in cols:
+                cur.execute("ALTER TABLE scheduled_comments ADD COLUMN error_message TEXT")
+            if "executed_at" not in cols:
+                cur.execute("ALTER TABLE scheduled_comments ADD COLUMN executed_at INTEGER")
+            cur.close()
 
     def _init_mysql(self):
         with self.connect() as conn:
@@ -147,10 +161,22 @@ class Database:
                     platform VARCHAR(30) NOT NULL,
                     scheduled_at BIGINT NOT NULL,
                     status VARCHAR(30) NOT NULL DEFAULT 'scheduled',
-                    created_at BIGINT NOT NULL
+                    created_at BIGINT NOT NULL,
+                    post_id VARCHAR(255) NULL,
+                    error_message TEXT NULL,
+                    executed_at BIGINT NULL
                 )
                 """
             )
+            for col_def in [
+                ("post_id", "VARCHAR(255) NULL"),
+                ("error_message", "TEXT NULL"),
+                ("executed_at", "BIGINT NULL"),
+            ]:
+                try:
+                    cur.execute(f"ALTER TABLE scheduled_comments ADD COLUMN {col_def[0]} {col_def[1]}")
+                except Exception:
+                    pass
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS api_calls (
@@ -272,27 +298,101 @@ class Database:
             cur.close()
         return rows
 
-    def create_scheduled_comment(self, comment_text, platform, scheduled_at):
+    def create_scheduled_comment(self, comment_text, platform, scheduled_at, post_id=None):
         p = self.param()
         sql = (
-            "INSERT INTO scheduled_comments(comment_text, platform, scheduled_at, status, created_at) "
-            f"VALUES ({p}, {p}, {p}, {p}, {p})"
+            "INSERT INTO scheduled_comments(comment_text, platform, scheduled_at, status, created_at, post_id) "
+            f"VALUES ({p}, {p}, {p}, {p}, {p}, {p})"
         )
-        values = (comment_text, platform, scheduled_at, "scheduled", now_ms())
+        values = (comment_text, platform, scheduled_at, "scheduled", now_ms(), post_id or None)
         with self.connect() as conn:
             cur = conn.cursor()
             cur.execute(sql, values)
             item_id = cur.lastrowid
             cur.close()
-        return {"id": item_id, "comment_text": comment_text, "platform": platform,
-                "scheduled_at": scheduled_at, "status": "scheduled"}
+        return {
+            "id": item_id,
+            "comment_text": comment_text,
+            "platform": platform,
+            "scheduled_at": scheduled_at,
+            "status": "scheduled",
+            "post_id": post_id or "",
+            "created_at": now_ms(),
+        }
+
+    def get_due_scheduled_comments(self, now_timestamp=None):
+        if now_timestamp is None:
+            now_timestamp = now_ms()
+        p = self.param()
+        sql = (
+            "SELECT id, comment_text, platform, scheduled_at, status, created_at, post_id, error_message, executed_at "
+            f"FROM scheduled_comments WHERE status = 'scheduled' AND scheduled_at <= {p} ORDER BY scheduled_at ASC"
+        )
+        with self.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(sql, (now_timestamp,))
+            columns = [col[0] for col in cur.description]
+            rows = [dict(zip(columns, row)) for row in cur.fetchall()]
+            cur.close()
+        return rows
+
+    def claim_scheduled_comment(self, comment_id):
+        p = self.param()
+        sql = f"UPDATE scheduled_comments SET status = 'processing' WHERE id = {p} AND status = 'scheduled'"
+        with self.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(sql, (comment_id,))
+            claimed = cur.rowcount > 0
+            cur.close()
+        return claimed
+
+    def update_scheduled_comment_status(self, comment_id, status, error_message=None, executed_at=None):
+        p = self.param()
+        if executed_at is None:
+            executed_at = now_ms()
+        sql = (
+            f"UPDATE scheduled_comments SET status = {p}, error_message = {p}, executed_at = {p} "
+            f"WHERE id = {p}"
+        )
+        values = (status, error_message, executed_at, comment_id)
+        with self.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(sql, values)
+            cur.close()
+
+    def get_scheduled_comment(self, comment_id):
+        p = self.param()
+        sql = (
+            "SELECT id, comment_text, platform, scheduled_at, status, created_at, post_id, error_message, executed_at "
+            f"FROM scheduled_comments WHERE id = {p} LIMIT 1"
+        )
+        with self.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(sql, (comment_id,))
+            if not cur.description:
+                cur.close()
+                return None
+            columns = [col[0] for col in cur.description]
+            row = cur.fetchone()
+            cur.close()
+        return dict(zip(columns, row)) if row else None
+
+    def delete_scheduled_comment(self, comment_id):
+        p = self.param()
+        sql = f"DELETE FROM scheduled_comments WHERE id = {p}"
+        with self.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(sql, (comment_id,))
+            deleted = cur.rowcount > 0
+            cur.close()
+        return deleted
 
     def scheduled_comments(self, limit=100):
         with self.connect() as conn:
             cur = conn.cursor()
             cur.execute(
-                "SELECT id, comment_text, platform, scheduled_at, status, created_at "
-                "FROM scheduled_comments ORDER BY scheduled_at ASC LIMIT " + str(int(limit))
+                "SELECT id, comment_text, platform, scheduled_at, status, created_at, post_id, error_message, executed_at "
+                "FROM scheduled_comments ORDER BY CASE WHEN status = 'scheduled' THEN 0 WHEN status = 'processing' THEN 1 ELSE 2 END, scheduled_at ASC, id DESC LIMIT " + str(int(limit))
             )
             columns = [col[0] for col in cur.description]
             rows = [dict(zip(columns, row)) for row in cur.fetchall()]

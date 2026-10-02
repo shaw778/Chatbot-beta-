@@ -1739,7 +1739,13 @@ body:not(.day-mode) .g-disclaimer {
         </div>
         <button class="schedule-submit" id="schedule-submit" onclick="saveSchedule()">Schedule comment</button><div id="schedule-feedback" style="font-size:12px;margin-top:10px"></div>
       </div>
-      <div class="scheduler-card"><h2>Upcoming comments</h2><div class="scheduled-list" id="scheduled-list"><div class="empty">No comments scheduled yet.</div></div></div>
+      <div class="scheduler-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="margin:0">Upcoming comments</h2>
+          <button type="button" class="qbtn" onclick="loadSchedules()" style="font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;background:transparent;color:var(--primary,#54a8ff);border:1px solid rgba(84,168,255,0.3);">🔄 Refresh</button>
+        </div>
+        <div class="scheduled-list" id="scheduled-list"><div class="empty">No comments scheduled yet.</div></div>
+      </div>
     </div>
 
     <!-- ── LOGS ── -->
@@ -2078,6 +2084,7 @@ var postHistory= [];   // Feature 39 – cross-post consistency
 var generatedComments = [];
 var selectedScheduleComment = '';
 var selectedSchedulePlatform = '';
+var selectedSchedulePostId = '';
 
 // ── Feature 31: Frequency cap ──
 var freqCap = {count:0, window:60*60*1000, lastReset: Date.now(), limit:20};
@@ -3149,8 +3156,30 @@ async function postGeneratedComment(index, btn){
     addLog('INFO', 'Copied status to clipboard: ' + error.message);
   }
 }
-function scheduleGeneratedComment(index){var item=generatedComments[index];if(!item)return;selectedScheduleComment=item.text;document.getElementById('scheduled-comment-preview').textContent=item.text;document.getElementById('schedule-feedback').textContent='';scheduleDateTimeDefaults();selectSchedulePlatform('facebook');openScheduler();}
-function openScheduler(){showPanel('scheduler');loadSchedules();}
+function scheduleGeneratedComment(index){
+  var item = generatedComments[index];
+  if(!item) return;
+  selectedScheduleComment = item.text;
+  selectedSchedulePostId = item.targetPostId || '';
+  document.getElementById('scheduled-comment-preview').textContent = item.text;
+  document.getElementById('schedule-feedback').textContent = selectedSchedulePostId ? ('Target Facebook Post: ' + selectedSchedulePostId) : '';
+  scheduleDateTimeDefaults();
+  selectSchedulePlatform('facebook');
+  openScheduler();
+}
+var schedulerPollTimer = null;
+function openScheduler(){
+  showPanel('scheduler');
+  loadSchedules();
+  if(!schedulerPollTimer){
+    schedulerPollTimer = setInterval(function(){
+      var panel = document.getElementById('panel-scheduler');
+      if(panel && panel.style.display !== 'none'){
+        loadSchedules();
+      }
+    }, 12000);
+  }
+}
 function selectSchedulePlatform(platform){
   selectedSchedulePlatform=platform;
   document.querySelectorAll('.platform-btn').forEach(function(button){
@@ -3180,9 +3209,219 @@ function selectSchedulePlatform(platform){
     tip.style.display = 'none';
   }
 }
-function renderScheduledItems(items){var list=document.getElementById('scheduled-list');list.innerHTML='';if(!items.length){list.innerHTML='<div class="empty">No comments scheduled yet.</div>';return;}items.forEach(function(item){var row=document.createElement('div'),comment=document.createElement('div'),meta=document.createElement('div');row.className='scheduled-item';comment.textContent=item.comment_text;meta.className='scheduled-meta';meta.textContent=(item.platform==='twitter'?'Twitter / X':item.platform.charAt(0).toUpperCase()+item.platform.slice(1))+' · '+new Date(item.scheduled_at).toLocaleString()+' · '+item.status;row.append(comment,meta);list.appendChild(row);});}
-async function loadSchedules(){try{var response=await fetch(API_BASE+'/api/schedules');if(!response.ok)throw new Error('Could not load schedules.');var data=await response.json();renderScheduledItems(data.items||[]);}catch(error){document.getElementById('scheduled-list').innerHTML='<div class="empty">Unable to load schedules. Please refresh and try again.</div>';addLog('ERR',error.message);}}
-async function saveSchedule(){var date=document.getElementById('schedule-date').value,time=document.getElementById('schedule-time').value,feedback=document.getElementById('schedule-feedback');if(!selectedScheduleComment){feedback.textContent='Choose “Schedule it” below a generated comment first.';feedback.style.color='var(--danger)';return;}if(!date||!time||!selectedSchedulePlatform){feedback.textContent='Choose a date, time, and platform.';feedback.style.color='var(--danger)';return;}var scheduledAt=new Date(date+'T'+time);if(Number.isNaN(scheduledAt.getTime())||scheduledAt.getTime()<=Date.now()){feedback.textContent='Choose a future date and time.';feedback.style.color='var(--danger)';return;}var submit=document.getElementById('schedule-submit');submit.disabled=true;try{var response=await fetch(API_BASE+'/api/schedules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment:selectedScheduleComment,platform:selectedSchedulePlatform,scheduled_at:scheduledAt.getTime()})});var data=await response.json();if(!response.ok)throw new Error(data.error||'Could not save schedule.');feedback.textContent='Scheduled for '+scheduledAt.toLocaleString()+' on '+(selectedSchedulePlatform==='twitter'?'Twitter / X':selectedSchedulePlatform)+'.';feedback.style.color='var(--success)';addLog('OK','Comment scheduled for '+scheduledAt.toLocaleString()+' on '+selectedSchedulePlatform+'.');selectedScheduleComment='';await loadSchedules();}catch(error){feedback.textContent=error.message;feedback.style.color='var(--danger)';addLog('ERR',error.message);}finally{submit.disabled=false;}}
+function renderScheduledItems(items){
+  var list = document.getElementById('scheduled-list');
+  list.innerHTML = '';
+  if(!items || !items.length){
+    list.innerHTML = '<div class="empty">No comments scheduled yet.</div>';
+    return;
+  }
+  items.forEach(function(item){
+    var row = document.createElement('div');
+    row.className = 'scheduled-item';
+    row.style.cssText = 'padding:13px 15px;margin-bottom:12px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid #23374c;display:flex;flex-direction:column;gap:9px;';
+
+    // Top Header: Platform + Status
+    var topRow = document.createElement('div');
+    topRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;';
+
+    var platformBadge = document.createElement('span');
+    platformBadge.style.cssText = 'font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:5px;background:#182e47;color:#7eb3f3;display:inline-flex;align-items:center;gap:5px;';
+    var platName = item.platform === 'twitter' ? '𝕏 Twitter' : (item.platform === 'instagram' ? '📸 Instagram' : '📘 Facebook');
+    platformBadge.textContent = platName;
+
+    var statusBadge = document.createElement('span');
+    statusBadge.style.cssText = 'font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;';
+    var st = (item.status || 'scheduled').toLowerCase();
+    if(st === 'posted'){
+      statusBadge.style.background = 'rgba(35,165,90,0.18)';
+      statusBadge.style.color = '#45db85';
+      statusBadge.style.border = '1px solid rgba(69,219,133,0.3)';
+      statusBadge.textContent = '✅ Posted';
+    } else if(st === 'posted (page feed)'){
+      statusBadge.style.background = 'rgba(23,162,184,0.18)';
+      statusBadge.style.color = '#3dd5f3';
+      statusBadge.style.border = '1px solid rgba(61,213,243,0.3)';
+      statusBadge.textContent = '📢 Posted to Page Feed';
+    } else if(st === 'processing'){
+      statusBadge.style.background = 'rgba(255,193,7,0.18)';
+      statusBadge.style.color = '#ffc107';
+      statusBadge.style.border = '1px solid rgba(255,193,7,0.3)';
+      statusBadge.textContent = '⏳ Posting...';
+    } else if(st === 'failed'){
+      statusBadge.style.background = 'rgba(235,69,89,0.18)';
+      statusBadge.style.color = '#ff6b7d';
+      statusBadge.style.border = '1px solid rgba(255,107,125,0.3)';
+      statusBadge.textContent = '❌ Failed';
+    } else {
+      statusBadge.style.background = 'rgba(59,130,246,0.18)';
+      statusBadge.style.color = '#60a5fa';
+      statusBadge.style.border = '1px solid rgba(96,165,250,0.3)';
+      statusBadge.textContent = '🕒 Scheduled';
+    }
+    topRow.append(platformBadge, statusBadge);
+
+    // Comment Text
+    var comment = document.createElement('div');
+    comment.style.cssText = 'font-size:12.5px;line-height:1.55;color:var(--text,#e1ebf6);background:rgba(0,0,0,0.18);padding:9px 12px;border-radius:6px;word-break:break-word;';
+    comment.textContent = item.comment_text;
+
+    // Meta (scheduled time & post ID)
+    var meta = document.createElement('div');
+    meta.className = 'scheduled-meta';
+    meta.style.cssText = 'font-size:11px;color:var(--muted,#8b9eb5);display:flex;gap:12px;flex-wrap:wrap;align-items:center;';
+    var timeStr = '⏰ Due: ' + new Date(item.scheduled_at).toLocaleString();
+    var postInfo = item.post_id ? ('📌 Target Post: ' + item.post_id) : '';
+    meta.innerHTML = '<span>' + timeStr + '</span>' + (postInfo ? '<span>' + postInfo + '</span>' : '');
+
+    // Error / Note
+    var errBox = null;
+    if(item.error_message){
+      errBox = document.createElement('div');
+      errBox.style.cssText = 'font-size:11px;color:#ff8595;background:rgba(235,69,89,0.12);padding:6px 10px;border-radius:5px;line-height:1.4;';
+      errBox.textContent = 'Notice: ' + item.error_message;
+    }
+
+    // Actions (Post Now + Delete)
+    var actionsRow = document.createElement('div');
+    actionsRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:2px;';
+
+    var postNowBtn = document.createElement('button');
+    postNowBtn.type = 'button';
+    postNowBtn.className = 'qbtn';
+    postNowBtn.style.cssText = 'font-size:11px;padding:5px 12px;border-radius:5px;cursor:pointer;background:#184a78;color:#a8d1ff;border:1px solid #2f69a5;font-weight:600;';
+    postNowBtn.textContent = '⚡ Post Now';
+    postNowBtn.onclick = function(){ triggerScheduleNow(item.id, postNowBtn); };
+
+    var delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'qbtn';
+    delBtn.style.cssText = 'font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer;background:transparent;color:#9cb1c7;border:1px solid #334960;';
+    delBtn.textContent = '🗑️ Delete';
+    delBtn.onclick = function(){ deleteScheduleItem(item.id, delBtn); };
+
+    actionsRow.append(postNowBtn, delBtn);
+
+    row.append(topRow, comment, meta);
+    if(errBox) row.append(errBox);
+    row.append(actionsRow);
+
+    list.appendChild(row);
+  });
+}
+
+async function triggerScheduleNow(scheduleId, btn){
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = 'Posting...';
+  }
+  try {
+    var response = await fetch(API_BASE + '/api/schedules/post-now', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({id: scheduleId})
+    });
+    var data = await response.json();
+    if(!response.ok) throw new Error(data.error || 'Failed to trigger scheduled post.');
+    if(data.success){
+      addLog('OK', 'Scheduled comment #' + scheduleId + ' posted successfully to Facebook!');
+    } else {
+      addLog('WARN', 'Scheduled comment #' + scheduleId + ' attempt: ' + (data.error || 'Check details'));
+    }
+    await loadSchedules();
+  } catch(err){
+    addLog('ERR', 'Post now error: ' + err.message);
+    alert('Failed to post now: ' + err.message);
+  } finally {
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = '⚡ Post Now';
+    }
+  }
+}
+
+async function deleteScheduleItem(scheduleId, btn){
+  if(!confirm('Delete this scheduled item?')) return;
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = '...';
+  }
+  try {
+    var response = await fetch(API_BASE + '/api/schedules/delete', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({id: scheduleId})
+    });
+    var data = await response.json();
+    if(!response.ok) throw new Error(data.error || 'Failed to delete scheduled comment.');
+    addLog('INFO', 'Deleted scheduled comment #' + scheduleId);
+    await loadSchedules();
+  } catch(err){
+    addLog('ERR', 'Delete schedule error: ' + err.message);
+  }
+}
+
+async function loadSchedules(){
+  try {
+    var response = await fetch(API_BASE + '/api/schedules');
+    if(!response.ok) throw new Error('Could not load schedules.');
+    var data = await response.json();
+    renderScheduledItems(data.items || []);
+  } catch(error){
+    document.getElementById('scheduled-list').innerHTML = '<div class="empty">Unable to load schedules. Please refresh and try again.</div>';
+    addLog('ERR', error.message);
+  }
+}
+
+async function saveSchedule(){
+  var date = document.getElementById('schedule-date').value;
+  var time = document.getElementById('schedule-time').value;
+  var feedback = document.getElementById('schedule-feedback');
+  if(!selectedScheduleComment){
+    feedback.textContent = 'Choose “Schedule it” below a generated comment first.';
+    feedback.style.color = 'var(--danger)';
+    return;
+  }
+  if(!date || !time || !selectedSchedulePlatform){
+    feedback.textContent = 'Choose a date, time, and platform.';
+    feedback.style.color = 'var(--danger)';
+    return;
+  }
+  var scheduledAt = new Date(date + 'T' + time);
+  if(Number.isNaN(scheduledAt.getTime())){
+    feedback.textContent = 'Choose a valid date and time.';
+    feedback.style.color = 'var(--danger)';
+    return;
+  }
+  var submit = document.getElementById('schedule-submit');
+  submit.disabled = true;
+  try {
+    var response = await fetch(API_BASE + '/api/schedules', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        comment: selectedScheduleComment,
+        platform: selectedSchedulePlatform,
+        scheduled_at: scheduledAt.getTime(),
+        post_id: selectedSchedulePostId || ''
+      })
+    });
+    var data = await response.json();
+    if(!response.ok) throw new Error(data.error || 'Could not save schedule.');
+    feedback.textContent = 'Scheduled for ' + scheduledAt.toLocaleString() + ' on ' + (selectedSchedulePlatform === 'twitter' ? 'Twitter / X' : selectedSchedulePlatform) + (selectedSchedulePostId ? ' (Post: ' + selectedSchedulePostId + ')' : '') + '.';
+    feedback.style.color = 'var(--success)';
+    addLog('OK', 'Comment scheduled for ' + scheduledAt.toLocaleString() + ' on ' + selectedSchedulePlatform + '.');
+    selectedScheduleComment = '';
+    selectedSchedulePostId = '';
+    await loadSchedules();
+  } catch(error){
+    feedback.textContent = error.message;
+    feedback.style.color = 'var(--danger)';
+    addLog('ERR', error.message);
+  } finally {
+    submit.disabled = false;
+  }
+}
 
 function addMsg(html,who){
   var msgs=document.getElementById('msgs');
@@ -3652,6 +3891,7 @@ function showPanel(p){
   if(p==='queue')renderQueue();
   if(p==='drafts')renderDrafts();
   if(p==='dashboard')updateStats();
+  if(p==='scheduler')loadSchedules();
   if(p==='pricing')loadPricingData();
 }
 
@@ -4296,6 +4536,7 @@ async function fbPostAsPageFeed(message, btn){
 
 function fbScheduleCommentDirect(postId, commentText){
   selectedScheduleComment = commentText;
+  selectedSchedulePostId = postId || '';
   document.getElementById('scheduled-comment-preview').textContent = commentText;
   document.getElementById('schedule-feedback').textContent = 'Scheduling comment for Facebook Post (ID: ' + postId + ')';
   scheduleDateTimeDefaults();
