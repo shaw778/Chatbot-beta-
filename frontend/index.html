@@ -1461,7 +1461,7 @@ body:not(.day-mode) .g-disclaimer {
   <div class="hlogo">◈</div>
   <div class="brand-copy"><div class="htitle">INTSocialMedia BOT</div></div>
   <div class="header-divider"></div>
-  <div class="header-context">AI workspace <span class="header-version" id="provider-mode-tag">LOCAL</span></div>
+  <div class="header-context">AI workspace <span class="header-version" id="provider-mode-tag">CLOUD</span></div>
   <div class="hstatus">
     <div id="header-user-badge" style="display:none;align-items:center;gap:7px;padding:3px 9px;border-radius:6px;background:var(--surface);border:1px solid var(--border);font-size:11px">
       <span style="width:7px;height:7px;border-radius:50%;background:#57d4b1"></span>
@@ -1515,7 +1515,7 @@ body:not(.day-mode) .g-disclaimer {
   <div class="stat-item"><span style="color:var(--muted)">Time saved</span><span class="stat-v" id="ss-time">0m</span></div>
   <div class="sb-div"></div>
   <div class="sb-section">Models Active</div>
-  <div class="model-tag"><div class="mdot" style="background:#534AB7"></div>Ollama / Claude / ChatGPT</div>
+  <div class="model-tag"><div class="mdot" style="background:#534AB7"></div>Ollama(local) / Cloud</div>
   <div class="model-tag"><div class="mdot" style="background:#1D9E75"></div>BERT Sentiment</div>
   <div class="model-tag"><div class="mdot" style="background:#1D9E75"></div>BERT Toxicity</div>
   <div class="model-tag"><div class="mdot" style="background:#BA7517"></div>XGBoost Engage</div>
@@ -1542,7 +1542,7 @@ body:not(.day-mode) .g-disclaimer {
 
   <div class="workspace-topline">
     <div><div class="view-eyebrow">SOCIAL CONTENT WORKSPACE</div><h1 id="view-title">Comment generation</h1></div>
-    <div class="topline-meta"><span class="provider-indicator"><span class="provider-indicator-dot"></span><span id="active-provider-label">Ollama · Local</span></span><button class="top-new-btn" type="button" onclick="startNewChat()" aria-label="Start new analysis">＋ <span>New analysis</span></button></div>
+    <div class="topline-meta"><span class="provider-indicator"><span class="provider-indicator-dot"></span><span id="active-provider-label">Cloud</span></span><button class="top-new-btn" type="button" onclick="startNewChat()" aria-label="Start new analysis">＋ <span>New analysis</span></button></div>
   </div>
 
   <div class="content">
@@ -1553,10 +1553,8 @@ body:not(.day-mode) .g-disclaimer {
       <div class="ibar">
         <textarea id="inp" placeholder="Paste a post or Facebook post link here..." onkeydown="handleKey(event)"></textarea>
         <select id="provider-select" class="provider-select" onchange="setProvider(this.value)">
-          <option value="gemini">Google Gemini (Free Cloud)</option>
-          <option value="openai">ChatGPT</option>
-          <option value="anthropic">Claude</option>
-          <option value="ollama">Ollama (local)</option>
+          <option value="gemini" selected>Cloud</option>
+          <option value="ollama">Ollama(local)</option>
         </select>
         <select id="lang-select" class="provider-select" style="min-width:105px" title="Comment &amp; Analysis Language">
           <option value="auto">🌐 Auto-Detect</option>
@@ -1580,7 +1578,7 @@ body:not(.day-mode) .g-disclaimer {
           <div class="image-fields">
             <label>Platform<select id="image-platform"><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="twitter">X / Twitter</option></select></label>
             <label>Tone<select id="image-tone"><option value="friendly">Friendly</option><option value="professional">Professional</option><option value="enthusiastic">Enthusiastic</option></select></label>
-            <label>Vision provider<select id="image-provider"><option value="gemini" selected>Google Gemini 2.5 (Fast &amp; Free)</option><option value="openai">OpenAI Vision (GPT-4o/5.6)</option><option value="anthropic">Anthropic Vision (Claude 3.5)</option><option value="local">Smart Vision Engine (On-device)</option></select></label>
+            <label>Vision provider<select id="image-provider"><option value="gemini" selected>Cloud</option><option value="local">Ollama(local)</option></select></label>
           </div>
           <div style="margin-bottom:12px">
             <label style="font-size:12px;font-weight:600;color:var(--text);display:block;margin-bottom:4px">Image context or subject hint <span style="font-weight:400;color:var(--muted)">(optional)</span>
@@ -1649,9 +1647,8 @@ body:not(.day-mode) .g-disclaimer {
           <button class="image-submit" id="fb-fetch-btn" onclick="fbFetchPost()" style="margin:0;white-space:nowrap">Fetch Post</button>
           <button class="image-submit" onclick="fbLoadFeed()" style="margin:0;white-space:nowrap;background:var(--accent)">🔄 Load Feed</button>
           <select id="fb-provider" style="border:1px solid var(--border);border-radius:7px;padding:8px 10px;font:inherit;font-size:12px">
-            <option value="gemini">Google Gemini (Free)</option>
-            <option value="openai">ChatGPT</option>
-            <option value="anthropic">Claude</option>
+            <option value="gemini" selected>Cloud</option>
+            <option value="ollama">Ollama(local)</option>
           </select>
           <select id="fb-lang" style="border:1px solid var(--border);border-radius:7px;padding:8px 10px;font:inherit;font-size:12px;background:var(--surface);color:var(--text)">
             <option value="auto">🌐 Auto Language</option>
@@ -2068,7 +2065,7 @@ var convId = null;
 var apiCallCount = 0;
 var apiCallLimit = 100;
 var API_BASE = window.location.origin;
-var aiProvider = 'anthropic';
+var aiProvider = 'gemini';
 
 var stats = {analyzed:0,generated:0,approved:0,blocked:0,timeSaved:0,
   generationSeconds:0,sentPos:0,sentNeg:0,sentNeu:0,flagged:0,schedPreds:[]};
@@ -2097,7 +2094,7 @@ var samples = {
 };
 
 var banners = {
-  comment:"💬 <b>Comment Generation</b> — Features 15-21: Claude / ChatGPT generates ranked, context-aware comments",
+  comment:"💬 <b>Comment Generation</b> — Features 15-21: AI-generated ranked, context-aware comments",
   sentiment:"😊 <b>Sentiment Analysis</b> — Features 8-14: VADER + BERT + AI-driven sarcasm detection",
   toxicity:"🛡️ <b>Toxicity Detection</b> — Features 22-26: BERT + keyword filter + AI explanation + manual review queue",
   schedule:"📅 <b>Scheduling</b> — Features 27-32: XGBoost engagement + Random Forest timing + AI strategy",
@@ -2315,23 +2312,18 @@ async function syncBackendStatus(){
     var data=await res.json();
     var el=document.getElementById('api-status');
     if(el){
-      if(aiProvider==='ollama') el.textContent='Python + Ollama + SQLite';
-      else if(data.gemini_key_configured) el.textContent='Python + Google Gemini + SQLite';
-      else if(data.openai_key_configured&&data.anthropic_key_configured) el.textContent='Python + Claude + ChatGPT + SQLite';
-      else if(data.openai_key_configured) el.textContent='Python + ChatGPT + SQLite';
-      else if(data.anthropic_key_configured) el.textContent='Python + Claude + SQLite';
-      else el.textContent='Python + SQLite fallback';
+      if(aiProvider==='ollama') el.textContent='Python + Ollama(local) + SQLite';
+      else el.textContent='Python + Cloud + SQLite';
     }
     var chosen = 'gemini';
-    if(data.gemini_key_configured) chosen = 'gemini';
-    else if(data.anthropic_key_configured) chosen = 'anthropic';
-    else if(data.openai_key_configured) chosen = 'openai';
 
     setProvider(chosen);
     var psel = document.getElementById('provider-select');
     if(psel) psel.value = chosen;
     var fbPsel = document.getElementById('fb-provider');
     if(fbPsel) fbPsel.value = chosen;
+    var imgPsel = document.getElementById('image-provider');
+    if(imgPsel) imgPsel.value = chosen;
     addLog('OK','Backend connected. Database: '+data.database);
     var cs=document.getElementById('connect-state');
     if(cs){
@@ -2356,16 +2348,20 @@ async function syncBackendStatus(){
 }
 
 function setProvider(value){
-  if(value!=='ollama'&&value!=='anthropic'&&value!=='openai'&&value!=='gemini') return;
-  aiProvider = value;
-  var providerName={gemini:'Google Gemini (Free)',ollama:'Ollama (local)',openai:'ChatGPT',anthropic:'Claude'}[value];
+  if(value!=='ollama'&&value!=='gemini'&&value!=='local') return;
+  aiProvider = (value === 'local' ? 'ollama' : value);
+  var providerName = (aiProvider === 'gemini' ? 'Cloud' : 'Ollama(local)');
   addLog('OK','AI provider set to '+providerName);
   var activeProvider=document.getElementById('active-provider-label');
-  if(activeProvider)activeProvider.textContent={gemini:'Google Gemini · Free',ollama:'Ollama · Local',openai:'ChatGPT',anthropic:'Claude'}[value];
+  if(activeProvider) activeProvider.textContent = providerName;
   var modeTag=document.getElementById('provider-mode-tag');
-  if(modeTag)modeTag.textContent=value==='ollama'?'LOCAL':'CLOUD';
+  if(modeTag) modeTag.textContent = (aiProvider === 'gemini' ? 'CLOUD' : 'LOCAL');
   var apiStatus=document.getElementById('api-status');
-  if(apiStatus)apiStatus.textContent='Python + '+providerName+' + SQLite';
+  if(apiStatus) apiStatus.textContent = 'Python + ' + providerName + ' + SQLite';
+  var psel = document.getElementById('provider-select');
+  if(psel && psel.value !== aiProvider) psel.value = aiProvider;
+  var fbPsel = document.getElementById('fb-provider');
+  if(fbPsel && fbPsel.value !== aiProvider) fbPsel.value = aiProvider;
 }
 
 async function postModel(endpoint,payload){
@@ -3619,9 +3615,9 @@ function setMode(m){
   });
   document.getElementById('inp').placeholder={
     comment:'Paste a social media post or Facebook post link to generate ranked comments...',
-    sentiment:'Enter text to analyze with VADER + BERT + Claude (sarcasm detection included)...',
+    sentiment:'Enter text to analyze with VADER + BERT + Cloud (sarcasm detection included)...',
     toxicity:'Enter text to check toxicity — BERT + keyword filter + AI explanation...',
-    schedule:'Paste a post to predict engagement (XGBoost) and best posting time (RF + Claude)...',
+    schedule:'Paste a post to predict engagement (XGBoost) and best posting time (RF + Cloud)...',
     qa:'Ask anything about the thesis: BERT, XGBoost, datasets, model accuracy, features...'
   }[m];
   var rp=document.getElementById('rpanel');
