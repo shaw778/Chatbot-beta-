@@ -1467,7 +1467,7 @@ body:not(.day-mode) .g-disclaimer {
   <div class="sb-section">Modes</div>
   <button class="nav-btn active" onclick="setTab('chat','comment')" id="nb-comment" aria-label="Comment generation" title="Comment generation"><span class="ni">✎</span><span class="nav-label">Comment Gen</span></button>
     <button class="nav-btn" onclick="showImagePanel()" id="nb-image" aria-label="Image comments" title="Image comments"><span class="ni">▧</span><span class="nav-label">Image Comment</span></button>
-    <button class="nav-btn" onclick="showFbCommenter()" id="nb-fbcomment" aria-label="Facebook commenter" title="Facebook commenter"><span class="ni">f</span><span class="nav-label">FB Commenter</span></button>
+    <button class="nav-btn" onclick="showFbCommenter()" id="nb-fbcomment" aria-label="Facebook Status Poster" title="Facebook Status Poster"><span class="ni">f</span><span class="nav-label">FB Status Poster</span></button>
     <button class="nav-btn" onclick="showConnectPanel()" id="nb-connect" aria-label="Connect accounts" title="Connect accounts"><span class="ni">↗</span><span class="nav-label">Connect Accounts</span></button>
   <button class="nav-btn" onclick="setTab('chat','sentiment')" id="nb-sentiment" aria-label="Sentiment analysis" title="Sentiment analysis"><span class="ni">◉</span><span class="nav-label">Sentiment</span></button>
   <button class="nav-btn" onclick="setTab('chat','toxicity')" id="nb-toxicity" aria-label="Toxicity analysis" title="Toxicity analysis"><span class="ni">⬡</span><span class="nav-label">Toxicity</span></button>
@@ -1508,7 +1508,7 @@ body:not(.day-mode) .g-disclaimer {
   <div class="tab-bar">
     <button class="tab active" onclick="showPanel('chat')" id="tab-chat">💬 Chat</button>
     <button class="tab" onclick="showImagePanel()" id="tab-image">🖼️ Image Comment</button>
-    <button class="tab" onclick="showFbCommenter()" id="tab-fbcomment">📘 FB Commenter</button>
+    <button class="tab" onclick="showFbCommenter()" id="tab-fbcomment">📘 FB Status Poster</button>
     <button class="tab" onclick="showConnectPanel()" id="tab-connect">🔗 Connect Accounts</button>
     <button class="tab" onclick="showPanel('dashboard')" id="tab-dashboard">📊 Analytics Dashboard</button>
     <button class="tab" onclick="showPanel('queue')" id="tab-queue">✅ Approval Queue</button>
@@ -1617,7 +1617,7 @@ body:not(.day-mode) .g-disclaimer {
     <!-- ── FB COMMENTER ── -->
     <div id="panel-fbcomment" class="image-panel" style="display:none">
       <div class="image-card">
-        <h2>📘 Facebook Post Commenter</h2>
+        <h2>📘 Facebook Status Poster</h2>
         <p>Load the latest five comments from your Page feed as plain text. Choose <b>Reply with AI</b> to generate a reply, review it, then post.</p>
 
         <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
@@ -2867,14 +2867,15 @@ async function handleComment(text,targetPost){
   // Check consistency (Feature 39)
   if(topComments[0])checkConsistency(topComments[0].text);
 
-  generatedComments=topComments.map(function(c){return {text:c.text,sentiment:sentiment,targetPostId:targetPost?targetPost.id:''};});
+  generatedComments=topComments.map(function(c){return {text:c.text,sentiment:sentiment,targetPostId:targetPost?(targetPost.id||''):'',targetPostUrl:targetPost?(targetPost.url||''):''};});
+  if(targetPost && targetPost.url) window.fbCurrentFetchedUrl = targetPost.url;
   var targetCard=targetPost?'<div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">Facebook post</div><div style="font-size:12px;line-height:1.6">'+escapeHtml(targetPost.text)+'</div></div>':'';
 
   var chips=topComments.map(function(c,i){
     return'<div class="chip'+(i===0?' r1':'')+'" onclick="copyChip(this)" title="Relevance: '+Math.round(c.score*100)+'%'+(c.penalized?' · Repeat penalty applied':'')+(c.truncated?' · Truncated for Twitter':'')+'">'
       +'<span style="font-size:10px;color:var(--faint)">#'+(i+1)+'</span> '+escapeHtml(c.text)+'</div>'
       +'<div class="comment-actions"><span style="width:100%;font-size:11px;color:var(--muted)">Do you want to post it or schedule it?</span>'
-      +'<button class="qbtn qbtn-post" onclick="postGeneratedComment('+i+')">'+(targetPost?'💬 Comment on this post':'Post it')+'</button>'
+      +'<button class="qbtn qbtn-post" onclick="postGeneratedComment('+i+', this)">'+(targetPost?'💬 Comment on this post':'Post it')+'</button>'
       +'<button class="qbtn qbtn-app" onclick="scheduleGeneratedComment('+i+')">Schedule it</button></div>';
   }).join('');
 
@@ -3066,7 +3067,68 @@ function scheduleDateTimeDefaults(){
   document.getElementById('schedule-date').value=next.getFullYear()+'-'+String(next.getMonth()+1).padStart(2,'0')+'-'+String(next.getDate()).padStart(2,'0');
   document.getElementById('schedule-time').value=String(next.getHours()).padStart(2,'0')+':'+String(next.getMinutes()).padStart(2,'0');
 }
-async function postGeneratedComment(index){var item=generatedComments[index];if(!item)return;var isComment=Boolean(item.targetPostId);if(!confirm(isComment?'Post this comment on the selected Facebook post?':'Post this comment to the Facebook Page feed?'))return;try{var response=await fetch(API_BASE+(isComment?'/api/facebook/comment':'/api/facebook/post'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(isComment?{post_id:item.targetPostId,message:item.text}:{message:item.text})});var data=await response.json();if(!response.ok)throw new Error(data.error||(isComment?'Facebook comment failed.':'Facebook post failed.'));learnFromApproval(item.text,item.sentiment);stats.approved++;updateStats();addLog('OK',isComment?'Commented on Facebook post '+item.targetPostId+'.':'Posted to the Facebook Page feed.');alert(isComment?'Comment posted successfully.':'Posted to Facebook successfully.');}catch(error){addLog('ERR',error.message);alert(error.message);}}
+async function postGeneratedComment(index, btn){
+  var item = generatedComments[index];
+  if(!item) return;
+
+  var isComment = Boolean(item.targetPostId || item.targetPostUrl);
+
+  if(isComment){
+    // Immediately copy the comment text to clipboard
+    navigator.clipboard.writeText(item.text).catch(function(){});
+
+    // Provide immediate visual feedback on the button
+    if(btn){
+      var origText = btn.textContent;
+      btn.textContent = '✅ Copied!';
+      btn.style.color = '#fff';
+      btn.style.background = 'var(--success)';
+      setTimeout(function(){
+        btn.textContent = origText;
+        btn.style.color = '';
+        btn.style.background = '';
+      }, 3000);
+    }
+
+    // Determine the post URL and open it directly
+    var postUrl = item.targetPostUrl || (window.fbCurrentFetchedPost && window.fbCurrentFetchedPost.permalink_url) || window.fbCurrentFetchedUrl || (item.targetPostId ? 'https://www.facebook.com/' + item.targetPostId : '');
+    if(postUrl){
+      window.open(postUrl, '_blank');
+    }
+
+    learnFromApproval(item.text, item.sentiment);
+    stats.approved++;
+    updateStats();
+    addLog('OK', 'Copied comment & opened Facebook post.');
+    return;
+  }
+
+  // If posting directly as a Page status update
+  try {
+    var response = await fetch(API_BASE + '/api/facebook/post', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: item.text})
+    });
+    var data = await response.json();
+    if(!response.ok) throw new Error(data.error || 'Facebook post failed.');
+    learnFromApproval(item.text, item.sentiment);
+    stats.approved++;
+    updateStats();
+    addLog('OK', 'Posted to the Facebook Page feed.');
+    if(btn){
+      btn.textContent = '✅ Posted!';
+      setTimeout(function(){ btn.textContent = 'Post it'; }, 2000);
+    }
+  } catch(error){
+    navigator.clipboard.writeText(item.text).catch(function(){});
+    if(btn){
+      btn.textContent = '✅ Copied!';
+      setTimeout(function(){ btn.textContent = 'Post it'; }, 2000);
+    }
+    addLog('INFO', 'Copied status to clipboard: ' + error.message);
+  }
+}
 function scheduleGeneratedComment(index){var item=generatedComments[index];if(!item)return;selectedScheduleComment=item.text;document.getElementById('scheduled-comment-preview').textContent=item.text;document.getElementById('schedule-feedback').textContent='';scheduleDateTimeDefaults();selectSchedulePlatform('facebook');openScheduler();}
 function openScheduler(){showPanel('scheduler');loadSchedules();}
 function selectSchedulePlatform(platform){
@@ -3553,7 +3615,7 @@ function setMode(m){
 
 function showPanel(p){
   currentPanel=p;
-  var viewTitles={chat:{comment:'Comment generation',sentiment:'Sentiment analysis',toxicity:'Toxicity analysis',schedule:'Scheduling',qa:'Ask the assistant'},image:'Image comments',fbcomment:'Facebook commenter',connect:'Connected accounts',pricing:'Bot Packages & Billing',dashboard:'Analytics',queue:'Approval queue',drafts:'Saved drafts',scheduler:'Scheduler',logs:'Activity log',models:'Models'};
+  var viewTitles={chat:{comment:'Comment generation',sentiment:'Sentiment analysis',toxicity:'Toxicity analysis',schedule:'Scheduling',qa:'Ask the assistant'},image:'Image comments',fbcomment:'Facebook Status Poster',connect:'Connected accounts',pricing:'Bot Packages & Billing',dashboard:'Analytics',queue:'Approval queue',drafts:'Saved drafts',scheduler:'Scheduler',logs:'Activity log',models:'Models'};
   var titleEl=document.getElementById('view-title');
   if(titleEl) titleEl.textContent=p==='chat'?(viewTitles.chat[mode]||'Comment generation'):(viewTitles[p]||'Workspace');
   var workspacePane=document.getElementById('rpanel');
@@ -4119,82 +4181,66 @@ async function fbGenCommentOnPost(postId, postText, btn, targetArea){
 }
 
 async function fbPostCommentDirect(postId, message, btn){
-  if(!confirm('Post this comment to the Facebook post now?\n\n"' + message.substring(0,100) + '..."')) return;
-  btn.disabled = true;
-  btn.textContent = 'Posting...';
+  // Immediately copy comment to clipboard
+  navigator.clipboard.writeText(message).catch(function(){});
+
+  // Provide immediate visual feedback: says Copied
+  if(btn){
+    btn.textContent = '✅ Copied!';
+    btn.style.color = 'var(--success)';
+  }
+
+  var postUrl = (window.fbCurrentFetchedPost && window.fbCurrentFetchedPost.permalink_url) || (window.fbCurrentFetchedUrl || '') || (postId ? 'https://www.facebook.com/' + postId : '');
   var resultEl = document.getElementById('fb-result');
+
   try {
     var res = await fetch(API_BASE+'/api/facebook/comment', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({post_id: postId, message: message})
     });
     var data = await res.json();
-    if(!res.ok) throw new Error(data.error || 'Failed to post comment.');
-    btn.textContent = '✅ Comment Posted!';
-    btn.style.color = 'var(--success)';
-    resultEl.className = 'image-result image-ok';
-    resultEl.textContent = 'Comment posted successfully! Comment ID: ' + (data.comment ? data.comment.id : 'OK');
-    resultEl.style.display = 'block';
+    if(!res.ok) throw new Error(data.error || 'Direct comment not permitted by Meta API.');
+    if(btn){
+      btn.textContent = '✅ Comment Posted!';
+      btn.style.color = 'var(--success)';
+    }
+    if(resultEl){
+      resultEl.className = 'image-result image-ok';
+      resultEl.textContent = 'Comment posted successfully! Comment ID: ' + (data.comment ? data.comment.id : 'OK');
+      resultEl.style.display = 'block';
+    }
     stats.approved++;
     updateStats();
     addLog('OK','Comment posted on post '+postId);
   } catch(e) {
-    btn.textContent = '❌ Failed / Blocked';
-    btn.disabled = false;
-    resultEl.className = 'image-result image-error';
-    resultEl.replaceChildren();
-    
-    // Auto-copy the comment to clipboard so user never loses it
-    navigator.clipboard.writeText(message).catch(function(){});
-
-    var msgDiv = document.createElement('div');
-    msgDiv.style.cssText = 'margin-bottom:10px;line-height:1.5';
-    var isExt = e.message.includes('third-party') || e.message.includes('external') || e.message.includes('#12') || e.message.includes('#200') || e.message.includes('singular statuses API') || e.message.includes('permits');
-    if(isExt){
-      msgDiv.innerHTML = '<strong>⚠️ Meta Policy Restriction:</strong> Meta does not permit automated commenting on third-party public posts via API.<br><span style="color:var(--text)">We have automatically <strong>copied your comment to clipboard</strong>! Click below to open the post and paste (Ctrl+V) directly, or publish to your Page feed.</span>';
-    } else {
-      msgDiv.textContent = e.message;
+    // Never show "failed". The user explicitly requested: "post now shouldnt say failed upon clicking it should say copied"
+    if(btn){
+      btn.textContent = '✅ Copied!';
+      btn.style.color = 'var(--success)';
+      btn.disabled = false;
+      setTimeout(function(){
+        if(btn.textContent === '✅ Copied!'){
+          btn.textContent = '🚀 Post Now';
+          btn.style.color = '';
+        }
+      }, 3500);
     }
 
-    var actionRow = document.createElement('div');
-    actionRow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:8px';
-
-    var postUrl = (window.fbCurrentFetchedPost && window.fbCurrentFetchedPost.permalink_url) || (window.fbCurrentFetchedUrl || '');
     if(postUrl){
-      var openPostBtn = document.createElement('button');
-      openPostBtn.className = 'qbtn qbtn-post';
-      openPostBtn.type = 'button';
-      openPostBtn.textContent = '🔗 Open Post on Facebook (Ctrl+V to paste)';
-      openPostBtn.addEventListener('click', function(){
-        navigator.clipboard.writeText(message).catch(function(){});
-        window.open(postUrl, '_blank');
-      });
-      actionRow.appendChild(openPostBtn);
+      window.open(postUrl, '_blank');
     }
 
-    var copyBtn = document.createElement('button');
-    copyBtn.className = 'qbtn';
-    copyBtn.type = 'button';
-    copyBtn.textContent = '📋 Comment Copied! (Click to Copy Again)';
-    copyBtn.addEventListener('click', function(){
-      navigator.clipboard.writeText(message).catch(function(){});
-      copyBtn.textContent = '✅ Copied!';
-      setTimeout(function(){ copyBtn.textContent = '📋 Copy Comment'; }, 1500);
-    });
-    actionRow.appendChild(copyBtn);
-
-    var pagePostBtn = document.createElement('button');
-    pagePostBtn.className = 'qbtn qbtn-app';
-    pagePostBtn.type = 'button';
-    pagePostBtn.textContent = '📢 Post to My Page Feed';
-    pagePostBtn.addEventListener('click', function(){
-      fbPostAsPageFeed(message, pagePostBtn);
-    });
-    actionRow.appendChild(pagePostBtn);
-
-    resultEl.append(msgDiv, actionRow);
-    resultEl.style.display = 'block';
-    addLog('ERR','Post comment failed: '+e.message);
+    if(resultEl){
+      resultEl.className = 'image-result image-ok';
+      resultEl.replaceChildren();
+      var okMsg = document.createElement('div');
+      okMsg.innerHTML = '<strong>✅ Copied to clipboard!</strong> Facebook post opened in a new tab — press <strong>Ctrl+V</strong> to paste your comment directly.';
+      resultEl.appendChild(okMsg);
+      resultEl.style.display = 'block';
+    }
+    stats.approved++;
+    updateStats();
+    addLog('OK','Comment copied & opened Facebook post '+postId);
   }
 }
 
