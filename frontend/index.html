@@ -269,6 +269,21 @@ header:after,.hlogo{display:none}
 .nav-btn.active{background:#1b66bc;color:#fff;box-shadow:none;font-weight:600}
 .nav-btn.active:before{content:"";position:absolute;left:-9px;width:3px;height:22px;border-radius:0 3px 3px 0;background:#76c8ff}
 .nb{position:absolute;top:2px;right:1px;min-width:15px;height:15px;padding:0 4px;border-radius:8px;font-size:9px;border:1px solid #0b1727}
+
+/* ── Liquid Glass Hover Tooltip Bar for Sidebar Logos ── */
+.sidebar-glass-tip{position:fixed;z-index:999999;pointer-events:none;opacity:0;visibility:hidden;transform:translateY(-50%) translateX(-8px) scale(.94);transform-origin:left center;transition:opacity .18s cubic-bezier(.16,1,.3,1),transform .18s cubic-bezier(.16,1,.3,1),visibility .18s cubic-bezier(.16,1,.3,1);filter:drop-shadow(0 10px 24px rgba(0,0,0,.55))}
+.sidebar-glass-tip.visible{opacity:1;visibility:visible;transform:translateY(-50%) translateX(0) scale(1)}
+.sidebar-glass-tip .sgt-inner{position:relative;display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:9px;background:linear-gradient(135deg,rgba(16,32,54,.78) 0%,rgba(9,20,36,.88) 100%);backdrop-filter:blur(18px) saturate(190%);-webkit-backdrop-filter:blur(18px) saturate(190%);border:1px solid rgba(120,185,255,.35);box-shadow:inset 0 1px 1px 0 rgba(255,255,255,.35),inset 0 -1px 1px 0 rgba(0,0,0,.3),0 0 16px rgba(84,168,255,.18);white-space:nowrap;overflow:hidden}
+.sidebar-glass-tip .sgt-inner::before{content:"";position:absolute;top:0;left:6px;right:6px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);pointer-events:none}
+.sidebar-glass-tip .sgt-arrow{position:absolute;left:-5px;top:50%;width:10px;height:10px;background:rgba(13,26,44,.85);border-left:1px solid rgba(120,185,255,.35);border-bottom:1px solid rgba(120,185,255,.35);transform:translateY(-50%) rotate(45deg);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);z-index:1}
+.sidebar-glass-tip .sgt-text{font-size:12px;font-weight:600;color:#f1f7ff;letter-spacing:.3px;text-shadow:0 1px 3px rgba(0,0,0,.7);position:relative;z-index:2;user-select:none}
+.sidebar-glass-tip .sgt-badge{font-size:9.5px;font-weight:700;padding:1.5px 6.5px;border-radius:6px;background:rgba(84,168,255,.22);color:#8ed0ff;border:1px solid rgba(126,192,255,.35);position:relative;z-index:2;letter-spacing:.2px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+@media (max-width:680px){
+  .sidebar-glass-tip{transform:translateX(-50%) translateY(-6px) scale(.94);transform-origin:center top}
+  .sidebar-glass-tip.visible{transform:translateX(-50%) translateY(0) scale(1)}
+  .sidebar-glass-tip .sgt-arrow{left:50%;top:-5px;border-left:1px solid rgba(120,185,255,.35);border-bottom:none;border-top:1px solid rgba(120,185,255,.35);transform:translateX(-50%) rotate(45deg)}
+}
+
 .main{order:2;min-width:0;background:#0d1929;border:1px solid #21354b;border-left:0;border-radius:0 9px 9px 0}
 .tab-bar{display:none}
 .workspace-topline{height:70px;min-height:70px;padding:0 26px;border-bottom:1px solid #1e3044;background:#0d1929;display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -1462,26 +1477,35 @@ body:not(.day-mode) .g-disclaimer {
 
 <div class="wrap">
 
+<!-- Liquid Glass Floating Tooltip Bar for Sidebar Logos -->
+<div id="sidebar-glass-tip" class="sidebar-glass-tip" role="tooltip" aria-hidden="true">
+  <div class="sgt-arrow"></div>
+  <div class="sgt-inner">
+    <span class="sgt-text" id="sgt-text"></span>
+    <span class="sgt-badge" id="sgt-badge" style="display:none"></span>
+  </div>
+</div>
+
 <!-- ── Sidebar ── -->
 <div class="sidebar">
   <div class="sb-section">Modes</div>
-  <button class="nav-btn active" onclick="setTab('chat','comment')" id="nb-comment" aria-label="Comment generation" title="Comment generation"><span class="ni">✎</span><span class="nav-label">Comment Gen</span></button>
-    <button class="nav-btn" onclick="showImagePanel()" id="nb-image" aria-label="Image comments" title="Image comments"><span class="ni">▧</span><span class="nav-label">Image Comment</span></button>
-    <button class="nav-btn" onclick="showFbCommenter()" id="nb-fbcomment" aria-label="Facebook Status Poster" title="Facebook Status Poster"><span class="ni">f</span><span class="nav-label">FB Status Poster</span></button>
-    <button class="nav-btn" onclick="showConnectPanel()" id="nb-connect" aria-label="Connect accounts" title="Connect accounts"><span class="ni">↗</span><span class="nav-label">Connect Accounts</span></button>
-  <button class="nav-btn" onclick="setTab('chat','sentiment')" id="nb-sentiment" aria-label="Sentiment analysis" title="Sentiment analysis"><span class="ni">◉</span><span class="nav-label">Sentiment</span></button>
-  <button class="nav-btn" onclick="setTab('chat','toxicity')" id="nb-toxicity" aria-label="Toxicity analysis" title="Toxicity analysis"><span class="ni">⬡</span><span class="nav-label">Toxicity</span></button>
-  <button class="nav-btn" onclick="openScheduler()" id="nb-schedule" aria-label="Scheduler" title="Scheduler"><span class="ni">▦</span><span class="nav-label">Scheduler</span></button>
-  <button class="nav-btn" onclick="setTab('chat','qa')" id="nb-qa" aria-label="Ask the assistant" title="Ask the assistant"><span class="ni">?</span><span class="nav-label">Q&amp;A</span></button>
+  <button class="nav-btn active" onclick="setTab('chat','comment')" id="nb-comment" aria-label="Comment generation" data-tooltip="Comment Generation"><span class="ni">✎</span><span class="nav-label">Comment Gen</span></button>
+  <button class="nav-btn" onclick="showImagePanel()" id="nb-image" aria-label="Image comments" data-tooltip="Image Comments"><span class="ni">▧</span><span class="nav-label">Image Comment</span></button>
+  <button class="nav-btn" onclick="showFbCommenter()" id="nb-fbcomment" aria-label="Facebook Status Poster" data-tooltip="FB Status Poster"><span class="ni">f</span><span class="nav-label">FB Status Poster</span></button>
+  <button class="nav-btn" onclick="showConnectPanel()" id="nb-connect" aria-label="Connect accounts" data-tooltip="Connect Accounts"><span class="ni">↗</span><span class="nav-label">Connect Accounts</span></button>
+  <button class="nav-btn" onclick="setTab('chat','sentiment')" id="nb-sentiment" aria-label="Sentiment analysis" data-tooltip="Sentiment Analysis"><span class="ni">◉</span><span class="nav-label">Sentiment</span></button>
+  <button class="nav-btn" onclick="setTab('chat','toxicity')" id="nb-toxicity" aria-label="Toxicity analysis" data-tooltip="Toxicity Analysis"><span class="ni">⬡</span><span class="nav-label">Toxicity</span></button>
+  <button class="nav-btn" onclick="openScheduler()" id="nb-schedule" aria-label="Scheduler" data-tooltip="Post Scheduler"><span class="ni">▦</span><span class="nav-label">Scheduler</span></button>
+  <button class="nav-btn" onclick="setTab('chat','qa')" id="nb-qa" aria-label="Ask the assistant" data-tooltip="Ask the Assistant (Q&amp;A)"><span class="ni">?</span><span class="nav-label">Q&amp;A</span></button>
   <div class="sb-div"></div>
   <div class="sb-section">Workspace</div>
-  <button class="nav-btn" onclick="setTab('dashboard')" id="nb-dashboard" aria-label="Analytics" title="Analytics"><span class="ni">▥</span><span class="nav-label">Analytics</span></button>
-  <button class="nav-btn" onclick="setTab('queue')" id="nb-queue" aria-label="Approvals" title="Approvals"><span class="ni">✓</span><span class="nav-label">Approvals</span><span class="nb" id="queue-badge">0</span></button>
-  <button class="nav-btn" onclick="setTab('drafts')" id="nb-drafts" aria-label="Drafts" title="Drafts"><span class="ni">▤</span><span class="nav-label">Drafts</span><span class="nb" id="drafts-badge" style="background:var(--warn)">0</span></button>
-  <button class="nav-btn" onclick="setTab('logs')" id="nb-logs" aria-label="Error logs" title="Error logs"><span class="ni">≡</span><span class="nav-label">Error Logs</span></button>
-    <div class="sb-div"></div>
+  <button class="nav-btn" onclick="setTab('dashboard')" id="nb-dashboard" aria-label="Analytics" data-tooltip="Analytics Dashboard"><span class="ni">▥</span><span class="nav-label">Analytics</span></button>
+  <button class="nav-btn" onclick="setTab('queue')" id="nb-queue" aria-label="Approvals" data-tooltip="Approval Queue"><span class="ni">✓</span><span class="nav-label">Approvals</span><span class="nb" id="queue-badge">0</span></button>
+  <button class="nav-btn" onclick="setTab('drafts')" id="nb-drafts" aria-label="Drafts" data-tooltip="Saved Drafts"><span class="ni">▤</span><span class="nav-label">Drafts</span><span class="nb" id="drafts-badge" style="background:var(--warn)">0</span></button>
+  <button class="nav-btn" onclick="setTab('logs')" id="nb-logs" aria-label="Error logs" data-tooltip="Error Logs"><span class="ni">≡</span><span class="nav-label">Error Logs</span></button>
+  <div class="sb-div"></div>
   <div class="sb-section">Billing &amp; Plans</div>
-  <button class="nav-btn" onclick="showPanel('pricing')" id="nb-pricing" aria-label="Bot Packages" title="Bot Packages &amp; Pricing"><span class="ni">⚡</span><span class="nav-label">Bot Packages</span><span class="nb" style="background:var(--primary);font-size:9px">PRO</span></button>
+  <button class="nav-btn" onclick="showPanel('pricing')" id="nb-pricing" aria-label="Bot Packages" data-tooltip="Bot Packages &amp; Pricing"><span class="ni">⚡</span><span class="nav-label">Bot Packages</span><span class="nb" style="background:var(--primary);font-size:9px">PRO</span></button>
   <div class="sb-div"></div>
   <div class="sb-section">Session Stats</div>
   <div class="stat-item"><span style="color:var(--muted)">Analyzed</span><span class="stat-v" id="ss-analyzed">0</span></div>
@@ -1498,7 +1522,7 @@ body:not(.day-mode) .g-disclaimer {
   <div class="model-tag"><div class="mdot" style="background:#E24B4A"></div>Random Forest</div>
   <div class="model-tag"><div class="mdot" style="background:#888"></div>VADER Fast</div>
   <div class="model-tag"><div class="mdot" style="background:#888"></div>Sent-Transformer</div>
-  <button class="nav-btn nav-btn-model" onclick="showPanel('models')" id="nb-models" aria-label="Models" title="Models"><span class="ni">▦</span><span class="nav-label">Models</span></button>
+  <button class="nav-btn nav-btn-model" onclick="showPanel('models')" id="nb-models" aria-label="Models" data-tooltip="AI Models &amp; Status"><span class="ni">▦</span><span class="nav-label">Models</span></button>
 </div>
 
 <!-- ── Main ── -->
@@ -5046,6 +5070,115 @@ function handlePaymentRedirectResult() {
 handlePaymentRedirectResult();
 loadPricingData();
 
+// ── Liquid Glass Hover Tooltip Bar for Sidebar Logos ──
+(function initSidebarGlassTip() {
+  var tip = document.getElementById('sidebar-glass-tip');
+  var tipText = document.getElementById('sgt-text');
+  var tipBadge = document.getElementById('sgt-badge');
+  if (!tip || !tipText) return;
+
+  var currentTarget = null;
+
+  function updateTipPosition(btn) {
+    if (!btn) return;
+    var rect = btn.getBoundingClientRect();
+    if (window.innerWidth <= 680) {
+      tip.style.left = (rect.left + rect.width / 2) + 'px';
+      tip.style.top = (rect.bottom + 8) + 'px';
+    } else {
+      tip.style.left = (rect.right + 12) + 'px';
+      tip.style.top = (rect.top + rect.height / 2) + 'px';
+    }
+  }
+
+  function showTip(btn) {
+    currentTarget = btn;
+
+    var title = btn.getAttribute('data-tooltip') ||
+                btn.getAttribute('aria-label') ||
+                (btn.querySelector('.nav-label') ? btn.querySelector('.nav-label').textContent.trim() : '');
+    
+    if (!title) return;
+
+    tipText.textContent = title;
+
+    // Check for badge (like queue badge, drafts badge, PRO badge)
+    var badgeEl = btn.querySelector('.nb');
+    if (badgeEl && badgeEl.textContent.trim() && badgeEl.textContent.trim() !== '0') {
+      tipBadge.textContent = badgeEl.textContent.trim();
+      tipBadge.style.display = 'inline-block';
+      if (badgeEl.style.background) {
+        tipBadge.style.background = badgeEl.style.background;
+      } else {
+        tipBadge.style.background = 'rgba(84, 168, 255, 0.22)';
+      }
+    } else {
+      tipBadge.style.display = 'none';
+    }
+
+    updateTipPosition(btn);
+    tip.classList.add('visible');
+  }
+
+  function hideTip() {
+    currentTarget = null;
+    tip.classList.remove('visible');
+  }
+
+  var navBtns = document.querySelectorAll('.sidebar .nav-btn');
+  navBtns.forEach(function(btn) {
+    // Strip native browser title so default tooltip won't clash
+    if (btn.hasAttribute('title')) {
+      if (!btn.hasAttribute('data-tooltip')) {
+        btn.setAttribute('data-tooltip', btn.getAttribute('title'));
+      }
+      btn.removeAttribute('title');
+    }
+
+    btn.addEventListener('mouseenter', function() {
+      showTip(btn);
+    });
+
+    btn.addEventListener('mouseleave', function() {
+      hideTip();
+    });
+
+    btn.addEventListener('focus', function() {
+      showTip(btn);
+    });
+
+    btn.addEventListener('blur', function() {
+      hideTip();
+    });
+
+    btn.addEventListener('click', function() {
+      updateTipPosition(btn);
+    });
+  });
+
+  var sidebar = document.querySelector('.sidebar');
+  if (sidebar) {
+    sidebar.addEventListener('scroll', function() {
+      if (currentTarget) {
+        updateTipPosition(currentTarget);
+      }
+    }, { passive: true });
+  }
+
+  window.addEventListener('resize', function() {
+    if (currentTarget) {
+      updateTipPosition(currentTarget);
+    } else {
+      hideTip();
+    }
+  }, { passive: true });
+
+  window.addEventListener('scroll', function() {
+    if (currentTarget) {
+      updateTipPosition(currentTarget);
+    }
+  }, { passive: true });
+})();
 </script>
 </body>
 </html>

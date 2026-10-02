@@ -100,6 +100,7 @@ def test_image_vision_falls_back_without_provider_token(monkeypatch):
     from backend import ai_provider
 
     monkeypatch.setattr(ai_provider, "OPENAI_API_KEY", "")
+    monkeypatch.setattr(ai_provider, "GEMINI_API_KEY", "")
     result = ai_provider.call_vision(image_bytes(), "image/png", "Write a comment.", provider="openai")
     assert result["provider"] == "local-fallback"
     assert result["text"]
