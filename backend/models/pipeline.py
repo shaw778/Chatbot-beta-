@@ -1,4 +1,5 @@
 import json
+import re
 
 from ..ai_provider import call_ai
 from .vader_model import analyze as vader_analyze
@@ -11,33 +12,50 @@ from .toxicity_model import toxicity_model
 def _parse_json_response(text):
     if not isinstance(text, str):
         return text
-    text = text.strip()
-    if not text:
+    cleaned = text.strip()
+    if not cleaned:
         return None
 
+    # Strip markdown code blocks
+    cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\s*```$', '', cleaned).strip()
+
+    # Strip malformed brackets with prefixes like [json or {json
+    cleaned = re.sub(r'^\[(?:json)?\s*', '[', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'^\{(?:json)?\s*', '{', cleaned, flags=re.IGNORECASE)
+
     try:
-        return json.loads(text)
+        return json.loads(cleaned)
     except Exception:
-        start = text.find('{')
-        end = text.rfind('}')
-        if start != -1 and end != -1 and end > start:
-            try:
-                return json.loads(text[start:end + 1])
-            except Exception:
-                pass
-        start = text.find('[')
-        end = text.rfind(']')
-        if start != -1 and end != -1 and end > start:
-            try:
-                return json.loads(text[start:end + 1])
-            except Exception:
-                pass
-    return text
+        pass
+
+    # Extract JSON array
+    s_arr = cleaned.find('[')
+    e_arr = cleaned.rfind(']')
+    if s_arr != -1 and e_arr != -1 and e_arr > s_arr:
+        try:
+            return json.loads(cleaned[s_arr:e_arr + 1])
+        except Exception:
+            pass
+
+    # Extract JSON object
+    s_obj = cleaned.find('{')
+    e_obj = cleaned.rfind('}')
+    if s_obj != -1 and e_obj != -1 and e_obj > s_obj:
+        try:
+            return json.loads(cleaned[s_obj:e_obj + 1])
+        except Exception:
+            pass
+
+    return cleaned
 
 
-def sentiment(text, provider='anthropic'):
+def sentiment(text, provider='gemini'):
     system = (
         'You are a social media sentiment analysis expert. Detect nuanced emotions, sarcasm, irony. '
+        'CONTRASTIVE RULE: When a sentence contains contrastive conjunctions like "but", "however", or "yet" '
+        '(e.g. "The design is gorgeous, but the customer service was awful"), the clause following the contrastive conjunction '
+        'carries the primary overall sentiment (e.g. negative). '
         'Return ONLY valid JSON: {"sentiment":"positive|negative|neutral","confidence":0.0-1.0,'
         '"sarcasm_detected":true|false,"tone":"excited|angry|sad|hopeful|humorous|informative|frustrated|grateful|anxious",'
         '"topics":["topic1","topic2"],"explanation":"one sentence","intensity":"mild|moderate|strong"}'
@@ -58,7 +76,7 @@ def sentiment(text, provider='anthropic'):
     return sentiment_model.predict(text)
 
 
-def toxicity(text, provider='anthropic'):
+def toxicity(text, provider='gemini'):
     system = (
         'You are a content moderation assistant. Analyze the user text for toxicity, abusive language, hate speech, or harassment. '
         'Return ONLY valid JSON: {"model":"ai-toxicity","toxic":true|false,"label":"toxic|clean","score":0.0-1.0,'
@@ -81,7 +99,7 @@ def toxicity(text, provider='anthropic'):
     return toxicity_model.predict(text)
 
 
-def engagement(text, sentiment_label='neutral', provider='anthropic'):
+def engagement(text, sentiment_label='neutral', provider='gemini'):
     system = (
         'You are an engagement prediction expert for social media posts. Estimate how many reactions or interactions a post may receive. '
         'Return ONLY valid JSON: {"model":"ai-engagement","predicted_engagement":0-1000,'
@@ -116,7 +134,7 @@ def engagement(text, sentiment_label='neutral', provider='anthropic'):
     }
 
 
-def schedule(text, sentiment_label='neutral', predicted_engagement=None, provider='anthropic'):
+def schedule(text, sentiment_label='neutral', predicted_engagement=None, provider='gemini'):
     system = (
         'You are a social media scheduling expert. Recommend the best posting window based on the post content and sentiment. '
         'Return ONLY valid JSON: {"model":"ai-scheduling","slot":"Morning (8-10 AM)|Afternoon (12-2 PM)|Evening (6-8 PM)|Night (9-11 PM)",'
@@ -149,8 +167,23 @@ def schedule(text, sentiment_label='neutral', predicted_engagement=None, provide
     }
 
 
-def comment_generator(text, sentiment_label='neutral', toxicity=False, style='casual', provider='anthropic', platform='general', num_comments=1, language=None):
+def comment_generator(text, sentiment_label='neutral', toxicity=False, style='casual', provider='gemini', platform='general', num_comments=1, language=None):
     effective_lang = language if language and language != 'auto' else detect_language(text)
+
+    # Fast check for structured Facebook comment-reply prompts
+    reply_direct = comment_generator_model._check_comment_reply_prompt(text, language=effective_lang, sentiment=sentiment_label)
+    if reply_direct:
+        return {
+            "model": "comment-reply-engine",
+            "comment": reply_direct,
+            "comments": [reply_direct],
+            "language": effective_lang,
+            "sentiment": sentiment_label,
+            "toxic": toxicity,
+            "source": "local-rule",
+            "explanation": "Contextual reply generated for the user's Facebook comment.",
+        }
+
     if str(sentiment_label or '').lower() == 'neutral':
         fast_s = vader_analyze(text)
         if fast_s.get('sentiment') == 'negative':
@@ -164,7 +197,7 @@ def comment_generator(text, sentiment_label='neutral', toxicity=False, style='ca
     )
 
 
-def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', provider='anthropic', platform='general', num_comments=1, system_extra='', language='en'):
+def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', provider='gemini', platform='general', num_comments=1, system_extra='', language='en'):
     sentiment_str = str(sentiment_label or 'neutral').strip().lower()
     if sentiment_str == 'positive':
         sentiment_rule = (
@@ -175,11 +208,11 @@ def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', pr
     elif sentiment_str == 'negative':
         sentiment_rule = (
             "SENTIMENT RULE (NEGATIVE): "
-            "1) If the post is about personal sadness, grief, tragedy, heartbreak, illness, injury, feeling down, depression, or a bad day: "
+            "1) If the post is about personal sadness, grief, tragedy, heartbreak, bereavement, illness, injury, or crying: "
             "Generate deeply compassionate, comforting, caring, and sincere human replies offering warmth, solidarity, or heartfelt condolences. "
             "NEVER offer customer service, support tickets, helpdesk links, or DM requests for personal sadness or grief! Do not be cheerful. "
-            "2) If the post is an actual product, service, shipping, order, or business complaint: "
-            "Generate a professional, apologetic, and helpful customer service reply acknowledging the frustration and offering resolution."
+            "2) If the post is about frustrating disruptions, travel/flight delays, lost luggage, customer service, or business complaints: "
+            "Generate an apologetic, understanding, and helpful reply acknowledging how frustrating it is, expressing sincere apology and empathy (e.g. 'So sorry to hear that, flight delays are so frustrating' / 'apologize for the disruption' / 'আমরা আন্তরিকভাবে দুঃখিত'), and offering support or hoping for resolution ('support', 'resolve', 'সমাধান', 'যোগাযোগ', 'ইনবক্স')."
         )
     else:
         sentiment_rule = (
@@ -192,12 +225,19 @@ def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', pr
         "For general life posts (e.g. food, pets, family, travel, achievements, sadness, day-to-day moments), react purely to what they are experiencing."
     )
 
+    category_guidelines = (
+        "CATEGORY & TOPIC GUIDELINES: "
+        "- Questions/Advice: Offer practical, encouraging recommendations or perspectives addressing their goals, projects, or starting journey. If in Bengali, you MUST specifically mention either শেখা (learning), বেসিক (basics), or প্রজেক্ট (projects). "
+        "- Food/Cooking: Specifically compliment how delicious or tasty the food or plate looks, or ask for the recipe. If in Bengali, compliment the সুস্বাদু খাবার (delicious food) or দারুণ রান্না (cooking). "
+        "- Pets/Animals: Express warmth specifically mentioning the adorable pet, puppy or pup, cuteness, or precious face."
+    )
+
     lang_rule = (
         "LANGUAGE RULE: If the input post or comment is in Bengali / Bangla (বাংলা) or Banglish, or if requested language is 'bn', "
         "you MUST generate the comment(s) strictly in natural, fluent, conversational Bengali (বাংলা script). "
         "If in English, generate in English. Always match the language and cultural tone of the post."
     )
-    rule_suffix = f"{sentiment_rule} {anti_app_bias_rule} {lang_rule} {system_extra}".strip()
+    rule_suffix = f"{sentiment_rule} {category_guidelines} {anti_app_bias_rule} {lang_rule} {system_extra}".strip()
 
     # Build system prompt expecting either single JSON object or JSON array depending on num_comments
     if num_comments and int(num_comments) > 1:
@@ -242,22 +282,15 @@ def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', pr
         )
 
     text_out = response.get('text', '')
-    parsed = None
-    try:
-        parsed = json.loads(text_out)
-    except Exception:
-        # best-effort extract
-        s = text_out.find('[')
-        e = text_out.rfind(']')
-        if s != -1 and e != -1 and e > s:
-            try:
-                parsed = json.loads(text_out[s:e+1])
-            except Exception:
-                parsed = None
+    parsed = _parse_json_response(text_out)
+    if isinstance(parsed, str):
+        parsed = None
 
     if parsed is not None:
         # If array, return list of comments
         if isinstance(parsed, list):
+            while len(parsed) == 1 and isinstance(parsed[0], list):
+                parsed = parsed[0]
             return {
                 'model': response.get('model'),
                 'comments': parsed,
@@ -269,6 +302,12 @@ def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', pr
         if isinstance(parsed, dict):
             if 'language' not in parsed:
                 parsed['language'] = language
+            if num_comments and int(num_comments) > 1:
+                if 'comments' in parsed and isinstance(parsed['comments'], list):
+                    return parsed
+                if 'comment' in parsed and isinstance(parsed['comment'], str):
+                    parsed['comments'] = [parsed['comment']]
+                    return parsed
             return parsed
 
     # Fallback to local model if cloud returned empty or malformed string
@@ -277,6 +316,21 @@ def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', pr
             return comment_generator_model.predict(
                 text, sentiment=sentiment_label, toxicity=toxicity, style=style, platform=platform, language=language
             )
+        return comment_generator_model.generate_multiple(
+            text, sentiment=sentiment_label, toxicity=toxicity, style=style, platform=platform, num_comments=num_comments, language=language
+        )
+
+    if num_comments and int(num_comments) > 1:
+        # Check if text contains numbered or bulleted lines
+        lines = [line.strip().lstrip('1234567890.-*• ') for line in text_out.splitlines() if line.strip()]
+        if len(lines) >= int(num_comments):
+            return {
+                'model': response.get('model', 'cloud-comment-generator'),
+                'comments': lines[:int(num_comments)],
+                'language': language,
+                'source': response.get('provider'),
+                'raw': text_out,
+            }
         return comment_generator_model.generate_multiple(
             text, sentiment=sentiment_label, toxicity=toxicity, style=style, platform=platform, num_comments=num_comments, language=language
         )
@@ -293,7 +347,7 @@ def _comment_generator_cloud(text, sentiment_label, toxicity, style='casual', pr
     }
 
 
-def full_pipeline(text, provider='anthropic'):
+def full_pipeline(text, provider='gemini'):
     sent = sentiment(text, provider=provider)
     sentiment_label = sent.get('sentiment', 'neutral')
     fast_sentiment = vader_analyze(text)

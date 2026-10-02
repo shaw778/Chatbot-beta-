@@ -2299,9 +2299,9 @@ async function syncBackendStatus(){
       else el.textContent='Python + SQLite fallback';
     }
     var chosen = 'gemini';
-    if(data.anthropic_key_configured) chosen = 'anthropic';
+    if(data.gemini_key_configured) chosen = 'gemini';
+    else if(data.anthropic_key_configured) chosen = 'anthropic';
     else if(data.openai_key_configured) chosen = 'openai';
-    else if(data.gemini_key_configured) chosen = 'gemini';
 
     setProvider(chosen);
     var psel = document.getElementById('provider-select');

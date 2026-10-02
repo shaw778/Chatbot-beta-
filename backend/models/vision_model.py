@@ -49,11 +49,11 @@ class LocalVisionModel:
             return None
 
         models_to_try = [
-            os.environ.get("GEMINI_MODEL", "gemini-3.8-flash"),
+            os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest"),
+            "gemini-flash-lite-latest",
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
             "gemini-3.8-flash",
-            "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
         ]
         seen = set()
         candidate_models = [m for m in models_to_try if m and not (m in seen or seen.add(m))]

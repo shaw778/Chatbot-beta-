@@ -55,7 +55,7 @@ def fallback_response(payload):
         result["model"] = "ai-toxicity"
         return json.dumps(result)
 
-    if "json array of strings" in system or "social media comment generator" in system:
+    if "json array of strings" in system or "comment writer" in system or "comment generator" in system:
         post_match = re.search(r'Post:\s*"(.*?)"(?:\n|$)', user_text, re.DOTALL)
         post_text = post_match.group(1) if post_match else user_text
         num_match = re.search(r'Generate\s+(\d+)\s+comment', user_text, re.IGNORECASE)
@@ -464,10 +464,10 @@ def call_gemini(payload):
 
     models_to_try = [
         requested_model,
+        "gemini-flash-lite-latest",
+        "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite",
         "gemini-3.8-flash",
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
     ]
     seen = set()
     candidate_models = [m for m in models_to_try if m and not (m in seen or seen.add(m))]
@@ -521,12 +521,12 @@ def call_gemini(payload):
 def call_ai(payload):
     provider = str(payload.get("provider", "")).lower().strip()
     if not provider or provider in {"ollama", "local", "offline", "none"}:
-        if ANTHROPIC_API_KEY:
+        if GEMINI_API_KEY:
+            provider = "gemini"
+        elif ANTHROPIC_API_KEY:
             provider = "anthropic"
         elif OPENAI_API_KEY:
             provider = "openai"
-        elif GEMINI_API_KEY:
-            provider = "gemini"
         else:
             text = fallback_response(payload)
             return {"text": text, "provider": "local-fallback", "model": "local"}
@@ -541,9 +541,9 @@ def call_ai(payload):
     except Exception as exc:
         logger.warning("Primary provider '%s' failed (%s). Checking failovers...", provider, exc)
         for failover_name, failover_fn, key in [
+            ("gemini", call_gemini, GEMINI_API_KEY),
             ("anthropic", call_anthropic, ANTHROPIC_API_KEY),
             ("openai", call_openai, OPENAI_API_KEY),
-            ("gemini", call_gemini, GEMINI_API_KEY),
         ]:
             if key and provider not in {failover_name}:
                 try:
@@ -554,6 +554,11 @@ def call_ai(payload):
         return {"text": text, "provider": "local-fallback", "model": "local"}
 
     # If unrecognized provider, try configured providers or fallback
+    if GEMINI_API_KEY:
+        try:
+            return call_gemini(payload)
+        except Exception:
+            pass
     if ANTHROPIC_API_KEY:
         try:
             return call_anthropic(payload)
@@ -562,11 +567,6 @@ def call_ai(payload):
     if OPENAI_API_KEY:
         try:
             return call_openai(payload)
-        except Exception:
-            pass
-    if GEMINI_API_KEY:
-        try:
-            return call_gemini(payload)
         except Exception:
             pass
     text = fallback_response(payload)
@@ -590,10 +590,10 @@ def call_vision(image_bytes, media_type, prompt, provider="gemini", filename="",
 
         models_to_try = [
             requested_model,
+            "gemini-flash-lite-latest",
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
             "gemini-3.8-flash",
-            "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
         ]
         seen = set()
         candidate_models = [m for m in models_to_try if m and not (m in seen or seen.add(m))]
