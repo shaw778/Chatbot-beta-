@@ -1330,10 +1330,313 @@ body:not(.day-mode) .g-custom-input {
 body:not(.day-mode) .g-disclaimer {
   color: #9aa0a6;
 }
+
+/* ── IntSocialBot Liquid-Glass Preloader / Loading Screen ── */
+.int-preloader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000000;
+  background: radial-gradient(ellipse at 50% 35%, #0d2642 0%, #060e1a 60%, #03070d 100%);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s ease;
+  user-select: none;
+  overflow: hidden;
+}
+
+body.day-mode .int-preloader-overlay {
+  background: radial-gradient(ellipse at 50% 35%, #e1effe 0%, #f4f8fc 65%, #e4ecf4 100%);
+}
+
+.int-preloader-overlay.int-loader-hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(1.035);
+  pointer-events: none;
+}
+
+.int-loader-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 440px;
+  width: 100%;
+}
+
+.int-loader-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -60%);
+  background: radial-gradient(circle, rgba(23, 105, 224, 0.35) 0%, rgba(0, 210, 255, 0.18) 45%, transparent 70%);
+  filter: blur(36px);
+  pointer-events: none;
+  animation: intAuraPulse 3s infinite alternate ease-in-out;
+}
+
+@keyframes intAuraPulse {
+  0% { transform: translate(-50%, -60%) scale(0.9); opacity: 0.7; }
+  100% { transform: translate(-50%, -60%) scale(1.15); opacity: 1; }
+}
+
+.int-logo-wrapper {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.int-orbit-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(from 0deg, #1769e0, #00d2ff, #45db85, #1769e0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: intOrbitSpin 2.2s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.6));
+}
+
+@keyframes intOrbitSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.int-orbit-ring-secondary {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1px dashed rgba(84, 168, 255, 0.3);
+  animation: intOrbitSpinReverse 6s linear infinite;
+}
+
+@keyframes intOrbitSpinReverse {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.int-logo-disc {
+  width: 78px;
+  height: 78px;
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(16, 36, 61, 0.85));
+  border: 1px solid rgba(126, 192, 255, 0.35);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  animation: intBadgePulse 2.8s infinite alternate ease-in-out;
+}
+
+body.day-mode .int-logo-disc {
+  background: linear-gradient(145deg, #ffffff, #edf5fc);
+  border-color: #bad3eb;
+  box-shadow: 0 10px 24px rgba(23, 105, 176, 0.16);
+}
+
+@keyframes intBadgePulse {
+  0% { transform: scale(0.98); }
+  100% { transform: scale(1.02); }
+}
+
+.int-logo-icon {
+  width: 44px;
+  height: 44px;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(84, 168, 255, 0.8));
+}
+
+.int-loader-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 14px;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, #ffffff 0%, #a0cdff 50%, #54a8ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+body.day-mode .int-loader-title {
+  background: linear-gradient(135deg, #0d3866 0%, #1769b0 60%, #168b75 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.int-loader-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 650;
+  padding: 4px 14px;
+  border-radius: 99px;
+  background: rgba(84, 168, 255, 0.1);
+  border: 1px solid rgba(84, 168, 255, 0.22);
+  color: #7ec0ff;
+  margin-top: 2px;
+  margin-bottom: 16px;
+}
+
+body.day-mode .int-loader-badge {
+  background: #e3effa;
+  border-color: #bfd9ee;
+  color: #1769b0;
+}
+
+.int-pulse-core {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00d2ff;
+  box-shadow: 0 0 8px #00d2ff;
+  animation: intDotPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes intDotPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.25); }
+}
+
+.int-progress-track {
+  width: 250px;
+  height: 4.5px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+body.day-mode .int-progress-track {
+  background: #d8e5f2;
+  border-color: #cbdbee;
+}
+
+.int-progress-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 45%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, transparent, #00d2ff 40%, #1769e0 80%, transparent);
+  box-shadow: 0 0 14px rgba(0, 210, 255, 0.7);
+  animation: intProgressIndeterminate 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes intProgressIndeterminate {
+  0% { transform: translateX(-120%); width: 35%; }
+  50% { transform: translateX(110%); width: 65%; }
+  100% { transform: translateX(290%); width: 35%; }
+}
+
+.int-loader-status {
+  font-size: 12px;
+  color: #9cb4ce;
+  margin-top: 13px;
+  min-height: 18px;
+  transition: all 0.25s ease;
+  font-weight: 500;
+}
+
+body.day-mode .int-loader-status {
+  color: #556b82;
+}
+
+.int-loader-footer {
+  margin-top: 32px;
+  font-size: 11px;
+  color: #5a718c;
+  letter-spacing: 0.03em;
+  font-weight: 500;
+}
+
+body.day-mode .int-loader-footer {
+  color: #7990a8;
+}
+
 </style>
   <script src="https://sandbox.sslcommerz.com/embed.min.js"></script>
 </head>
 <body>
+
+<!-- ── IntSocialBot Liquid-Glass Preloader Screen ── -->
+<div id="int-loading-screen" class="int-preloader-overlay">
+  <div class="int-loader-card">
+    <div class="int-loader-glow"></div>
+    
+    <div class="int-logo-wrapper">
+      <div class="int-orbit-ring"></div>
+      <div class="int-orbit-ring-secondary"></div>
+      <div class="int-logo-disc">
+        <!-- Modern AI Social Bot Logo SVG -->
+        <svg class="int-logo-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="intGrad1" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00D2FF"/>
+              <stop offset="0.5" stop-color="#1769E0"/>
+              <stop offset="1" stop-color="#45DB85"/>
+            </linearGradient>
+            <linearGradient id="intGrad2" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FFFFFF"/>
+              <stop offset="1" stop-color="#7EC0FF"/>
+            </linearGradient>
+          </defs>
+          <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" stroke="url(#intGrad1)" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="24" cy="24" r="5" fill="url(#intGrad2)"/>
+          <circle cx="16" cy="18" r="3" fill="#00D2FF"/>
+          <circle cx="32" cy="18" r="3" fill="#45DB85"/>
+          <circle cx="24" cy="33" r="3.2" fill="#1769E0"/>
+          <path d="M16 18L24 24M32 18L24 24M24 24L24 33" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <h1 class="int-loader-title">IntSocialBot</h1>
+    
+    <div class="int-loader-badge">
+      <span class="int-pulse-core"></span>
+      <span class="int-loader-text">Loading</span>
+    </div>
+
+    <div class="int-progress-track">
+      <div class="int-progress-fill"></div>
+    </div>
+
+    <div id="int-loader-status" class="int-loader-status">Initializing AI workspace...</div>
+    
+    <div class="int-loader-footer">
+      AI Social Automation &amp; Multi-Model Intelligence
+    </div>
+  </div>
+</div>
+
 
 <!-- ── Login Screen Feed Gate ── -->
 <div id="login-screen" class="login-overlay">
@@ -5416,6 +5719,79 @@ loadPricingData();
     }
   }, { passive: true });
 })();
+
+// ── IntSocialBot Preloader Controller ──
+(function initIntSocialBotPreloader() {
+  var preloader = document.getElementById('int-loading-screen');
+  var statusEl = document.getElementById('int-loader-status');
+  if (!preloader) return;
+
+  var startTime = Date.now();
+  var isDismissed = false;
+
+  var statusStages = [
+    { delay: 1000, text: 'Connecting to neural engines & database...' },
+    { delay: 2800, text: 'Waking up Render cloud container...' },
+    { delay: 7000, text: 'Synchronizing model weights & Facebook tools...' },
+    { delay: 13000, text: 'Almost ready, finalizing AI environment...' }
+  ];
+
+  var timeouts = statusStages.map(function(stage) {
+    return setTimeout(function() {
+      if (!isDismissed && statusEl) {
+        statusEl.style.opacity = '0.3';
+        setTimeout(function() {
+          if (!isDismissed && statusEl) {
+            statusEl.textContent = stage.text;
+            statusEl.style.opacity = '1';
+          }
+        }, 150);
+      }
+    }, stage.delay);
+  });
+
+  function dismissPreloader(immediate) {
+    if (isDismissed) return;
+    isDismissed = true;
+    timeouts.forEach(clearTimeout);
+
+    var elapsed = Date.now() - startTime;
+    var minWait = immediate ? 0 : Math.max(0, 950 - elapsed);
+
+    setTimeout(function() {
+      if (statusEl) {
+        statusEl.textContent = 'Ready!';
+        statusEl.style.color = '#45db85';
+      }
+      setTimeout(function() {
+        preloader.classList.add('int-loader-hidden');
+        setTimeout(function() {
+          preloader.style.display = 'none';
+        }, 550);
+      }, 200);
+    }, minWait);
+  }
+
+  // Ping backend health
+  fetch(API_BASE + '/api/health')
+    .then(function(res) {
+      if (res.ok) dismissPreloader(false);
+      else setTimeout(function() { dismissPreloader(false); }, 1200);
+    })
+    .catch(function() {
+      setTimeout(function() {
+        fetch(API_BASE + '/api/health')
+          .then(function() { dismissPreloader(false); })
+          .catch(function() { dismissPreloader(false); });
+      }, 2500);
+    });
+
+  // Safety fallback: maximum 6 seconds so user is never blocked
+  setTimeout(function() {
+    dismissPreloader(false);
+  }, 6000);
+})();
+
 </script>
 </body>
 </html>
